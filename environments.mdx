@@ -1,0 +1,109 @@
+---
+title: "Ambientes"
+description: "Cómo se construye la URL base de tu ambiente de Matriz OMS API y qué tener en cuenta al trabajar con más de un ambiente."
+icon: "server"
+---
+
+import BaseUrls from '/snippets/base-urls.mdx';
+
+Cada cliente de Matriz OMS API opera sobre uno o más **ambientes propios**. No existe una URL única para todos los integradores: la URL base se arma a partir de tu identificador de cliente o ambiente y del dominio con el que fue provisto tu acceso.
+
+## Anatomía de la URL base
+
+```text
+https://api.{urlbase}.{dominio}.com.ar
+```
+
+| Componente | Descripción | Ejemplo |
+| --- | --- | --- |
+| `api` | Subdominio del servicio. `api` para Trading; `api-risk` para Riesgo (solo administradores de ALyC). | `api` |
+| `{urlbase}` | Identificador del cliente o del ambiente. | `demo` |
+| `{dominio}` | `matrizoms` o `xoms`, según cómo esté provisto el ambiente. | `matrizoms` |
+
+Por ejemplo, para el ambiente `demo` provisto bajo el dominio `matrizoms`, la URL base de Trading es:
+
+```text
+https://api.demo.matrizoms.com.ar
+```
+
+Y el mismo ambiente provisto bajo el dominio `xoms`:
+
+```text
+https://api.demo.xoms.com.ar
+```
+
+<Note>
+  Si no conocés tu `{urlbase}` o el dominio que te corresponde, solicitalo mediante un ticket en JIRA antes de comenzar la integración.
+</Note>
+
+## Ambiente demo general
+
+Además de los ambientes propios de cada ALyC, existe un **ambiente demo general**:
+
+| Uso | URL |
+| --- | --- |
+| REST | `https://api.demo.matrizoms.com.ar` |
+| WebSocket | `wss://api.demo.matrizoms.com.ar/` |
+
+## URL de WebSocket
+
+La API WebSocket usa el mismo host que la API REST de Trading, con el esquema `wss://`:
+
+```text
+wss://api.{urlbase}.{dominio}.com.ar/
+```
+
+Ver [API WebSocket](/websockets/overview) para los métodos de autenticación de la conexión.
+
+## Dominios disponibles
+
+<BaseUrls />
+
+## Reglas al trabajar con ambientes
+
+<AccordionGroup>
+  <Accordion title="El token se obtiene contra la URL base en la que vas a operar" icon="key">
+    El token se solicita con `POST /auth/getToken` contra la URL base del ambiente y dominio que vas a usar. Utilizá cada token únicamente contra la URL base con la que lo obtuviste.
+  </Accordion>
+  <Accordion title="Cada dominio requiere su propio token" icon="shield-halved">
+    El token obtenido en `api` no sirve para `api-risk`, y viceversa. Si tu perfil tiene acceso a ambos dominios, gestioná dos tokens por separado.
+  </Accordion>
+  <Accordion title="matrizoms y xoms no son intercambiables" icon="triangle-exclamation">
+    Usá siempre el dominio que te fue asignado. Cambiar `matrizoms` por `xoms` (o al revés) no apunta al mismo ambiente.
+  </Accordion>
+</AccordionGroup>
+
+## Buenas prácticas
+
+Parametrizá el identificador de ambiente y el dominio en la configuración de tu aplicación, en lugar de escribir la URL completa en el código. Así podés pasar de un ambiente de pruebas a producción sin modificar el código.
+
+<CodeGroup>
+```bash .env
+MATRIZ_URLBASE=demo
+MATRIZ_DOMINIO=matrizoms
+MATRIZ_USERNAME=tu_usuario
+MATRIZ_PASSWORD=tu_contraseña
+```
+
+```python Python
+import os
+
+URLBASE = os.environ["MATRIZ_URLBASE"]                    # ej.: "demo"
+DOMINIO = os.environ.get("MATRIZ_DOMINIO", "matrizoms")   # "matrizoms" o "xoms"
+
+TRADING_BASE_URL = f"https://api.{URLBASE}.{DOMINIO}.com.ar"
+```
+
+```javascript Node.js
+const URLBASE = process.env.MATRIZ_URLBASE;                 // ej.: "demo"
+const DOMINIO = process.env.MATRIZ_DOMINIO ?? "matrizoms";  // "matrizoms" o "xoms"
+
+const TRADING_BASE_URL = `https://api.${URLBASE}.${DOMINIO}.com.ar`;
+```
+</CodeGroup>
+
+<Tip>
+  Mantené separadas las credenciales de cada ambiente y nunca las incluyas en el repositorio de código. Usá variables de entorno o un gestor de secretos.
+</Tip>
+
+{/* [PENDIENTE] Completar con horarios de disponibilidad de cada ambiente y, si corresponde, otros ambientes de prueba además del demo general. */}

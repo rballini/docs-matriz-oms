@@ -1,0 +1,139 @@
+---
+title: "Soporte"
+description: "Cómo reportar consultas e incidentes de Matriz OMS API mediante un ticket en JIRA y qué datos incluir para resolverlos rápido."
+icon: "life-ring"
+---
+
+Las consultas y los incidentes de Matriz OMS API se gestionan mediante un **ticket en JIRA**, cargado **a través del cliente que lo solicita**.
+
+<Card title="Portal de soporte (JIRA)" icon="ticket">
+  Cargá tu consulta o incidente como ticket en JIRA.
+
+  Acceso: a confirmar.
+</Card>
+
+{/* [PENDIENTE] Completar: (1) URL del portal de JIRA (agregar href="https://…" a la Card y quitar "Acceso: a confirmar"); (2) quién puede cargar tickets (¿solo usuarios designados por cada ALyC?); (3) horarios de atención; (4) niveles de severidad y tiempos de respuesta (SLA); (5) canal de urgencias en horario de rueda, si existe. */}
+
+## Antes de abrir un ticket
+
+Muchos problemas se resuelven revisando:
+
+- [Errores](/reference/errors): formato de los errores y casos frecuentes.
+- [Autenticación](/authentication): token vencido o de otro dominio (`api` vs. `api-risk`).
+- [Ambientes](/environments): `{urlbase}` y dominio (`matrizoms` o `xoms`) correctos.
+- [Estados de una orden](/reference/order-statuses): el `text` de un rechazo suele indicar el motivo.
+
+## Datos mínimos para reportar un incidente
+
+Incluí estos datos en el ticket. Sin ellos, el equipo no puede ubicar tus requests en los registros.
+
+<Steps>
+  <Step title="Instancia y ambiente">
+    Tu `{urlbase}`, el dominio (`matrizoms` o `xoms`) y el ambiente (demo o producción). Ej.: `api.demo.matrizoms.com.ar`.
+  </Step>
+  <Step title="Usuario y cuenta">
+    El **nombre de usuario** con el que operaste y la **cuenta** involucrada. **Nunca** incluyas la contraseña ni el token.
+  </Step>
+  <Step title="Interfaz y método">
+    REST o WebSocket, y el endpoint o tipo de mensaje. Ej.: `GET /rest/order/newSingleOrder` o mensaje `no`.
+  </Step>
+  <Step title="Identificadores de la orden">
+    Todos los que tengas: `clOrdId`, `wsClOrdId` (si la orden se envió por WebSocket), `orderId` y `execId`.
+  </Step>
+  <Step title="Fecha y hora exactas">
+    Timestamp del request o del mensaje, **con zona horaria**. Ej.: `2026-11-17 14:23:35 (UTC-3)`.
+  </Step>
+  <Step title="Request y response completos">
+    La URL o el mensaje enviado y la respuesta recibida (o el Execution Report), **sin el token**.
+  </Step>
+  <Step title="Descripción e impacto">
+    Qué esperabas, qué ocurrió, si se puede reproducir y a cuántos usuarios u operaciones afecta.
+  </Step>
+</Steps>
+
+<Warning>
+  **Nunca envíes contraseñas ni tokens** en un ticket, un correo o una captura. Reemplazá el valor de `X-Auth-Token` y `X-Password` por `[REDACTADO]` antes de compartir requests o logs.
+</Warning>
+
+## Checklist
+
+- [ ] Instancia (`{urlbase}` y dominio) y ambiente
+- [ ] Usuario (sin contraseña) y cuenta
+- [ ] Interfaz (REST / WebSocket) y endpoint o tipo de mensaje
+- [ ] `clOrdId` / `wsClOrdId` / `orderId` / `execId`
+- [ ] Fecha y hora con zona horaria
+- [ ] Request y response completos, sin token
+- [ ] Descripción, pasos para reproducir e impacto
+
+## Plantilla de ticket
+
+Copiá esta plantilla y completala:
+
+```markdown Plantilla
+**Resumen:** <una línea que describa el problema>
+
+**Instancia:** api.<urlbase>.<matrizoms|xoms>.com.ar
+**Ambiente:** <demo | producción>
+**Usuario:** <nombre de usuario — sin contraseña>
+**Cuenta:** <número de cuenta>
+
+**Interfaz:** <REST | WebSocket>
+**Endpoint / mensaje:** <ej.: GET /rest/order/newSingleOrder · mensaje "no">
+
+**Identificadores:**
+- clOrdId: <valor>
+- wsClOrdId: <valor o N/A>
+- orderId: <valor o N/A>
+- execId: <valor o N/A>
+
+**Fecha y hora:** <AAAA-MM-DD HH:mm:ss (UTC-3)>
+
+**Request (sin token):**
+<URL completa o mensaje JSON enviado>
+
+**Response / Execution Report:**
+<respuesta completa recibida>
+
+**Resultado esperado:** <qué esperabas que pasara>
+**Resultado obtenido:** <qué pasó>
+**¿Se puede reproducir?:** <sí / no — pasos>
+**Impacto:** <usuarios u operaciones afectadas>
+```
+
+## Cómo ocultar el token en tus logs
+
+<CodeGroup>
+```python Python
+def redactar_headers(headers: dict) -> dict:
+    """Devuelve una copia de los headers sin credenciales, apta para compartir."""
+    sensibles = {"x-auth-token", "x-password"}
+    return {
+        clave: ("[REDACTADO]" if clave.lower() in sensibles else valor)
+        for clave, valor in headers.items()
+    }
+
+
+print(redactar_headers({"X-Auth-Token": "abc123", "Content-Type": "application/json"}))
+# {'X-Auth-Token': '[REDACTADO]', 'Content-Type': 'application/json'}
+```
+
+```javascript Node.js
+function redactarHeaders(headers) {
+  // Devuelve una copia de los headers sin credenciales, apta para compartir.
+  const sensibles = new Set(["x-auth-token", "x-password"]);
+  return Object.fromEntries(
+    Object.entries(headers).map(([clave, valor]) => [
+      clave,
+      sensibles.has(clave.toLowerCase()) ? "[REDACTADO]" : valor,
+    ]),
+  );
+}
+
+console.log(redactarHeaders({ "X-Auth-Token": "abc123", "Content-Type": "application/json" }));
+// { 'X-Auth-Token': '[REDACTADO]', 'Content-Type': 'application/json' }
+```
+</CodeGroup>
+
+<Note>
+  Si el request usa el token como **query parameter** en WebSocket (`?X-Auth-Token=…`), quitalo también de la URL antes de compartirla.
+</Note>

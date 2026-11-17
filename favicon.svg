@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="Matriz OMS API">
+  <!-- PLACEHOLDER: reemplazar por el favicon oficial -->
+  <rect width="32" height="32" rx="8" fill="#111D4A"/>
+  <path d="M8 24V9l8 9 8-9v15" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="26" cy="6" r="3" fill="#7B2CBF"/>
+</svg>

@@ -1,0 +1,404 @@
+---
+title: "Guía rápida"
+description: "De cero a tu primera orden verificada: obtené el token, consultá segmentos e instrumentos, enviá una orden por REST o WebSocket y verificá su estado."
+icon: "rocket"
+---
+
+import VerificarEstadoOrden from '/snippets/verificar-estado-orden.mdx';
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+En esta guía vas a recorrer el flujo completo de una integración, de punta a punta:
+
+1. Obtener el token de acceso.
+2. Consultar segmentos y el detalle de un instrumento.
+3. Enviar una orden, por REST o por WebSocket.
+4. Verificar el estado de la orden.
+
+<Warning>
+  Hacé tus primeras pruebas en un **ambiente de prueba**, como el demo general (`api.demo.matrizoms.com.ar`). Las órdenes que envíes en producción son **reales**.
+</Warning>
+
+## Antes de empezar
+
+Necesitás:
+
+- **Usuario y contraseña** habilitados para Matriz OMS API.
+- Tu **`{urlbase}`** y tu **dominio** (`matrizoms` o `xoms`). Ver [Ambientes](/environments).
+- Una **cuenta** habilitada para operar. En los ejemplos usamos la cuenta `30`.
+- **Python 3.9+** con `requests` y `websockets`, o **Node.js 18+** con `ws`.
+
+Configurá estas variables de entorno, que usan todos los ejemplos:
+
+```bash .env
+MATRIZ_URLBASE=demo
+MATRIZ_DOMINIO=matrizoms
+MATRIZ_USERNAME=tu_usuario
+MATRIZ_PASSWORD=tu_contraseña
+MATRIZ_CUENTA=30
+```
+
+## Paso a paso
+
+<Steps>
+  <Step title="Obtené el token de acceso">
+    Enviá tu usuario y contraseña como headers a `POST /auth/getToken`. El token llega en el header de respuesta `X-Auth-Token` y vale 24 horas.
+
+    ```bash
+    curl -i -X POST "https://api.$MATRIZ_URLBASE.$MATRIZ_DOMINIO.com.ar/auth/getToken" \
+      -H "X-Username: $MATRIZ_USERNAME" \
+      -H "X-Password: $MATRIZ_PASSWORD"
+    ```
+
+    Copiá el valor del header `X-Auth-Token` de la respuesta y guardalo:
+
+    ```bash
+    export MATRIZ_TOKEN="<valor de X-Auth-Token>"
+    export BASE_URL="https://api.$MATRIZ_URLBASE.$MATRIZ_DOMINIO.com.ar"
+    ```
+
+    Más detalle en [Autenticación](/authentication).
+  </Step>
+  <Step title="Consultá los segmentos disponibles">
+    Verificá que el token funciona consultando los segmentos de negociación:
+
+    ```bash
+    curl "$BASE_URL/rest/segment/all" \
+      -H "X-Auth-Token: $MATRIZ_TOKEN"
+    ```
+
+    La respuesta tiene `"status": "OK"` y una lista `segments` (por ejemplo, `DDF`, `DDA`, `DUAL`, `MERV`). Ver [Lista de segmentos disponibles](/reference-data/segments/list).
+  </Step>
+  <Step title="Consultá el detalle del instrumento">
+    Antes de operar, consultá las reglas del instrumento: límites de precio, tick y volúmenes.
+
+    ```bash
+    curl --get "$BASE_URL/rest/instruments/detail" \
+      -H "X-Auth-Token: $MATRIZ_TOKEN" \
+      --data-urlencode "marketId=ROFX" \
+      --data-urlencode "symbol=DLR/DIC26"
+    ```
+
+    Tomá nota de `minPriceIncrement`, `lowLimitPrice`, `highLimitPrice`, `minTradeVol` y `maxTradeVol`. Ver [Descripción detallada de un instrumento](/reference-data/instruments/detail).
+  </Step>
+  <Step title="Enviá una orden">
+    Elegí la interfaz:
+
+    <Tabs>
+      <Tab title="REST">
+        ```bash
+        curl --get "$BASE_URL/rest/order/newSingleOrder" \
+          -H "X-Auth-Token: $MATRIZ_TOKEN" \
+          --data-urlencode "marketId=ROFX" \
+          --data-urlencode "symbol=DLR/DIC26" \
+          --data-urlencode "side=BUY" \
+          --data-urlencode "ordType=LIMIT" \
+          --data-urlencode "timeInForce=DAY" \
+          --data-urlencode "orderQty=1" \
+          --data-urlencode "price=1596.0" \
+          --data-urlencode "account=30"
+        ```
+
+        La respuesta devuelve el Client Order ID en `order.clientId` y el participante en `order.proprietary`. Guardá ambos. Ver [Ingresar una orden](/order-routing/new-order).
+      </Tab>
+      <Tab title="WebSocket">
+        Conectate a `wss://api.{urlbase}.(matrizoms|xoms).com.ar/` con el header `X-Auth-Token`, **suscribite primero** a los Execution Reports de la cuenta y después enviá la orden:
+
+        ```json Suscripción a Execution Reports
+        { "type": "os", "account": { "id": "30" } }
+        ```
+
+        ```json Orden
+        {
+          "type": "no",
+          "product": { "marketId": "ROFX", "symbol": "DLR/DIC26" },
+          "price": 1596.0,
+          "quantity": 1,
+          "side": "BUY",
+          "account": "30",
+          "wsClOrdId": "quickstart-0001"
+        }
+        ```
+
+        Ver [API WebSocket](/websockets/overview) e [Ingresar una orden (WebSocket)](/websockets/orders/new-order).
+      </Tab>
+    </Tabs>
+
+    <Note>
+      La cuenta es un **entero** en REST (`account=30`) y un **texto** en WebSocket (`"account": "30"`).
+    </Note>
+  </Step>
+  <Step title="Verificá el estado de la orden">
+    <Tabs>
+      <Tab title="REST">
+        Consultá el último estado con el `clientId` y el `proprietary` que devolvió el alta:
+
+        ```bash
+        curl --get "$BASE_URL/rest/order/id" \
+          -H "X-Auth-Token: $MATRIZ_TOKEN" \
+          --data-urlencode "clOrdId=<clientId devuelto>" \
+          --data-urlencode "proprietary=<proprietary devuelto>"
+        ```
+
+        Ver [Último estado por Client Order ID](/order-routing/status/last-by-client-order-id).
+      </Tab>
+      <Tab title="WebSocket">
+        El estado llega en los mensajes `or` (Execution Report). El primero trae tu `wsClOrdId` junto con el `clOrdId` asignado; los siguientes informan cada cambio de estado (`NEW`, `PARTIALLY_FILLED`, `FILLED`, `REJECTED`…).
+
+        Ver [Mensaje de Execution Report](/websockets/orders/execution-report-message).
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 27 (parámetros clOrdId y proprietary de /rest/order/id) y p. 22 (reglas de wsClOrdId). */}
+<RevisarVigencia dato="Los parámetros de /rest/order/id del paso 5 y el uso de wsClOrdId en WebSocket" />
+
+## Por qué siempre hay que verificar
+
+<VerificarEstadoOrden />
+
+## Script completo
+
+El mismo flujo de punta a punta, listo para ejecutar:
+
+<CodeGroup>
+```python Python (REST)
+# pip install requests
+import os
+import time
+
+import requests
+
+BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+CUENTA = int(os.environ.get("MATRIZ_CUENTA", "30"))  # entero en REST
+
+
+def verificar(respuesta: requests.Response) -> dict:
+    respuesta.raise_for_status()
+    datos = respuesta.json()
+    if datos.get("status") == "ERROR":
+        raise RuntimeError(datos.get("description") or datos.get("message"))
+    return datos
+
+
+# 1. Token
+r = requests.post(
+    f"{BASE_URL}/auth/getToken",
+    headers={
+        "X-Username": os.environ["MATRIZ_USERNAME"],
+        "X-Password": os.environ["MATRIZ_PASSWORD"],
+    },
+    timeout=10,
+)
+r.raise_for_status()
+HEADERS = {"X-Auth-Token": r.headers["X-Auth-Token"]}
+print("1. Token obtenido")
+
+# 2. Segmentos y detalle del instrumento
+segmentos = verificar(requests.get(f"{BASE_URL}/rest/segment/all", headers=HEADERS, timeout=10))
+print("2. Segmentos:", [s["marketSegmentId"] for s in segmentos["segments"]])
+
+detalle = verificar(requests.get(
+    f"{BASE_URL}/rest/instruments/detail",
+    headers=HEADERS,
+    params={"marketId": "ROFX", "symbol": "DLR/DIC26"},
+    timeout=10,
+))["instrument"]
+print("   Tick:", detalle["minPriceIncrement"],
+      "| límites:", detalle["lowLimitPrice"], "-", detalle["highLimitPrice"])
+
+# 3. Orden
+precio = 1596.0
+if not detalle["lowLimitPrice"] <= precio <= detalle["highLimitPrice"]:
+    raise SystemExit(f"El precio {precio} está fuera de los límites del instrumento")
+
+alta = verificar(requests.get(
+    f"{BASE_URL}/rest/order/newSingleOrder",
+    headers=HEADERS,
+    params={
+        "marketId": "ROFX",
+        "symbol": "DLR/DIC26",
+        "side": "BUY",
+        "ordType": "LIMIT",
+        "timeInForce": "DAY",
+        "orderQty": 1,
+        "price": precio,
+        "account": CUENTA,
+    },
+    timeout=10,
+))["order"]
+print("3. Orden recibida. clOrdId:", alta["clientId"])
+
+# 4. Estado (reintenta mientras siga en PENDING_NEW)
+for _ in range(5):
+    estado = verificar(requests.get(
+        f"{BASE_URL}/rest/order/id",
+        headers=HEADERS,
+        params={"clOrdId": alta["clientId"], "proprietary": alta["proprietary"]},
+        timeout=10,
+    ))["order"]
+    if estado["status"] != "PENDING_NEW":
+        break
+    time.sleep(0.5)
+
+print("4. Estado:", estado["status"], "|", estado.get("text"))
+```
+
+```javascript Node.js (REST)
+// Node.js 18 o superior (fetch nativo, ES modules)
+const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+const CUENTA = process.env.MATRIZ_CUENTA ?? "30"; // se envía como account=30 (entero en REST)
+
+async function verificar(respuesta) {
+  if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
+  const datos = await respuesta.json();
+  if (datos.status === "ERROR") throw new Error(datos.description || datos.message);
+  return datos;
+}
+
+const espera = (ms) => new Promise((resolver) => setTimeout(resolver, ms));
+
+// 1. Token
+const auth = await fetch(`${BASE_URL}/auth/getToken`, {
+  method: "POST",
+  headers: {
+    "X-Username": process.env.MATRIZ_USERNAME,
+    "X-Password": process.env.MATRIZ_PASSWORD,
+  },
+});
+if (!auth.ok) throw new Error(`No se pudo obtener el token: HTTP ${auth.status}`);
+const HEADERS = { "X-Auth-Token": auth.headers.get("X-Auth-Token") };
+console.log("1. Token obtenido");
+
+// 2. Segmentos y detalle del instrumento
+const segmentos = await verificar(await fetch(`${BASE_URL}/rest/segment/all`, { headers: HEADERS }));
+console.log("2. Segmentos:", segmentos.segments.map((s) => s.marketSegmentId));
+
+const paramsDetalle = new URLSearchParams({ marketId: "ROFX", symbol: "DLR/DIC26" });
+const { instrument: detalle } = await verificar(
+  await fetch(`${BASE_URL}/rest/instruments/detail?${paramsDetalle}`, { headers: HEADERS }),
+);
+console.log("   Tick:", detalle.minPriceIncrement, "| límites:", detalle.lowLimitPrice, "-", detalle.highLimitPrice);
+
+// 3. Orden
+const precio = 1596.0;
+if (precio < detalle.lowLimitPrice || precio > detalle.highLimitPrice) {
+  throw new Error(`El precio ${precio} está fuera de los límites del instrumento`);
+}
+
+const paramsOrden = new URLSearchParams({
+  marketId: "ROFX",
+  symbol: "DLR/DIC26",
+  side: "BUY",
+  ordType: "LIMIT",
+  timeInForce: "DAY",
+  orderQty: "1",
+  price: String(precio),
+  account: CUENTA,
+});
+const { order: alta } = await verificar(
+  await fetch(`${BASE_URL}/rest/order/newSingleOrder?${paramsOrden}`, { headers: HEADERS }),
+);
+console.log("3. Orden recibida. clOrdId:", alta.clientId);
+
+// 4. Estado (reintenta mientras siga en PENDING_NEW)
+const paramsEstado = new URLSearchParams({ clOrdId: alta.clientId, proprietary: alta.proprietary });
+let estado;
+for (let intento = 0; intento < 5; intento++) {
+  ({ order: estado } = await verificar(
+    await fetch(`${BASE_URL}/rest/order/id?${paramsEstado}`, { headers: HEADERS }),
+  ));
+  if (estado.status !== "PENDING_NEW") break;
+  await espera(500);
+}
+console.log("4. Estado:", estado.status, "|", estado.text);
+```
+
+```python Python (WebSocket)
+# pip install requests "websockets>=14"
+import asyncio
+import json
+import os
+
+import requests
+import websockets
+
+URLBASE = os.environ["MATRIZ_URLBASE"]
+DOMINIO = os.environ.get("MATRIZ_DOMINIO", "matrizoms")
+REST_URL = f"https://api.{URLBASE}.{DOMINIO}.com.ar"
+WS_URL = f"wss://api.{URLBASE}.{DOMINIO}.com.ar/"
+CUENTA = os.environ.get("MATRIZ_CUENTA", "30")  # texto en WebSocket
+MI_ID = "quickstart-0001"
+
+ESTADOS_FINALES = {"FILLED", "CANCELLED", "REJECTED"}
+
+
+def obtener_token() -> str:
+    r = requests.post(
+        f"{REST_URL}/auth/getToken",
+        headers={
+            "X-Username": os.environ["MATRIZ_USERNAME"],
+            "X-Password": os.environ["MATRIZ_PASSWORD"],
+        },
+        timeout=10,
+    )
+    r.raise_for_status()
+    return r.headers["X-Auth-Token"]
+
+
+async def main() -> None:
+    token = obtener_token()
+    print("1. Token obtenido")
+
+    async with websockets.connect(WS_URL, additional_headers={"X-Auth-Token": token}) as ws:
+        # 2. Suscripción a Execution Reports ANTES de enviar la orden
+        await ws.send(json.dumps({"type": "os", "account": {"id": CUENTA}}))
+        print("2. Suscripto a Execution Reports de la cuenta", CUENTA)
+
+        # 3. Orden con identificador propio
+        await ws.send(json.dumps({
+            "type": "no",
+            "product": {"marketId": "ROFX", "symbol": "DLR/DIC26"},
+            "price": 1596.0,
+            "quantity": 1,
+            "side": "BUY",
+            "account": CUENTA,
+            "wsClOrdId": MI_ID,
+        }))
+        print("3. Orden enviada")
+
+        # 4. Seguimiento del estado por Execution Reports
+        mi_cl_ord_id = None
+        async for crudo in ws:
+            mensaje = json.loads(crudo)
+            if mensaje.get("type") != "or":
+                continue
+            reporte = mensaje["orderReport"]
+            if reporte.get("wsClOrdId") == MI_ID:
+                mi_cl_ord_id = reporte["clOrdId"]
+            if mi_cl_ord_id and reporte["clOrdId"] == mi_cl_ord_id:
+                print("4. Estado:", reporte["status"], "|", reporte.get("text"))
+                if reporte["status"] in ESTADOS_FINALES or reporte["status"] == "NEW":
+                    break
+
+
+asyncio.run(main())
+```
+</CodeGroup>
+
+## Próximos pasos
+
+<CardGroup cols={2}>
+  <Card title="Ciclo de vida de una orden" icon="arrows-spin" href="/guides/order-lifecycle">
+    Cómo validar, enviar, seguir, modificar y cancelar órdenes de forma robusta.
+  </Card>
+  <Card title="REST o WebSocket" icon="code-compare" href="/guides/rest-vs-websocket">
+    Cuándo conviene cada interfaz y cómo combinarlas.
+  </Card>
+  <Card title="Market Data en tiempo real" icon="chart-line" href="/websockets/market-data/subscribe">
+    Suscribite a las puntas y al último precio por WebSocket.
+  </Card>
+  <Card title="Errores" icon="triangle-exclamation" href="/reference/errors">
+    Formato de los errores y casos frecuentes.
+  </Card>
+</CardGroup>

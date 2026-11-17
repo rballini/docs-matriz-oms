@@ -1,0 +1,204 @@
+---
+title: "Autenticación"
+description: "Obtené tu token de acceso con usuario y contraseña y usalo en todos los requests a Matriz OMS API."
+icon: "key"
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+
+Matriz OMS API utiliza **autenticación por token**. Solicitás el token con una petición `POST` enviando tu usuario y contraseña como headers, y el servidor devuelve un token de acceso **válido por 24 horas** que debés incluir en todos los requests posteriores.
+
+<Info>
+  Matriz OMS API expone dos dominios y **cada uno requiere su propio token**, que se obtiene de la misma forma pero contra su propia URL base. Esta página documenta el dominio de **Trading** (`api`). Ver [Ambientes](/environments).
+</Info>
+
+## Obtener el token de acceso (Trading)
+
+```http
+POST https://api.{urlbase}.(matrizoms|xoms).com.ar/auth/getToken
+```
+
+### Headers del request
+
+<ParamField header="X-Username" type="string" required>
+  Tu nombre de usuario.
+</ParamField>
+
+<ParamField header="X-Password" type="string" required>
+  Tu contraseña.
+</ParamField>
+
+### Headers de la respuesta
+
+<ResponseField name="X-Auth-Token" type="string" required>
+  Token de acceso. Viene en los **headers** de la respuesta. Debés enviarlo en el header `X-Auth-Token` de todos los requests posteriores contra el dominio `api`. Validez: 24 horas.
+</ResponseField>
+
+### Ejemplos
+
+<CodeGroup>
+```bash cURL
+# -i muestra los headers de la respuesta, donde viene X-Auth-Token
+curl -i -X POST "https://api.demo.matrizoms.com.ar/auth/getToken" \
+  -H "X-Username: $MATRIZ_USERNAME" \
+  -H "X-Password: $MATRIZ_PASSWORD"
+```
+
+```python Python
+import os
+import requests
+
+URLBASE = os.environ["MATRIZ_URLBASE"]                    # ej.: "demo"
+DOMINIO = os.environ.get("MATRIZ_DOMINIO", "matrizoms")   # "matrizoms" o "xoms"
+BASE_URL = f"https://api.{URLBASE}.{DOMINIO}.com.ar"
+
+respuesta = requests.post(
+    f"{BASE_URL}/auth/getToken",
+    headers={
+        "X-Username": os.environ["MATRIZ_USERNAME"],
+        "X-Password": os.environ["MATRIZ_PASSWORD"],
+    },
+    timeout=10,
+)
+respuesta.raise_for_status()
+
+token = respuesta.headers["X-Auth-Token"]
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const URLBASE = process.env.MATRIZ_URLBASE;                 // ej.: "demo"
+const DOMINIO = process.env.MATRIZ_DOMINIO ?? "matrizoms";  // "matrizoms" o "xoms"
+const BASE_URL = `https://api.${URLBASE}.${DOMINIO}.com.ar`;
+
+const respuesta = await fetch(`${BASE_URL}/auth/getToken`, {
+  method: "POST",
+  headers: {
+    "X-Username": process.env.MATRIZ_USERNAME,
+    "X-Password": process.env.MATRIZ_PASSWORD,
+  },
+});
+
+if (!respuesta.ok) {
+  throw new Error(`No se pudo obtener el token: HTTP ${respuesta.status}`);
+}
+
+const token = respuesta.headers.get("X-Auth-Token");
+```
+</CodeGroup>
+
+<Note>
+  El token **no viene en el cuerpo** de la respuesta: leelo siempre desde el header `X-Auth-Token`.
+</Note>
+
+## Usar el token en los requests
+
+Una vez obtenido el token, envialo en el header `X-Auth-Token` de cada request al dominio `api`:
+
+<AuthHeader />
+
+Por ejemplo, para consultar la [lista de segmentos disponibles](/reference-data/segments/list):
+
+<CodeGroup>
+```bash cURL
+curl "https://api.demo.matrizoms.com.ar/rest/segment/all" \
+  -H "X-Auth-Token: $MATRIZ_TOKEN"
+```
+
+```python Python
+segmentos = requests.get(
+    f"{BASE_URL}/rest/segment/all",
+    headers={"X-Auth-Token": token},
+    timeout=10,
+)
+print(segmentos.json())
+```
+
+```javascript Node.js
+const segmentos = await fetch(`${BASE_URL}/rest/segment/all`, {
+  headers: { "X-Auth-Token": token },
+});
+console.log(await segmentos.json());
+```
+</CodeGroup>
+
+## Validez y renovación del token
+
+El token tiene una validez de **24 horas** desde que se emite. Recomendaciones:
+
+- **Reutilizá el token** durante su vigencia. No solicites un token nuevo en cada request.
+- **Renovalo antes de que venza.** Pedí un token nuevo con margen, en lugar de esperar a que un request falle.
+- **Gestioná un token por dominio.** Si también operás sobre `api-risk`, mantené ese token por separado.
+
+<Accordion title="Ejemplo: cliente Python con renovación automática del token" icon="rotate">
+```python
+import os
+import time
+import requests
+
+class MatrizClient:
+    """Cliente mínimo que reutiliza el token y lo renueva antes de las 24 horas."""
+
+    VIGENCIA_SEGUNDOS = 24 * 60 * 60
+    MARGEN_SEGUNDOS = 60 * 60  # renueva una hora antes del vencimiento
+
+    def __init__(self, urlbase: str, dominio: str = "matrizoms"):
+        self.base_url = f"https://api.{urlbase}.{dominio}.com.ar"
+        self._token = None
+        self._emitido_en = 0.0
+
+    def _token_vigente(self) -> str:
+        edad = time.time() - self._emitido_en
+        if self._token is None or edad > self.VIGENCIA_SEGUNDOS - self.MARGEN_SEGUNDOS:
+            respuesta = requests.post(
+                f"{self.base_url}/auth/getToken",
+                headers={
+                    "X-Username": os.environ["MATRIZ_USERNAME"],
+                    "X-Password": os.environ["MATRIZ_PASSWORD"],
+                },
+                timeout=10,
+            )
+            respuesta.raise_for_status()
+            self._token = respuesta.headers["X-Auth-Token"]
+            self._emitido_en = time.time()
+        return self._token
+
+    def get(self, ruta: str, **params):
+        respuesta = requests.get(
+            f"{self.base_url}{ruta}",
+            headers={"X-Auth-Token": self._token_vigente()},
+            params=params,
+            timeout=10,
+        )
+        respuesta.raise_for_status()
+        return respuesta.json()
+
+
+cliente = MatrizClient(urlbase=os.environ["MATRIZ_URLBASE"])
+print(cliente.get("/rest/segment/all"))
+```
+</Accordion>
+
+## Autenticación en WebSocket
+
+La API WebSocket usa el **mismo token** del dominio `api`. Obtenelo por REST y envialo al abrir la conexión, por cualquiera de estas dos vías:
+
+- **Header HTTP en el handshake** (recomendado en backends): `X-Auth-Token: <token>`.
+- **Query parameter** (útil en navegadores): `wss://api.{urlbase}.(matrizoms|xoms).com.ar/?X-Auth-Token=<token>`.
+
+Ejemplos completos en [API WebSocket](/websockets/overview).
+
+## Dominio de Riesgo (`api-risk`)
+
+<Warning>
+  El dominio `api-risk.{urlbase}.(matrizoms|xoms).com.ar` es **exclusivo para administradores de ALyC** con credenciales habilitadas. Usa el mismo mecanismo de autenticación, pero con su propia URL y su propio token. La documentación completa está disponible en la sección restringida de Risk API para usuarios con ese perfil.
+</Warning>
+
+## Buenas prácticas de seguridad
+
+- **No incluyas credenciales en el código.** Usá variables de entorno o un gestor de secretos.
+- **Tratá el token como una credencial.** No lo registres en logs ni lo compartas entre usuarios o sistemas.
+- **Usá siempre HTTPS** y la URL base que te fue asignada.
+- **Separá las credenciales por ambiente**: pruebas y producción no deberían compartir usuario ni token.
+
+{/* [PENDIENTE] Documentar la respuesta ante credenciales inválidas y ante token vencido (código HTTP y cuerpo). Ninguna de las tres fuentes lo define. */}
