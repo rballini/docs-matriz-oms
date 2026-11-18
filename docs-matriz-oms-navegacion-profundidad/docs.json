@@ -1,0 +1,322 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Matriz OMS API",
+  "description": "Documentación oficial de Matriz OMS API: integración REST y WebSocket con Primary Trading Platform (PTP) de A3 Mercados para ALyCs e instituciones financieras.",
+  "colors": {
+    "primary": "#3BB58C",
+    "light": "#5AD1A8",
+    "dark": "#3BB58C"
+  },
+  "background": {
+    "color": {
+      "light": "#FFFFFF",
+      "dark": "#0E0A38"
+    }
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "favicon": "/favicon.svg",
+  "appearance": {
+    "default": "system"
+  },
+  "icons": {
+    "library": "fontawesome"
+  },
+  "styling": {
+    "eyebrows": "breadcrumbs",
+    "codeblocks": {
+      "theme": {
+        "light": "github-light",
+        "dark": "tokyo-night"
+      }
+    }
+  },
+  "search": {
+    "prompt": "Buscar endpoints, parámetros, errores…"
+  },
+  "seo": {
+    "indexing": "navigable"
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "cursor",
+      "vscode"
+    ]
+  },
+  "metadata": {
+    "timestamp": true
+  },
+  "api": {
+    "playground": {
+      "display": "simple"
+    },
+    "params": {
+      "expanded": "all"
+    },
+    "examples": {
+      "languages": [
+        "curl",
+        "python",
+        "javascript"
+      ],
+      "defaults": "required"
+    },
+    "mdx": {
+      "auth": {
+        "method": "key",
+        "name": "X-Auth-Token"
+      }
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Soporte",
+        "href": "/support",
+        "icon": "life-ring"
+      },
+      {
+        "label": "Novedades",
+        "href": "/reference/changelog",
+        "icon": "clock-rotate-left"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Guía rápida",
+      "href": "/quickstart"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guías",
+        "icon": "book-open",
+        "groups": [
+          {
+            "group": "Primeros pasos",
+            "public": true,
+            "icon": "rocket",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "environments",
+              "authentication"
+            ],
+            "boost": 1.5
+          },
+          {
+            "group": "Conceptos clave",
+            "public": true,
+            "icon": "lightbulb",
+            "pages": [
+              "guides/order-lifecycle",
+              "guides/client-order-id-vs-order-id",
+              "guides/rest-vs-websocket"
+            ]
+          },
+          {
+            "group": "Recursos",
+            "public": true,
+            "icon": "toolbox",
+            "pages": [
+              "resources/ecosystem",
+              "resources/webinars",
+              "support"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API REST de Trading",
+        "icon": "code",
+        "groups": [
+          {
+            "group": "Datos de referencia",
+            "public": true,
+            "icon": "layer-group",
+            "pages": [
+              "reference-data/segments/list",
+              {
+                "group": "Instrumentos",
+                "pages": [
+                  "reference-data/instruments/list",
+                  "reference-data/instruments/list-detailed",
+                  "reference-data/instruments/detail",
+                  "reference-data/instruments/by-cfi-code",
+                  "reference-data/instruments/by-segment"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Ruteo de órdenes",
+            "public": true,
+            "icon": "paper-plane",
+            "pages": [
+              "order-routing/new-order",
+              "order-routing/replace-order",
+              "order-routing/cancel-order",
+              {
+                "group": "Consulta de estado",
+                "pages": [
+                  "order-routing/status/last-by-client-order-id",
+                  "order-routing/status/history-by-client-order-id",
+                  "order-routing/status/actives-by-account",
+                  "order-routing/status/filled-by-account",
+                  "order-routing/status/all-by-account",
+                  "order-routing/status/by-execution-id",
+                  "order-routing/status/by-order-id"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Market Data",
+            "public": true,
+            "icon": "chart-line",
+            "pages": [
+              "market-data/snapshot",
+              "market-data/historical-trades"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API WebSocket",
+        "icon": "bolt",
+        "groups": [
+          {
+            "group": "Conexión",
+            "public": true,
+            "icon": "plug",
+            "pages": [
+              "websockets/overview"
+            ]
+          },
+          {
+            "group": "Órdenes",
+            "public": true,
+            "icon": "paper-plane",
+            "pages": [
+              "websockets/orders/new-order",
+              "websockets/orders/cancel-order",
+              "websockets/orders/subscribe-execution-reports",
+              "websockets/orders/execution-report-message"
+            ]
+          },
+          {
+            "group": "Market Data en tiempo real",
+            "public": true,
+            "icon": "chart-line",
+            "pages": [
+              "websockets/market-data/subscribe",
+              "websockets/market-data/market-data-message"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Risk API · Administradores ALyC",
+        "icon": "lock",
+        "groups": [
+          {
+            "group": "Matriz Risk API (acceso restringido)",
+            "icon": "lock",
+            "pages": [
+              "risk/overview",
+              "risk/positions",
+              "risk/detailed-positions",
+              "risk/account-report"
+            ]
+          }
+        ],
+        "hidden": false
+      },
+      {
+        "tab": "Referencia",
+        "icon": "book",
+        "groups": [
+          {
+            "group": "Anexos",
+            "public": true,
+            "icon": "folder-open",
+            "pages": [
+              "reference/errors",
+              "reference/field-dictionary",
+              "reference/market-data-entries",
+              "reference/cfi-codes",
+              "reference/order-statuses",
+              "reference/changelog"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "links": [
+      {
+        "header": "Documentación",
+        "items": [
+          {
+            "label": "Introducción",
+            "href": "/introduction"
+          },
+          {
+            "label": "Autenticación",
+            "href": "/authentication"
+          },
+          {
+            "label": "Ambientes",
+            "href": "/environments"
+          }
+        ]
+      },
+      {
+        "header": "Referencia",
+        "items": [
+          {
+            "label": "Errores",
+            "href": "/reference/errors"
+          },
+          {
+            "label": "Diccionario de campos",
+            "href": "/reference/field-dictionary"
+          },
+          {
+            "label": "Novedades",
+            "href": "/reference/changelog"
+          }
+        ]
+      },
+      {
+        "header": "Ayuda",
+        "items": [
+          {
+            "label": "Soporte",
+            "href": "/support"
+          },
+          {
+            "label": "Herramientas y webinars",
+            "href": "/resources/ecosystem"
+          }
+        ]
+      }
+    ]
+  },
+  "errors": {
+    "404": {
+      "redirect": false,
+      "title": "Página no encontrada",
+      "description": "La página que buscás no existe, fue movida o requiere un perfil con permisos específicos. Si sos administrador de una ALyC, iniciá sesión con tu usuario habilitado. También podés usar el buscador o volver a la [introducción](/introduction)."
+    }
+  }
+}

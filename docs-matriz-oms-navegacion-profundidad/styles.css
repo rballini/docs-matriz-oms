@@ -1,0 +1,817 @@
+/*
+ * Identidad visual · Matriz OMS API
+ * ===========================================================================
+ * Mintlify incluye automáticamente cualquier archivo .css del repositorio en
+ * todas las páginas: no hace falta referenciarlo desde docs.json.
+ *
+ * Índice
+ *   1. Variables de marca
+ *   2. Lectura y navegación (scrollbar, menú lateral, encabezados de grupo, métodos HTTP)
+ *   3. Tarjetas, bloques de código y botones (superficies elevadas + micro-interacciones)
+ *   3b. Profundidad del contenido: tablas, callouts y pasos (Steps)
+ *   4. Portada: hero, badges, bento grid y bloque de código tipo terminal
+ *   5. Demos en video (.demo-video-frame) con cambio automático claro/oscuro
+ *   6. Accesibilidad: movimiento reducido
+ *   7. Footer: logo de Primary como columna derecha (no modificar)
+ *
+ * Hooks usados (documentados por Mintlify): .card, .callout, .steps, .step,
+ * .code-block, .code-group, .method-pill, .method-nav-pill, .sidebar-group,
+ * .sidebar-group-header, #sidebar-content, #content, #topbar-cta-button, #footer.
+ * Mintlify agrega la clase "dark" al elemento <html> en modo oscuro.
+ * Mintlify advierte que la estructura interna de sus componentes puede
+ * cambiar: si una actualización altera algún estilo, revisar con
+ * "Inspeccionar elemento" y ajustar el selector.
+ */
+
+/* ---------------------------------------------------------------------------
+ * 1. Variables de marca
+ * ------------------------------------------------------------------------- */
+:root {
+  --mx-navy: #0E0A38;
+  --mx-indigo: #1D1464;
+  --mx-emerald: #3BB58C;
+  --mx-emerald-light: #5AD1A8;
+  --mx-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --mx-border: rgba(29, 20, 100, 0.10);
+  --mx-border-hover: rgba(59, 181, 140, 0.55);
+  --mx-glass: rgba(255, 255, 255, 0.72);
+  --mx-glow: 0 10px 30px -12px rgba(59, 181, 140, 0.45), 0 0 0 1px rgba(59, 181, 140, 0.35);
+  --mx-shadow-deep: 0 24px 60px -24px rgba(14, 10, 56, 0.45);
+  --mx-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+  /* Superficies elevadas (tarjetas, callouts, tablas, pasos) */
+  --mx-surface: #FFFFFF;
+  --mx-surface-alt: #F6F8FB;
+  --mx-surface-border: rgba(29, 20, 100, 0.10);
+  --mx-surface-shadow: 0 1px 2px rgba(14, 10, 56, 0.06), 0 8px 24px -12px rgba(14, 10, 56, 0.18);
+  --mx-surface-shadow-hover: 0 2px 4px rgba(14, 10, 56, 0.06), 0 16px 36px -14px rgba(14, 10, 56, 0.28);
+}
+
+.dark {
+  --mx-border: rgba(90, 209, 168, 0.14);
+  --mx-border-hover: rgba(90, 209, 168, 0.55);
+  --mx-glass: rgba(29, 20, 100, 0.28);
+  --mx-glow: 0 12px 34px -12px rgba(59, 181, 140, 0.55), 0 0 0 1px rgba(90, 209, 168, 0.40);
+  --mx-shadow-deep: 0 28px 70px -24px rgba(0, 0, 0, 0.75);
+  --mx-surface: #15104A;
+  --mx-surface-alt: #120D42;
+  --mx-surface-border: rgba(90, 209, 168, 0.22);
+  --mx-surface-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 30px -14px rgba(0, 0, 0, 0.75);
+  --mx-surface-shadow-hover: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 18px 40px -14px rgba(0, 0, 0, 0.85), 0 0 24px -10px rgba(59, 181, 140, 0.40);
+}
+
+/* ---------------------------------------------------------------------------
+ * 2. Lectura y navegación
+ * ------------------------------------------------------------------------- */
+
+/* Scrollbar fina con el verde de marca */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 181, 140, 0.45) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(59, 181, 140, 0.35);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(59, 181, 140, 0.65);
+}
+
+/* Selección de texto */
+::selection {
+  background: rgba(59, 181, 140, 0.25);
+}
+
+/* Menú lateral: transiciones suaves y marca de la página activa */
+#sidebar-content a {
+  transition: color 0.2s var(--mx-ease), background-color 0.2s var(--mx-ease), transform 0.2s var(--mx-ease);
+}
+#sidebar-content a:hover {
+  transform: translateX(2px);
+}
+#sidebar-content li[data-active] > a,
+#sidebar-content li[data-active] > div {
+  box-shadow: inset 2px 0 0 var(--mx-emerald);
+}
+
+/* Encabezados de grupo del menú lateral ("Primeros pasos", "Conceptos clave"…):
+ * cápsula con tinte de marca, borde izquierdo esmeralda y tipografía técnica */
+.sidebar-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.25rem 0 0.5rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid rgba(59, 181, 140, 0.18);
+  border-left: 2px solid var(--mx-emerald);
+  background: rgba(59, 181, 140, 0.08);
+  color: var(--mx-indigo);
+  font-family: var(--mx-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s var(--mx-ease), border-color 0.25s var(--mx-ease),
+    box-shadow 0.25s var(--mx-ease), transform 0.25s var(--mx-ease);
+}
+.sidebar-group-header:hover {
+  background: rgba(59, 181, 140, 0.14);
+  border-color: rgba(59, 181, 140, 0.40);
+  box-shadow: 0 6px 16px -10px rgba(59, 181, 140, 0.60);
+  transform: translateX(2px);
+}
+.dark .sidebar-group-header {
+  color: #E6E3FF;
+  background: rgba(29, 20, 100, 0.55);
+  border-color: rgba(90, 209, 168, 0.18);
+  border-left-color: var(--mx-emerald-light);
+}
+.dark .sidebar-group-header:hover {
+  background: rgba(29, 20, 100, 0.85);
+  border-color: rgba(90, 209, 168, 0.45);
+  box-shadow: 0 6px 18px -10px rgba(90, 209, 168, 0.55);
+}
+.sidebar-group-icon {
+  color: var(--mx-emerald);
+}
+.dark .sidebar-group-icon {
+  color: var(--mx-emerald-light);
+}
+/* Grupo que contiene la página actual: línea guía esmeralda */
+.sidebar-group:has(> li[data-active]) {
+  box-shadow: inset 1px 0 0 rgba(59, 181, 140, 0.35);
+}
+
+/* Etiquetas de métodos HTTP (GET, POST, DELETE…) con estilo técnico */
+.method-pill,
+.method-nav-pill {
+  font-family: var(--mx-mono) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 6px !important;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+/* ---------------------------------------------------------------------------
+ * 3. Tarjetas, bloques de código y botones
+ * ------------------------------------------------------------------------- */
+
+/* Tarjetas: superficie elevada (blanco con sombra suave en claro; índigo
+ * #15104A con borde esmeralda translúcido en oscuro), micro-elevación y
+ * resplandor esmeralda al pasar el cursor */
+.card {
+  background-color: var(--mx-surface) !important;
+  border-color: var(--mx-surface-border) !important;
+  box-shadow: var(--mx-surface-shadow);
+  transition: transform 0.35s var(--mx-ease), box-shadow 0.35s var(--mx-ease), border-color 0.35s var(--mx-ease);
+}
+a.card:hover,
+.card:hover {
+  transform: translateY(-3px);
+  border-color: var(--mx-border-hover) !important;
+  box-shadow: var(--mx-surface-shadow-hover), var(--mx-glow);
+}
+[data-component-part="card-icon"] {
+  transition: transform 0.35s var(--mx-ease), filter 0.35s var(--mx-ease);
+}
+.card:hover [data-component-part="card-icon"] {
+  transform: scale(1.06);
+  filter: drop-shadow(0 0 8px rgba(59, 181, 140, 0.55));
+}
+
+/* Bloques y grupos de código: borde translúcido y profundidad */
+.code-block,
+.code-group {
+  border-radius: 12px !important;
+  border: 1px solid var(--mx-border) !important;
+  box-shadow: 0 10px 30px -18px rgba(14, 10, 56, 0.35);
+  transition: border-color 0.3s var(--mx-ease), box-shadow 0.3s var(--mx-ease);
+}
+.code-block:hover,
+.code-group:hover {
+  border-color: rgba(59, 181, 140, 0.40) !important;
+  box-shadow: 0 14px 36px -18px rgba(59, 181, 140, 0.35);
+}
+.code-group .code-block {
+  border: none !important;
+  box-shadow: none;
+}
+
+/* Botón principal de la barra superior */
+#topbar-cta-button a,
+#topbar-cta-button button {
+  transition: transform 0.25s var(--mx-ease), box-shadow 0.25s var(--mx-ease);
+}
+#topbar-cta-button a:hover,
+#topbar-cta-button button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px -8px rgba(59, 181, 140, 0.65);
+}
+
+/* ---------------------------------------------------------------------------
+ * 3b. Profundidad del contenido: tablas, callouts y pasos
+ * ------------------------------------------------------------------------- */
+
+/* Tablas: contenedor elevado, encabezado diferenciado, filas alternadas y hover */
+#content table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--mx-surface-border);
+  background: var(--mx-surface);
+  box-shadow: var(--mx-surface-shadow);
+}
+#content table thead th {
+  background: linear-gradient(180deg, rgba(59, 181, 140, 0.12), rgba(59, 181, 140, 0.06));
+  color: var(--mx-indigo);
+  font-family: var(--mx-mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(59, 181, 140, 0.35);
+}
+.dark #content table thead th {
+  background: linear-gradient(180deg, rgba(29, 20, 100, 0.95), rgba(29, 20, 100, 0.65));
+  color: var(--mx-emerald-light);
+  border-bottom-color: rgba(90, 209, 168, 0.35);
+}
+#content table th,
+#content table td {
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid var(--mx-surface-border);
+}
+#content table tbody tr:last-child td {
+  border-bottom: none;
+}
+#content table tbody tr:nth-child(even) td {
+  background: var(--mx-surface-alt);
+}
+#content table tbody tr td {
+  transition: background-color 0.2s var(--mx-ease);
+}
+#content table tbody tr:hover td {
+  background: rgba(59, 181, 140, 0.08);
+}
+.dark #content table tbody tr:hover td {
+  background: rgba(59, 181, 140, 0.10);
+}
+
+/* Callouts: relieve y micro-elevación en todos (Warning, Tip… conservan su color) */
+.callout {
+  border-radius: 12px !important;
+  box-shadow: var(--mx-surface-shadow);
+  transition: transform 0.3s var(--mx-ease), box-shadow 0.3s var(--mx-ease), border-color 0.3s var(--mx-ease);
+}
+.callout:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--mx-surface-shadow-hover);
+}
+/* Note e Info: superficie elevada con acento esmeralda.
+ * Depende del atributo data-callout-type que Mintlify agrega a cada callout;
+ * si no estuviera presente, se aplica solo el relieve general de arriba. */
+.callout[data-callout-type="note"],
+.callout[data-callout-type="info"] {
+  background: var(--mx-surface) !important;
+  border: 1px solid var(--mx-surface-border) !important;
+  border-left: 3px solid var(--mx-emerald) !important;
+}
+.dark .callout[data-callout-type="note"],
+.dark .callout[data-callout-type="info"] {
+  border-left-color: var(--mx-emerald-light) !important;
+}
+
+/* Pasos (Steps): cada paso como superficie con hover, indicador numérico
+ * marcado y conector esmeralda */
+.step {
+  border-radius: 12px;
+  transition: background-color 0.3s var(--mx-ease), box-shadow 0.3s var(--mx-ease), transform 0.3s var(--mx-ease);
+}
+.step:hover {
+  background: var(--mx-surface);
+  box-shadow: var(--mx-surface-shadow);
+  transform: translateX(2px);
+}
+/* Indicador numérico / icono y conector. Mintlify no documenta estos hooks:
+ * si no se aplican, revisar el markup de un paso con "Inspeccionar elemento". */
+.step [data-component-part="step-number"] {
+  background: linear-gradient(135deg, var(--mx-emerald), var(--mx-emerald-light)) !important;
+  color: var(--mx-navy) !important;
+  font-family: var(--mx-mono);
+  font-weight: 800;
+  box-shadow: 0 0 0 4px rgba(59, 181, 140, 0.18), 0 6px 14px -6px rgba(59, 181, 140, 0.75);
+}
+.step [data-component-part="step-line"] {
+  background: linear-gradient(180deg, var(--mx-emerald), rgba(90, 209, 168, 0.15)) !important;
+  width: 2px !important;
+}
+.step [data-component-part="step-title"] {
+  font-weight: 700;
+  color: var(--mx-indigo);
+}
+.dark .step [data-component-part="step-title"] {
+  color: #FFFFFF;
+}
+
+/* ---------------------------------------------------------------------------
+ * 4. Portada
+ * ------------------------------------------------------------------------- */
+
+/* Hero con ondas topográficas y red de nodos (SVG embebido) */
+.mx-hero {
+  position: relative;
+  overflow: hidden;
+  margin: 0.5rem 0 2.5rem;
+  padding: clamp(1.75rem, 4vw, 3rem);
+  border-radius: 20px;
+  border: 1px solid var(--mx-border);
+  background-color: #FFFFFF;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 420' preserveAspectRatio='xMidYMid slice'%3E%3Cpath d='M0 40.0 Q0 40.0 30.0 46.8 Q60 53.6 90.0 56.9 Q120 60.2 150.0 59.2 Q180 58.2 210.0 55.2 Q240 52.2 270.0 50.4 Q300 48.7 330.0 49.6 Q360 50.5 390.0 52.5 Q420 54.6 450.0 54.5 Q480 54.4 510.0 50.3 Q540 46.2 570.0 39.2 Q600 32.3 630.0 26.2 Q660 20.0 690.0 17.9 Q720 15.8 750.0 18.2 Q780 20.5 810.0 24.6 Q840 28.7 870.0 31.3 Q900 33.9 930.0 33.6 Q960 33.4 990.0 32.1 Q1020 30.8 1050.0 31.6 Q1080 32.3 1110.0 36.8 Q1140 41.2 1170.0 47.8 T1200 54.4' fill='none' stroke='%231D1464' stroke-opacity='0.07' stroke-width='1'/%3E%3Cpath d='M0 103.9 Q0 103.9 30.0 105.8 Q60 107.8 90.0 105.5 Q120 103.1 150.0 99.3 Q180 95.5 210.0 93.5 Q240 91.4 270.0 91.8 Q300 92.2 330.0 93.1 Q360 93.9 390.0 92.2 Q420 90.4 450.0 84.9 Q480 79.4 510.0 72.2 Q540 64.9 570.0 59.9 Q600 54.8 630.0 54.4 Q660 54.1 690.0 58.1 Q720 62.0 750.0 67.0 Q780 72.0 810.0 74.9 Q840 77.8 870.0 77.9 Q900 78.1 930.0 77.7 Q960 77.4 990.0 79.5 Q1020 81.5 1050.0 86.9 Q1080 92.2 1110.0 98.4 Q1140 104.7 1170.0 108.2 T1200 111.8' fill='none' stroke='%231D1464' stroke-opacity='0.07' stroke-width='1'/%3E%3Cpath d='M0 153.9 Q0 153.9 30.0 149.9 Q60 145.9 90.0 141.2 Q120 136.5 150.0 133.9 Q180 131.4 210.0 131.1 Q240 130.9 270.0 130.6 Q300 130.3 330.0 127.1 Q360 123.9 390.0 117.6 Q420 111.3 450.0 104.6 Q480 97.9 510.0 94.6 Q540 91.2 570.0 93.1 Q600 95.0 630.0 100.7 Q660 106.4 690.0 112.2 Q720 118.0 750.0 121.2 Q780 124.3 810.0 124.8 Q840 125.3 870.0 125.8 Q900 126.2 930.0 129.2 Q960 132.1 990.0 137.6 Q1020 143.1 1050.0 148.3 Q1080 153.5 1110.0 154.9 Q1140 156.2 1170.0 152.4 T1200 148.5' fill='none' stroke='%231D1464' stroke-opacity='0.07' stroke-width='1'/%3E%3Cpath d='M0 185.6 Q0 185.6 30.0 179.9 Q60 174.3 90.0 171.4 Q120 168.4 150.0 167.6 Q180 166.8 210.0 165.5 Q240 164.2 270.0 160.2 Q300 156.1 330.0 149.8 Q360 143.5 390.0 138.1 Q420 132.7 450.0 131.8 Q480 130.8 510.0 135.1 Q540 139.5 570.0 146.8 Q600 154.1 630.0 160.5 Q660 167.0 690.0 170.1 Q720 173.3 750.0 173.9 Q780 174.5 810.0 175.3 Q840 176.2 870.0 179.4 Q900 182.7 930.0 187.6 Q960 192.5 990.0 195.9 Q1020 199.3 1050.0 198.1 Q1080 196.9 1110.0 190.7 Q1140 184.5 1170.0 176.2 T1200 167.8' fill='none' stroke='%231D1464' stroke-opacity='0.07' stroke-width='1'/%3E%3Cpath d='M0 209.1 Q0 209.1 30.0 205.9 Q60 202.8 90.0 201.7 Q120 200.7 150.0 198.8 Q180 197.0 210.0 192.8 Q240 188.5 270.0 183.0 Q300 177.5 330.0 174.1 Q360 170.8 390.0 172.6 Q420 174.4 450.0 181.2 Q480 187.9 510.0 196.6 Q540 205.2 570.0 211.7 Q600 218.3 630.0 221.0 Q660 223.7 690.0 224.0 Q720 224.3 750.0 225.1 Q780 225.9 810.0 228.8 Q840 231.6 870.0 235.3 Q900 238.9 930.0 240.0 Q960 241.1 990.0 237.2 Q1020 233.3 1050.0 225.1 Q1080 216.8 1110.0 207.8 Q1140 198.7 1170.0 192.7 T1200 186.7' fill='none' stroke='%231D1464' stroke-opacity='0.07' stroke-width='1'/%3E%3Cpath d='M0 235.5 Q0 235.5 30.0 234.6 Q60 233.7 90.0 231.9 Q120 230.1 150.0 226.4 Q180 222.6 210.0 218.6 Q240 214.7 270.0 214.0 Q300 213.3 330.0 217.9 Q360 222.6 390.0 231.4 Q420 240.3 450.0 249.6 Q480 258.9 510.0 265.0 Q540 271.0 570.0 272.7 Q600 274.5 630.0 274.0 Q660 273.5 690.0 273.6 Q720 273.8 750.0 275.7 Q780 277.6 810.0 279.4 Q840 281.3 870.0 279.8 Q900 278.3 930.0 271.9 Q960 265.5 990.0 255.9 Q1020 246.2 1050.0 237.2 Q1080 228.3 1110.0 223.5 Q1140 218.8 1170.0 218.8 T1200 218.9' fill='none' stroke='%231D1464' stroke-opacity='0.07' stroke-width='1'/%3E%3Cpath d='M0 267.4 Q0 267.4 30.0 266.3 Q60 265.2 90.0 262.6 Q120 260.0 150.0 258.2 Q180 256.4 210.0 258.5 Q240 260.6 270.0 267.9 Q300 275.2 330.0 285.5 Q360 295.8 390.0 305.0 Q420 314.1 450.0 318.9 Q480 323.6 510.0 323.8 Q540 323.9 570.0 322.2 Q600 320.4 630.0 319.5 Q660 318.6 690.0 319.1 Q720 319.6 750.0 319.3 Q780 319.0 810.0 315.0 Q840 311.1 870.0 302.7 Q900 294.3 930.0 284.1 Q960 273.8 990.0 265.9 Q1020 258.0 1050.0 255.4 Q1080 252.7 1110.0 254.9 Q1140 257.1 1170.0 261.1 T1200 265.1' fill='none' stroke='%231D1464' stroke-opacity='0.07' stroke-width='1'/%3E%3Cpath d='M0 303.7 Q0 303.7 30.0 302.8 Q60 301.8 90.0 302.4 Q120 303.0 150.0 307.9 Q180 312.7 210.0 322.1 Q240 331.4 270.0 342.2 Q300 353.0 330.0 361.1 Q360 369.1 390.0 371.8 Q420 374.4 450.0 372.5 Q480 370.5 510.0 367.1 Q540 363.7 570.0 361.4 Q600 359.2 630.0 358.1 Q660 357.0 690.0 354.6 Q720 352.2 750.0 346.2 Q780 340.1 810.0 330.6 Q840 321.1 870.0 311.4 Q900 301.6 930.0 295.7 Q960 289.9 990.0 289.9 Q1020 290.0 1050.0 294.6 Q1080 299.3 1110.0 305.0 Q1140 310.7 1170.0 314.7 T1200 318.8' fill='none' stroke='%231D1464' stroke-opacity='0.07' stroke-width='1'/%3E%3Cpath d='M0 348.6 Q0 348.6 30.0 351.6 Q60 354.6 90.0 361.7 Q120 368.8 150.0 379.2 Q180 389.7 210.0 400.0 Q240 410.2 270.0 416.1 Q300 422.0 330.0 421.8 Q360 421.7 390.0 417.3 Q420 412.9 450.0 407.7 Q480 402.5 510.0 398.8 Q540 395.2 570.0 392.6 Q600 390.0 630.0 385.9 Q660 381.8 690.0 374.4 Q720 367.0 750.0 357.4 Q780 347.8 810.0 339.6 Q840 331.4 870.0 328.5 Q900 325.5 930.0 328.8 Q960 332.0 990.0 339.2 Q1020 346.4 1050.0 353.6 Q1080 360.8 1110.0 365.8 Q1140 370.7 1170.0 374.0 T1200 377.3' fill='none' stroke='%231D1464' stroke-opacity='0.07' stroke-width='1'/%3E%3Cline x1='951' y1='107' x2='866' y2='76' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='951' y1='107' x2='1026' y2='55' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='1024' y1='363' x2='994' y2='328' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='1024' y1='363' x2='951' y2='107' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='669' y1='67' x2='746' y2='144' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='669' y1='67' x2='756' y2='178' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='1168' y1='78' x2='1054' y2='60' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='1168' y1='78' x2='1048' y2='65' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='994' y1='328' x2='1024' y2='363' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='994' y1='328' x2='951' y2='107' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='679' y1='289' x2='683' y2='325' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='679' y1='289' x2='708' y2='252' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='839' y1='49' x2='846' y2='53' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='839' y1='49' x2='866' y2='76' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='708' y1='252' x2='679' y2='289' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='708' y1='252' x2='683' y2='325' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='1048' y1='65' x2='1054' y2='60' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='1048' y1='65' x2='1026' y2='55' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='866' y1='76' x2='846' y2='53' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='866' y1='76' x2='839' y2='49' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='1054' y1='60' x2='1048' y2='65' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='1054' y1='60' x2='1026' y2='55' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='746' y1='144' x2='756' y2='178' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='746' y1='144' x2='669' y2='67' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='683' y1='325' x2='679' y2='289' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='683' y1='325' x2='708' y2='252' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='1026' y1='55' x2='1048' y2='65' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='1026' y1='55' x2='1054' y2='60' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='846' y1='53' x2='839' y2='49' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='846' y1='53' x2='866' y2='76' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='756' y1='178' x2='746' y2='144' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Cline x1='756' y1='178' x2='708' y2='252' stroke='%231D1464' stroke-opacity='0.1' stroke-width='1'/%3E%3Ccircle cx='951' cy='107' r='9' fill='%233BB58C' fill-opacity='0.099'/%3E%3Ccircle cx='951' cy='107' r='3.2' fill='%233BB58C' fill-opacity='0.55'/%3E%3Ccircle cx='1024' cy='363' r='2' fill='%233BB58C' fill-opacity='0.55'/%3E%3Ccircle cx='669' cy='67' r='2' fill='%233BB58C' fill-opacity='0.55'/%3E%3Ccircle cx='1168' cy='78' r='2' fill='%233BB58C' fill-opacity='0.55'/%3E%3Ccircle cx='994' cy='328' r='9' fill='%233BB58C' fill-opacity='0.099'/%3E%3Ccircle cx='994' cy='328' r='3.2' fill='%233BB58C' fill-opacity='0.55'/%3E%3Ccircle cx='679' cy='289' r='2' fill='%233BB58C' fill-opacity='0.55'/%3E%3Ccircle cx='839' cy='49' r='2' fill='%233BB58C' fill-opacity='0.55'/%3E%3Ccircle cx='708' cy='252' r='2' fill='%233BB58C' fill-opacity='0.55'/%3E%3Ccircle cx='1048' cy='65' r='9' fill='%233BB58C' fill-opacity='0.099'/%3E%3Ccircle cx='1048' cy='65' r='3.2' fill='%233BB58C' fill-opacity='0.55'/%3E%3Ccircle cx='866' cy='76' r='2' fill='%233BB58C' fill-opacity='0.55'/%3E%3Ccircle cx='1054' cy='60' r='2' fill='%233BB58C' fill-opacity='0.55'/%3E%3Ccircle cx='746' cy='144' r='2' fill='%233BB58C' fill-opacity='0.55'/%3E%3Ccircle cx='683' cy='325' r='9' fill='%233BB58C' fill-opacity='0.099'/%3E%3Ccircle cx='683' cy='325' r='3.2' fill='%233BB58C' fill-opacity='0.55'/%3E%3Ccircle cx='1026' cy='55' r='2' fill='%233BB58C' fill-opacity='0.55'/%3E%3Ccircle cx='846' cy='53' r='2' fill='%233BB58C' fill-opacity='0.55'/%3E%3Ccircle cx='756' cy='178' r='2' fill='%233BB58C' fill-opacity='0.55'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 85% 10%, rgba(59, 181, 140, 0.16), transparent 55%),
+    radial-gradient(ellipse at 0% 100%, rgba(29, 20, 100, 0.08), transparent 60%);
+  background-size: cover, auto, auto;
+  background-position: center;
+  box-shadow: var(--mx-shadow-deep);
+}
+.dark .mx-hero {
+  background-color: var(--mx-navy);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 420' preserveAspectRatio='xMidYMid slice'%3E%3Cpath d='M0 40.0 Q0 40.0 30.0 46.8 Q60 53.6 90.0 56.9 Q120 60.2 150.0 59.2 Q180 58.2 210.0 55.2 Q240 52.2 270.0 50.4 Q300 48.7 330.0 49.6 Q360 50.5 390.0 52.5 Q420 54.6 450.0 54.5 Q480 54.4 510.0 50.3 Q540 46.2 570.0 39.2 Q600 32.3 630.0 26.2 Q660 20.0 690.0 17.9 Q720 15.8 750.0 18.2 Q780 20.5 810.0 24.6 Q840 28.7 870.0 31.3 Q900 33.9 930.0 33.6 Q960 33.4 990.0 32.1 Q1020 30.8 1050.0 31.6 Q1080 32.3 1110.0 36.8 Q1140 41.2 1170.0 47.8 T1200 54.4' fill='none' stroke='%235AD1A8' stroke-opacity='0.09' stroke-width='1'/%3E%3Cpath d='M0 103.9 Q0 103.9 30.0 105.8 Q60 107.8 90.0 105.5 Q120 103.1 150.0 99.3 Q180 95.5 210.0 93.5 Q240 91.4 270.0 91.8 Q300 92.2 330.0 93.1 Q360 93.9 390.0 92.2 Q420 90.4 450.0 84.9 Q480 79.4 510.0 72.2 Q540 64.9 570.0 59.9 Q600 54.8 630.0 54.4 Q660 54.1 690.0 58.1 Q720 62.0 750.0 67.0 Q780 72.0 810.0 74.9 Q840 77.8 870.0 77.9 Q900 78.1 930.0 77.7 Q960 77.4 990.0 79.5 Q1020 81.5 1050.0 86.9 Q1080 92.2 1110.0 98.4 Q1140 104.7 1170.0 108.2 T1200 111.8' fill='none' stroke='%235AD1A8' stroke-opacity='0.09' stroke-width='1'/%3E%3Cpath d='M0 153.9 Q0 153.9 30.0 149.9 Q60 145.9 90.0 141.2 Q120 136.5 150.0 133.9 Q180 131.4 210.0 131.1 Q240 130.9 270.0 130.6 Q300 130.3 330.0 127.1 Q360 123.9 390.0 117.6 Q420 111.3 450.0 104.6 Q480 97.9 510.0 94.6 Q540 91.2 570.0 93.1 Q600 95.0 630.0 100.7 Q660 106.4 690.0 112.2 Q720 118.0 750.0 121.2 Q780 124.3 810.0 124.8 Q840 125.3 870.0 125.8 Q900 126.2 930.0 129.2 Q960 132.1 990.0 137.6 Q1020 143.1 1050.0 148.3 Q1080 153.5 1110.0 154.9 Q1140 156.2 1170.0 152.4 T1200 148.5' fill='none' stroke='%235AD1A8' stroke-opacity='0.09' stroke-width='1'/%3E%3Cpath d='M0 185.6 Q0 185.6 30.0 179.9 Q60 174.3 90.0 171.4 Q120 168.4 150.0 167.6 Q180 166.8 210.0 165.5 Q240 164.2 270.0 160.2 Q300 156.1 330.0 149.8 Q360 143.5 390.0 138.1 Q420 132.7 450.0 131.8 Q480 130.8 510.0 135.1 Q540 139.5 570.0 146.8 Q600 154.1 630.0 160.5 Q660 167.0 690.0 170.1 Q720 173.3 750.0 173.9 Q780 174.5 810.0 175.3 Q840 176.2 870.0 179.4 Q900 182.7 930.0 187.6 Q960 192.5 990.0 195.9 Q1020 199.3 1050.0 198.1 Q1080 196.9 1110.0 190.7 Q1140 184.5 1170.0 176.2 T1200 167.8' fill='none' stroke='%235AD1A8' stroke-opacity='0.09' stroke-width='1'/%3E%3Cpath d='M0 209.1 Q0 209.1 30.0 205.9 Q60 202.8 90.0 201.7 Q120 200.7 150.0 198.8 Q180 197.0 210.0 192.8 Q240 188.5 270.0 183.0 Q300 177.5 330.0 174.1 Q360 170.8 390.0 172.6 Q420 174.4 450.0 181.2 Q480 187.9 510.0 196.6 Q540 205.2 570.0 211.7 Q600 218.3 630.0 221.0 Q660 223.7 690.0 224.0 Q720 224.3 750.0 225.1 Q780 225.9 810.0 228.8 Q840 231.6 870.0 235.3 Q900 238.9 930.0 240.0 Q960 241.1 990.0 237.2 Q1020 233.3 1050.0 225.1 Q1080 216.8 1110.0 207.8 Q1140 198.7 1170.0 192.7 T1200 186.7' fill='none' stroke='%235AD1A8' stroke-opacity='0.09' stroke-width='1'/%3E%3Cpath d='M0 235.5 Q0 235.5 30.0 234.6 Q60 233.7 90.0 231.9 Q120 230.1 150.0 226.4 Q180 222.6 210.0 218.6 Q240 214.7 270.0 214.0 Q300 213.3 330.0 217.9 Q360 222.6 390.0 231.4 Q420 240.3 450.0 249.6 Q480 258.9 510.0 265.0 Q540 271.0 570.0 272.7 Q600 274.5 630.0 274.0 Q660 273.5 690.0 273.6 Q720 273.8 750.0 275.7 Q780 277.6 810.0 279.4 Q840 281.3 870.0 279.8 Q900 278.3 930.0 271.9 Q960 265.5 990.0 255.9 Q1020 246.2 1050.0 237.2 Q1080 228.3 1110.0 223.5 Q1140 218.8 1170.0 218.8 T1200 218.9' fill='none' stroke='%235AD1A8' stroke-opacity='0.09' stroke-width='1'/%3E%3Cpath d='M0 267.4 Q0 267.4 30.0 266.3 Q60 265.2 90.0 262.6 Q120 260.0 150.0 258.2 Q180 256.4 210.0 258.5 Q240 260.6 270.0 267.9 Q300 275.2 330.0 285.5 Q360 295.8 390.0 305.0 Q420 314.1 450.0 318.9 Q480 323.6 510.0 323.8 Q540 323.9 570.0 322.2 Q600 320.4 630.0 319.5 Q660 318.6 690.0 319.1 Q720 319.6 750.0 319.3 Q780 319.0 810.0 315.0 Q840 311.1 870.0 302.7 Q900 294.3 930.0 284.1 Q960 273.8 990.0 265.9 Q1020 258.0 1050.0 255.4 Q1080 252.7 1110.0 254.9 Q1140 257.1 1170.0 261.1 T1200 265.1' fill='none' stroke='%235AD1A8' stroke-opacity='0.09' stroke-width='1'/%3E%3Cpath d='M0 303.7 Q0 303.7 30.0 302.8 Q60 301.8 90.0 302.4 Q120 303.0 150.0 307.9 Q180 312.7 210.0 322.1 Q240 331.4 270.0 342.2 Q300 353.0 330.0 361.1 Q360 369.1 390.0 371.8 Q420 374.4 450.0 372.5 Q480 370.5 510.0 367.1 Q540 363.7 570.0 361.4 Q600 359.2 630.0 358.1 Q660 357.0 690.0 354.6 Q720 352.2 750.0 346.2 Q780 340.1 810.0 330.6 Q840 321.1 870.0 311.4 Q900 301.6 930.0 295.7 Q960 289.9 990.0 289.9 Q1020 290.0 1050.0 294.6 Q1080 299.3 1110.0 305.0 Q1140 310.7 1170.0 314.7 T1200 318.8' fill='none' stroke='%235AD1A8' stroke-opacity='0.09' stroke-width='1'/%3E%3Cpath d='M0 348.6 Q0 348.6 30.0 351.6 Q60 354.6 90.0 361.7 Q120 368.8 150.0 379.2 Q180 389.7 210.0 400.0 Q240 410.2 270.0 416.1 Q300 422.0 330.0 421.8 Q360 421.7 390.0 417.3 Q420 412.9 450.0 407.7 Q480 402.5 510.0 398.8 Q540 395.2 570.0 392.6 Q600 390.0 630.0 385.9 Q660 381.8 690.0 374.4 Q720 367.0 750.0 357.4 Q780 347.8 810.0 339.6 Q840 331.4 870.0 328.5 Q900 325.5 930.0 328.8 Q960 332.0 990.0 339.2 Q1020 346.4 1050.0 353.6 Q1080 360.8 1110.0 365.8 Q1140 370.7 1170.0 374.0 T1200 377.3' fill='none' stroke='%235AD1A8' stroke-opacity='0.09' stroke-width='1'/%3E%3Cline x1='951' y1='107' x2='866' y2='76' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='951' y1='107' x2='1026' y2='55' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='1024' y1='363' x2='994' y2='328' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='1024' y1='363' x2='951' y2='107' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='669' y1='67' x2='746' y2='144' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='669' y1='67' x2='756' y2='178' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='1168' y1='78' x2='1054' y2='60' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='1168' y1='78' x2='1048' y2='65' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='994' y1='328' x2='1024' y2='363' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='994' y1='328' x2='951' y2='107' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='679' y1='289' x2='683' y2='325' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='679' y1='289' x2='708' y2='252' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='839' y1='49' x2='846' y2='53' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='839' y1='49' x2='866' y2='76' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='708' y1='252' x2='679' y2='289' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='708' y1='252' x2='683' y2='325' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='1048' y1='65' x2='1054' y2='60' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='1048' y1='65' x2='1026' y2='55' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='866' y1='76' x2='846' y2='53' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='866' y1='76' x2='839' y2='49' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='1054' y1='60' x2='1048' y2='65' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='1054' y1='60' x2='1026' y2='55' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='746' y1='144' x2='756' y2='178' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='746' y1='144' x2='669' y2='67' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='683' y1='325' x2='679' y2='289' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='683' y1='325' x2='708' y2='252' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='1026' y1='55' x2='1048' y2='65' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='1026' y1='55' x2='1054' y2='60' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='846' y1='53' x2='839' y2='49' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='846' y1='53' x2='866' y2='76' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='756' y1='178' x2='746' y2='144' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Cline x1='756' y1='178' x2='708' y2='252' stroke='%235AD1A8' stroke-opacity='0.16' stroke-width='1'/%3E%3Ccircle cx='951' cy='107' r='9' fill='%233BB58C' fill-opacity='0.153'/%3E%3Ccircle cx='951' cy='107' r='3.2' fill='%233BB58C' fill-opacity='0.85'/%3E%3Ccircle cx='1024' cy='363' r='2' fill='%233BB58C' fill-opacity='0.85'/%3E%3Ccircle cx='669' cy='67' r='2' fill='%233BB58C' fill-opacity='0.85'/%3E%3Ccircle cx='1168' cy='78' r='2' fill='%233BB58C' fill-opacity='0.85'/%3E%3Ccircle cx='994' cy='328' r='9' fill='%233BB58C' fill-opacity='0.153'/%3E%3Ccircle cx='994' cy='328' r='3.2' fill='%233BB58C' fill-opacity='0.85'/%3E%3Ccircle cx='679' cy='289' r='2' fill='%233BB58C' fill-opacity='0.85'/%3E%3Ccircle cx='839' cy='49' r='2' fill='%233BB58C' fill-opacity='0.85'/%3E%3Ccircle cx='708' cy='252' r='2' fill='%233BB58C' fill-opacity='0.85'/%3E%3Ccircle cx='1048' cy='65' r='9' fill='%233BB58C' fill-opacity='0.153'/%3E%3Ccircle cx='1048' cy='65' r='3.2' fill='%233BB58C' fill-opacity='0.85'/%3E%3Ccircle cx='866' cy='76' r='2' fill='%233BB58C' fill-opacity='0.85'/%3E%3Ccircle cx='1054' cy='60' r='2' fill='%233BB58C' fill-opacity='0.85'/%3E%3Ccircle cx='746' cy='144' r='2' fill='%233BB58C' fill-opacity='0.85'/%3E%3Ccircle cx='683' cy='325' r='9' fill='%233BB58C' fill-opacity='0.153'/%3E%3Ccircle cx='683' cy='325' r='3.2' fill='%233BB58C' fill-opacity='0.85'/%3E%3Ccircle cx='1026' cy='55' r='2' fill='%233BB58C' fill-opacity='0.85'/%3E%3Ccircle cx='846' cy='53' r='2' fill='%233BB58C' fill-opacity='0.85'/%3E%3Ccircle cx='756' cy='178' r='2' fill='%233BB58C' fill-opacity='0.85'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 85% 10%, rgba(59, 181, 140, 0.22), transparent 55%),
+    radial-gradient(ellipse at 0% 100%, rgba(29, 20, 100, 0.85), transparent 65%);
+}
+.mx-hero > * {
+  position: relative;
+}
+.mx-hero p {
+  margin: 0;
+}
+.mx-hero__title {
+  margin-top: 1.25rem !important;
+  max-width: 22ch;
+  font-size: clamp(1.9rem, 3.6vw, 2.9rem);
+  font-weight: 750;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  color: var(--mx-indigo);
+}
+.dark .mx-hero__title {
+  color: #FFFFFF;
+}
+.mx-hero__lead {
+  margin-top: 1rem !important;
+  max-width: 62ch;
+  font-size: 1.075rem;
+  line-height: 1.65;
+  opacity: 0.88;
+}
+.mx-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+.mx-hero__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.75rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--mx-border);
+}
+.mx-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.mx-stat__label {
+  font-family: var(--mx-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.mx-stat__value {
+  font-family: var(--mx-mono);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--mx-indigo);
+}
+.dark .mx-stat__value {
+  color: var(--mx-emerald-light);
+}
+
+/* Botones de la portada */
+.mx-hero .mx-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid var(--mx-border);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.3s var(--mx-ease), box-shadow 0.3s var(--mx-ease), border-color 0.3s var(--mx-ease), background-color 0.3s var(--mx-ease);
+}
+.mx-hero .mx-btn:hover {
+  transform: translateY(-3px);
+}
+.mx-hero .mx-btn:focus-visible {
+  outline: 2px solid var(--mx-emerald);
+  outline-offset: 3px;
+}
+.mx-hero .mx-btn--primary {
+  background: linear-gradient(135deg, var(--mx-emerald), var(--mx-emerald-light));
+  border-color: transparent;
+  color: var(--mx-navy);
+  box-shadow: 0 10px 24px -10px rgba(59, 181, 140, 0.75);
+}
+.mx-hero .mx-btn--primary:hover {
+  box-shadow: 0 14px 30px -10px rgba(59, 181, 140, 0.9);
+}
+.mx-hero .mx-btn--ghost {
+  background-color: var(--mx-glass);
+  color: var(--mx-indigo);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.dark .mx-hero .mx-btn--ghost {
+  color: #FFFFFF;
+}
+.mx-hero .mx-btn--ghost:hover {
+  border-color: var(--mx-border-hover);
+  box-shadow: var(--mx-glow);
+}
+
+/* Badges de estado / tecnología */
+.mx-hero__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.mx-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-family: var(--mx-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.mx-badge--rest {
+  color: var(--mx-indigo);
+  border-color: rgba(29, 20, 100, 0.25);
+  background: rgba(29, 20, 100, 0.06);
+}
+.mx-badge--ws {
+  color: #1F7F60;
+  border-color: rgba(59, 181, 140, 0.45);
+  background: rgba(59, 181, 140, 0.10);
+}
+.mx-badge--dma {
+  color: var(--mx-indigo);
+  border-color: rgba(90, 209, 168, 0.55);
+  background: rgba(90, 209, 168, 0.12);
+}
+.dark .mx-badge--rest {
+  color: #C9C3FF;
+  border-color: rgba(201, 195, 255, 0.30);
+  background: rgba(29, 20, 100, 0.55);
+}
+.dark .mx-badge--ws,
+.dark .mx-badge--dma {
+  color: var(--mx-emerald-light);
+  border-color: rgba(90, 209, 168, 0.40);
+  background: rgba(59, 181, 140, 0.12);
+}
+.mx-badge__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.mx-badge__dot--pulse {
+  background: var(--mx-emerald);
+  animation: mx-pulse 2s var(--mx-ease) infinite;
+}
+@keyframes mx-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(59, 181, 140, 0.60); }
+  70% { box-shadow: 0 0 0 8px rgba(59, 181, 140, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(59, 181, 140, 0); }
+}
+
+/* Bento grid de flujos principales */
+.mx-bento {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  margin: 1.25rem 0 1.5rem;
+}
+@media (min-width: 1024px) {
+  .mx-bento {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .mx-bento__item--wide {
+    grid-column: span 2;
+  }
+}
+.mx-bento__item {
+  display: flex;
+}
+.mx-bento__item > *,
+.mx-bento__item .card {
+  flex: 1;
+  height: 100%;
+  margin: 0 !important;
+}
+.mx-bento__item .card {
+  position: relative;
+  overflow: hidden;
+}
+.mx-bento__item .card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--mx-emerald), var(--mx-emerald-light), transparent);
+  opacity: 0.85;
+}
+.mx-bento__item--orders .card {
+  background-image: radial-gradient(ellipse at 100% 0%, rgba(59, 181, 140, 0.12), transparent 60%);
+}
+.mx-bento__item--ws .card {
+  background-image: radial-gradient(ellipse at 0% 100%, rgba(90, 209, 168, 0.14), transparent 60%);
+}
+.mx-bento__item--risk .card {
+  background-image: radial-gradient(ellipse at 100% 100%, rgba(29, 20, 100, 0.14), transparent 60%);
+}
+.mx-bento__item--risk .card::before {
+  background: linear-gradient(90deg, var(--mx-indigo), var(--mx-emerald), transparent);
+}
+.dark .mx-bento__item--risk .card {
+  background-image: radial-gradient(ellipse at 100% 100%, rgba(29, 20, 100, 0.65), transparent 65%);
+}
+
+/* Chips de endpoints / mensajes dentro de las tarjetas */
+.mx-chip {
+  display: inline-block;
+  margin: 0.15rem 0.1rem 0 0;
+  padding: 0.1rem 0.5rem;
+  border-radius: 6px;
+  font-family: var(--mx-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--mx-indigo);
+  background: rgba(29, 20, 100, 0.06);
+  border: 1px solid rgba(29, 20, 100, 0.12);
+}
+.dark .mx-chip {
+  color: var(--mx-emerald-light);
+  background: rgba(59, 181, 140, 0.10);
+  border-color: rgba(90, 209, 168, 0.25);
+}
+.mx-chip--lock {
+  color: #FFFFFF !important;
+  background: var(--mx-indigo) !important;
+  border-color: var(--mx-indigo) !important;
+}
+
+/* Bloque de código tipo terminal en la portada */
+.mx-terminal {
+  position: relative;
+  margin: 1.25rem 0 2rem;
+  padding: 0.25rem 1rem 1rem;
+  border-radius: 16px;
+  border: 1px solid var(--mx-border);
+  background: linear-gradient(180deg, rgba(59, 181, 140, 0.05), transparent 30%);
+  box-shadow: var(--mx-shadow-deep);
+}
+.dark .mx-terminal {
+  background: linear-gradient(180deg, rgba(59, 181, 140, 0.08), rgba(14, 10, 56, 0.4) 40%);
+  border-color: rgba(90, 209, 168, 0.22);
+}
+
+/* ---------------------------------------------------------------------------
+ * 5. Demos en video
+ * ------------------------------------------------------------------------- */
+.demo-video-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  margin: 1.25rem 0 2rem;
+}
+@media (min-width: 1280px) {
+  .demo-video-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.demo-video-frame {
+  position: relative;
+  overflow: hidden;
+  margin: 1.25rem 0;
+  border-radius: 12px;
+  border: 1px solid rgba(90, 209, 168, 0.25);
+  background: #FFFFFF;
+  box-shadow:
+    0 30px 60px -28px rgba(14, 10, 56, 0.55),
+    0 12px 24px -16px rgba(14, 10, 56, 0.35),
+    0 0 0 1px rgba(59, 181, 140, 0.06);
+  transition: transform 0.4s var(--mx-ease), box-shadow 0.4s var(--mx-ease);
+}
+.demo-video-grid .demo-video-frame {
+  margin: 0;
+}
+.dark .demo-video-frame {
+  background: var(--mx-navy);
+  box-shadow:
+    0 30px 70px -28px rgba(0, 0, 0, 0.85),
+    0 0 40px -18px rgba(59, 181, 140, 0.45);
+}
+.demo-video-frame:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 36px 70px -28px rgba(14, 10, 56, 0.6),
+    0 0 0 1px rgba(59, 181, 140, 0.35),
+    0 0 40px -12px rgba(59, 181, 140, 0.45);
+}
+
+/* Barra superior decorativa estilo plataforma DMA */
+.demo-video-frame__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: 36px;
+  padding: 0 0.85rem;
+  border-bottom: 1px solid rgba(90, 209, 168, 0.20);
+  background: linear-gradient(180deg, #F6F8FB, #EEF2F7);
+  font-family: var(--mx-mono);
+  font-size: 0.72rem;
+}
+.dark .demo-video-frame__bar {
+  background: linear-gradient(180deg, #17114F, #120D42);
+}
+.demo-video-frame__dots {
+  display: inline-flex;
+  gap: 6px;
+}
+.demo-video-frame__dots > span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(29, 20, 100, 0.18);
+}
+.demo-video-frame__dots > span:first-child {
+  background: var(--mx-emerald);
+}
+.dark .demo-video-frame__dots > span {
+  background: rgba(255, 255, 255, 0.18);
+}
+.dark .demo-video-frame__dots > span:first-child {
+  background: var(--mx-emerald);
+}
+.demo-video-frame__title {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  letter-spacing: 0.04em;
+  color: var(--mx-indigo);
+  opacity: 0.85;
+}
+.dark .demo-video-frame__title {
+  color: #E6E3FF;
+}
+.demo-video-frame__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #1F7F60;
+  background: rgba(59, 181, 140, 0.12);
+  border: 1px solid rgba(59, 181, 140, 0.35);
+}
+.dark .demo-video-frame__status {
+  color: var(--mx-emerald-light);
+}
+.demo-video-frame__pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mx-emerald);
+  animation: mx-pulse 2s var(--mx-ease) infinite;
+}
+
+/* Video: el modo claro muestra la versión Light y el oscuro la versión Dark */
+.demo-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+.demo-video--dark {
+  display: none;
+}
+.dark .demo-video--light {
+  display: none;
+}
+.dark .demo-video--dark {
+  display: block;
+}
+.demo-video-caption {
+  margin-top: -0.5rem !important;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+/* ---------------------------------------------------------------------------
+ * 6. Accesibilidad: movimiento reducido
+ * ------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .card:hover,
+  .callout:hover,
+  .step:hover,
+  .sidebar-group-header:hover,
+  .mx-hero .mx-btn:hover,
+  .demo-video-frame:hover,
+  #sidebar-content a:hover {
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * 7. Footer: logo de Primary como columna derecha (no modificar)
+ * ---------------------------------------------------------------------------
+ * Estructura de la fila superior del footer de Mintlify
+ * (#footer > div > div:first-child):
+ *
+ *   <div class="flex flex-col md:flex-row gap-8 justify-between ...">
+ *     <div class="... lg:min-w-48 ...">  ← logo matriz OMS (h-[26px])
+ *     <div class="... grid ... flex-1">  ← columnas Documentación · Referencia · Ayuda
+ *     ::after                            ← logo Primary
+ *   </div>
+ * ------------------------------------------------------------------------- */
+
+/* Mobile (< 768px): logo de Primary debajo de las columnas */
+#footer > div > div:first-child::after {
+  content: "";
+  display: block;
+  flex-shrink: 0;
+  width: 7.5rem;   /* 26px de alto × proporción 4,51 : 1 del logo ≈ 117px */
+  height: 26px;    /* misma altura que el logo de matriz OMS (h-[26px]) */
+  margin-top: 0.5rem;
+  background-image: url("/logo/primary-light.svg");
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: left center;
+}
+
+/* Desktop (>= 768px): logo de Primary como columna derecha, simétrica a matriz OMS */
+@media (min-width: 768px) {
+  #footer > div > div:first-child::after {
+    width: auto;
+    min-width: 12rem;          /* igual a lg:min-w-48 del bloque de matriz OMS */
+    height: 26px;              /* igual a h-[26px] del logo de matriz OMS */
+    margin-top: 0;
+    align-self: flex-start;    /* alineado arriba, a la altura de los títulos */
+    background-position: right center;
+  }
+}
+
+/* Modo oscuro: Mintlify agrega la clase "dark" al elemento <html> */
+.dark #footer > div > div:first-child::after {
+  background-image: url("/logo/primary-dark.svg");
+}
