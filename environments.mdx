@@ -1,6 +1,6 @@
 ---
 title: "Ambientes"
-description: "Cómo se construye la URL base de tu ambiente de Matriz OMS API y qué tener en cuenta al trabajar con más de un ambiente."
+description: "Cómo se construye la URL base de tu ambiente de Matriz OMS API, qué ambiente usar para probar o para operar, y cómo pasar a producción."
 icon: "server"
 ---
 
@@ -8,56 +8,128 @@ import BaseUrls from '/snippets/base-urls.mdx';
 
 Cada cliente de Matriz OMS API opera sobre uno o más **ambientes propios**. No existe una URL única para todos los integradores: la URL base se arma a partir de tu identificador de cliente o ambiente y del dominio con el que fue provisto tu acceso.
 
-## Anatomía de la URL base
+## Elegí tu ambiente
 
-```text
-https://api.{urlbase}.{dominio}.com.ar
-```
+<CardGroup cols={2}>
+  <Card title="Testing · Demo general" icon="flask-vial">
+    <span className="mx-chip">Integración y pruebas</span> <span className="mx-chip">Demo</span>
 
-| Componente | Descripción | Ejemplo |
-| --- | --- | --- |
-| `api` | Subdominio del servicio. `api` para Trading; `api-risk` para Riesgo (solo administradores de ALyC). | `api` |
-| `{urlbase}` | Identificador del cliente o del ambiente. | `demo` |
-| `{dominio}` | `matrizoms` o `xoms`, según cómo esté provisto el ambiente. | `matrizoms` |
+    Además de los ambientes propios de cada ALyC, existe un **ambiente demo general**. Usalo para desarrollar y probar tu integración antes de operar en producción.
 
-Por ejemplo, para el ambiente `demo` provisto bajo el dominio `matrizoms`, la URL base de Trading es:
+    ```text API REST
+    https://api.demo.matrizoms.com.ar
+    ```
 
-```text
-https://api.demo.matrizoms.com.ar
-```
+    ```text API WebSocket
+    wss://api.demo.matrizoms.com.ar/
+    ```
+  </Card>
 
-Y el mismo ambiente provisto bajo el dominio `xoms`:
+  <Card title="Producción" icon="building-columns">
+    <span className="mx-chip">Operatoria real</span> <span className="mx-chip">Tu instancia</span>
 
-```text
-https://api.demo.xoms.com.ar
-```
+    Es la instancia de tu ALyC. Reemplazá `{urlbase}` por tu identificador y usá el dominio que te fue asignado (`matrizoms` o `xoms`).
+
+    ```text API REST
+    https://api.{urlbase}.(matrizoms|xoms).com.ar
+    ```
+
+    ```text API WebSocket
+    wss://api.{urlbase}.(matrizoms|xoms).com.ar/
+    ```
+  </Card>
+</CardGroup>
+
+<Warning>
+  Las órdenes que envíes en producción son **reales**. Hacé tus primeras pruebas en el demo general.
+</Warning>
 
 <Note>
   Si no conocés tu `{urlbase}` o el dominio que te corresponde, solicitalo mediante un ticket en JIRA antes de comenzar la integración.
 </Note>
 
-## Ambiente demo general
+## Anatomía de la URL base
 
-Además de los ambientes propios de cada ALyC, existe un **ambiente demo general**:
+La URL base se compone del esquema, el servicio, tu identificador (`{urlbase}`) y el dominio. Lo único que cambia entre las dos interfaces es el esquema.
 
-| Uso | URL |
-| --- | --- |
-| REST | `https://api.demo.matrizoms.com.ar` |
-| WebSocket | `wss://api.demo.matrizoms.com.ar/` |
+<Tabs>
+  <Tab title="API REST" icon="arrow-right-arrow-left">
+    ```text
+    https://api.{urlbase}.{dominio}.com.ar
+    ```
 
-## URL de WebSocket
+    | Componente | Descripción | Ejemplo |
+    | --- | --- | --- |
+    | `https://` | Esquema de la API REST. | `https://` |
+    | `api` | Subdominio del servicio. `api` para Trading; `api-risk` para Riesgo (solo administradores de ALyC). | `api` |
+    | `{urlbase}` | Identificador del cliente o del ambiente. | `demo` |
+    | `{dominio}` | `matrizoms` o `xoms`, según cómo esté provisto el ambiente. | `matrizoms` |
 
-La API WebSocket usa el mismo host que la API REST de Trading, con el esquema `wss://`:
+    Por ejemplo, para el ambiente `demo` provisto bajo el dominio `matrizoms`, la URL base de Trading es:
 
-```text
-wss://api.{urlbase}.{dominio}.com.ar/
-```
+    ```text
+    https://api.demo.matrizoms.com.ar
+    ```
 
-Ver [API WebSocket](/websockets/overview) para los métodos de autenticación de la conexión.
+    Y el mismo ambiente provisto bajo el dominio `xoms`:
+
+    ```text
+    https://api.demo.xoms.com.ar
+    ```
+  </Tab>
+  <Tab title="API WebSocket" icon="bolt">
+    ```text
+    wss://api.{urlbase}.{dominio}.com.ar/
+    ```
+
+    | Componente | Descripción | Ejemplo |
+    | --- | --- | --- |
+    | `wss://` | Esquema de la API WebSocket. | `wss://` |
+    | `api.{urlbase}.{dominio}.com.ar` | **El mismo host** que la API REST de Trading. | `api.demo.matrizoms.com.ar` |
+    | `/` | Ruta final de la conexión. | `/` |
+
+    Por ejemplo, para el ambiente `demo` provisto bajo el dominio `matrizoms`:
+
+    ```text
+    wss://api.demo.matrizoms.com.ar/
+    ```
+
+    El token se obtiene por REST contra ese mismo host. Ver [API WebSocket](/websockets/overview) para los métodos de autenticación de la conexión.
+  </Tab>
+</Tabs>
 
 ## Dominios disponibles
 
 <BaseUrls />
+
+## Del demo a producción
+
+<Steps>
+  <Step title="Integrá y probá en el demo general" icon="flask-vial">
+    Conectate al demo general y recorré el flujo completo de la [Guía rápida](/quickstart): token, segmentos, una orden y la verificación de su estado.
+  </Step>
+  <Step title="Validá el ciclo completo de una orden" icon="arrows-spin">
+    Verificá siempre el estado real de cada orden y reconciliá el estado después de una desconexión. Ver [Ciclo de vida de una orden](/guides/order-lifecycle).
+  </Step>
+  <Step title="Resolvé errores y reconexión" icon="triangle-exclamation">
+    Manejá los errores de la API y prepará la reconexión del WebSocket. Ver [Errores](/reference/errors) y [API WebSocket](/websockets/overview).
+  </Step>
+  <Step title="Pedí tu instancia y tus credenciales" icon="ticket">
+    Si no conocés tu `{urlbase}` o el dominio que te corresponde, solicitalo mediante un ticket en JIRA. Ver [Soporte](/support).
+  </Step>
+  <Step title="Cambiá la configuración, no el código" icon="sliders">
+    Apuntá la aplicación a tu instancia de producción modificando las variables de entorno (`MATRIZ_URLBASE`, `MATRIZ_DOMINIO` y las credenciales). Mantené separadas las credenciales de pruebas y de producción.
+  </Step>
+  <Step title="Empezá con cuidado" icon="circle-check">
+    Las órdenes en producción son reales: enviá primero una orden de cantidad mínima y verificá su estado antes de escalar el volumen.
+  </Step>
+</Steps>
+
+<Info>
+  Esta lista resume las buenas prácticas de esta documentación. Para el proceso formal de homologación y habilitación productiva, consultá la Guía de homologación y buenas prácticas en [Herramientas del ecosistema](/resources/ecosystem) o escribile a [Soporte](/support).
+</Info>
+
+{/* [PENDIENTE] Documentar los requisitos oficiales de homologación y de habilitación productiva. Ninguna de las fuentes los define: la lista de pasos de arriba es una guía práctica armada con las buenas prácticas ya documentadas, no un proceso oficial. Confirmar también si el demo general es el ambiente de homologación. */}
 
 ## Reglas al trabajar con ambientes
 
