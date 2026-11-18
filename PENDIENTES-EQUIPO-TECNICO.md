@@ -213,6 +213,7 @@ Cada fila es un aviso `<RevisarVigencia />` visible en el portal. La columna **O
 - [ ] C15. **Logo de Primary en el footer (`styles.css`).** Se agregó con CSS porque `docs.json` no tiene una propiedad nativa para un segundo logo en el footer. Verificar en vivo en modo claro, modo oscuro y mobile que quede bien ubicado junto al de matriz OMS y ajustar el selector `#footer::after` si hace falta. Las rutas `/logo/primary-*.svg` del CSS asumen que el portal se publica en la raíz de su dominio (no en un subpath). Igual que C1: `logo/primary-light.svg` y `logo/primary-dark.svg` están vectorizados desde un PNG; reemplazarlos por los vectoriales originales cuando estén disponibles.
 - [ ] C16. **Videos del front DMA** (`introduction.mdx` y `websockets/overview.mdx`): verificar en vivo que existan en `/plataforma/` con estos nombres exactos (las rutas distinguen mayúsculas): `FavsLight.mp4`, `FrontMDdark.mp4`, `WidgetsLight.mp4` y `WidgetsDark.mp4`. Cada demo carga las dos versiones (clara y oscura) y el CSS muestra solo la que corresponde al modo: conviene que cada MP4 pese pocos MB (H.264, sin audio, 720p o 1080p) para no penalizar la carga de la portada.
 - [ ] C17. **Tarjeta “Risk API” en la portada pública** (`introduction.mdx`): cuando se restaure la restricción por grupos (C3 y C13), los usuarios que no sean administradores de ALyC van a llegar a un 404 desde esa tarjeta. Decidir si se mantiene (con su etiqueta “Exclusivo administradores de ALyC”) o se quita de la portada.
+- [ ] C18. **Homologación y habilitación productiva** (`environments.mdx`, sección “Del demo a producción”): ninguna fuente define los requisitos oficiales. Los 6 pasos publicados son una guía práctica armada con buenas prácticas ya documentadas, y un aviso remite a la Guía de homologación de las herramientas del ecosistema. Reemplazar por el proceso oficial y confirmar si el **demo general es el ambiente de homologación** (hoy la tarjeta se llama “Testing · Demo general”). Relacionado con A3 (código HTTP y cuerpo de la respuesta ante credenciales inválidas o token vencido): `authentication.mdx` describe causas y soluciones sin afirmar un código, por ejemplo `401 Unauthorized`.
 
 ## Resumen
 
@@ -221,4 +222,4 @@ Cada fila es un aviso `<RevisarVigencia />` visible en el portal. La columna **O
 | A. Pendientes de definición técnica | 49 |
 | B. Avisos `[REVISAR_VIGENCIA]` visibles en páginas | 39 |
 | B. Marcas `[REVISAR_VIGENCIA]` en snippets (sin aviso propio) | 2 |
-| C. Tareas antes de publicar | 17 |
+| C. Tareas antes de publicar | 18 |
