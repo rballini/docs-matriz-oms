@@ -5,39 +5,55 @@
  * todas las páginas: no hace falta referenciarlo desde docs.json.
  *
  * Logo de Primary en el footer
- * docs.json no tiene una propiedad nativa para un segundo logo en el footer:
- * el logo de matriz OMS ("logo" en docs.json) es el único que gestiona
- * Mintlify. Este bloque agrega el logo de Primary al final del footer, en su
- * versión para modo claro y para modo oscuro.
+ * ---------------------------------------------------------------------------
+ * Estructura de la fila superior del footer de Mintlify
+ * (#footer > div > div:first-child):
+ *
+ *   <div class="flex flex-col md:flex-row gap-8 justify-between ...">
+ *     <div class="... lg:min-w-48 ...">  ← logo matriz OMS (h-[26px])
+ *     <div class="... grid ... flex-1">  ← columnas Documentación · Referencia · Ayuda
+ *     ::after                            ← logo Primary (este archivo)
+ *   </div>
+ *
+ * El pseudo-elemento ::after se agrega como tercer ítem de esa fila:
+ *   - Desktop (>= 768px): a la derecha de "Ayuda", con el mismo ancho mínimo
+ *     que el bloque de matriz OMS (12rem), para que las 3 columnas queden
+ *     centradas entre ambos logos.
+ *   - Mobile (< 768px): debajo de las columnas, alineado a la izquierda.
  *
  * Nota: Mintlify advierte que la estructura interna de sus componentes puede
- * cambiar. Si una actualización mueve o rompe el logo, revisar el footer con
- * "Inspeccionar elemento" y ajustar los selectores.
+ * cambiar. Si una actualización mueve el logo, revisar el footer con
+ * "Inspeccionar elemento" y ajustar el selector.
  */
 
-#footer::after {
+/* Mobile (< 768px): logo de Primary debajo de las columnas */
+#footer > div > div:first-child::after {
   content: "";
   display: block;
-  flex: 0 0 auto;
-  align-self: flex-start;
-  width: 120px;
-  height: 27px; /* proporción del logo: 4,51 : 1 */
-  margin-top: 1.5rem;
+  flex-shrink: 0;
+  width: 7.5rem;   /* 26px de alto × proporción 4,51 : 1 del logo ≈ 117px */
+  height: 26px;    /* misma altura que el logo de matriz OMS (h-[26px]) */
+  margin-top: 0.5rem;
   background-image: url("/logo/primary-light.svg");
   background-repeat: no-repeat;
-  background-position: left center;
   background-size: contain;
+  background-position: left center;
+}
+
+/* Desktop (>= 768px): logo de Primary como columna derecha, simétrica a matriz OMS */
+@media (min-width: 768px) {
+  #footer > div > div:first-child::after {
+    width: auto;
+    min-width: 12rem;          /* igual a lg:min-w-48 del bloque de matriz OMS */
+    height: 26px;              /* igual a h-[26px] del logo de matriz OMS */
+    margin-top: 0;
+    align-self: flex-start;    /* alineado arriba, a la altura de los títulos */
+    background-position: right center;
+  }
 }
 
 /* Modo oscuro: Mintlify agrega la clase "dark" al elemento <html> */
-html.dark #footer::after {
+.dark #footer > div > div:first-child::after {
   background-image: url("/logo/primary-dark.svg");
 }
 
-/* Pantallas chicas: logo un poco más chico */
-@media (max-width: 640px) {
-  #footer::after {
-    width: 100px;
-    height: 22px;
-  }
-}
