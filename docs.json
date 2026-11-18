@@ -27,7 +27,12 @@
   },
   "styling": {
     "eyebrows": "breadcrumbs",
-    "codeblocks": "system"
+    "codeblocks": {
+      "theme": {
+        "light": "github-light",
+        "dark": "tokyo-night"
+      }
+    }
   },
   "search": {
     "prompt": "Buscar endpoints, parámetros, errores…"
@@ -40,7 +45,9 @@
       "copy",
       "view",
       "chatgpt",
-      "claude"
+      "claude",
+      "cursor",
+      "vscode"
     ]
   },
   "metadata": {
@@ -102,7 +109,8 @@
               "quickstart",
               "environments",
               "authentication"
-            ]
+            ],
+            "boost": 1.5
           },
           {
             "group": "Conceptos clave",

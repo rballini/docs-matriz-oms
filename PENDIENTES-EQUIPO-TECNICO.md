@@ -101,7 +101,7 @@ Generado a partir de los comentarios `{/* [PENDIENTE] ... */}` y de las marcas `
 | A48 | `snippets/instrument-detail-fields.mdx` | El diccionario anterior nombra "timeInForces", pero la respuesta de ejemplo usa "timesInForce". Confirmar el nombre real del campo contra un ambiente vigente. | | ☐ |
 | A49 | `snippets/order-fields.mdx` | Confirmar el formato y la zona horaria de transactTime (en los ejemplos: AAAAMMDD-HH:mm:ss). | | ☐ |
 
-## B. Datos a validar contra la versión vigente — `[REVISAR_VIGENCIA]` (38 avisos visibles + 2 snippets)
+## B. Datos a validar contra la versión vigente — `[REVISAR_VIGENCIA]` (39 avisos visibles + 2 snippets)
 
 Cada fila es un aviso `<RevisarVigencia />` visible en el portal. La columna **Origen** indica de dónde se tomó el dato en la documentación anterior.
 
@@ -110,6 +110,7 @@ Cada fila es un aviso `<RevisarVigencia />` visible en el portal. La columna **O
 | # | Archivo | Dato a validar | Origen | Estado |
 | --- | --- | --- | --- | --- |
 | B1 | `quickstart.mdx` | Los parámetros de /rest/order/id del paso 5 y el uso de wsClOrdId en WebSocket | PDF v1.21, p. 27 (parámetros clOrdId y proprietary de /rest/order/id) y p. 22 (reglas de wsClOrdId). | ☐ |
+| B41 | `introduction.mdx` | Los parámetros de /rest/order/id usados en la verificación (pestaña “Flujo de Orden DMA”) | PDF v1.21, p. 27 (parámetros clOrdId y proprietary de /rest/order/id). | ☐ |
 
 ### API REST · Datos de referencia
 
@@ -210,12 +211,14 @@ Cada fila es un aviso `<RevisarVigencia />` visible en el portal. La columna **O
   - Botones `#3BB58C`: con texto blanco, 2,57:1; con texto azul `#0E0A38`, 7,30:1. Verificar en vivo qué color de texto aplica Mintlify.
   - `dark` `#3BB58C` sobre el fondo oscuro (botones en modo oscuro): 7,30:1. Sin problemas.
 - [ ] C15. **Logo de Primary en el footer (`styles.css`).** Se agregó con CSS porque `docs.json` no tiene una propiedad nativa para un segundo logo en el footer. Verificar en vivo en modo claro, modo oscuro y mobile que quede bien ubicado junto al de matriz OMS y ajustar el selector `#footer::after` si hace falta. Las rutas `/logo/primary-*.svg` del CSS asumen que el portal se publica en la raíz de su dominio (no en un subpath). Igual que C1: `logo/primary-light.svg` y `logo/primary-dark.svg` están vectorizados desde un PNG; reemplazarlos por los vectoriales originales cuando estén disponibles.
+- [ ] C16. **Videos del front DMA** (`introduction.mdx` y `websockets/overview.mdx`): verificar en vivo que existan en `/plataforma/` con estos nombres exactos (las rutas distinguen mayúsculas): `FavsLight.mp4`, `FrontMDdark.mp4`, `WidgetsLight.mp4` y `WidgetsDark.mp4`. Cada demo carga las dos versiones (clara y oscura) y el CSS muestra solo la que corresponde al modo: conviene que cada MP4 pese pocos MB (H.264, sin audio, 720p o 1080p) para no penalizar la carga de la portada.
+- [ ] C17. **Tarjeta “Risk API” en la portada pública** (`introduction.mdx`): cuando se restaure la restricción por grupos (C3 y C13), los usuarios que no sean administradores de ALyC van a llegar a un 404 desde esa tarjeta. Decidir si se mantiene (con su etiqueta “Exclusivo administradores de ALyC”) o se quita de la portada.
 
 ## Resumen
 
 | Tipo | Cantidad |
 | --- | --- |
 | A. Pendientes de definición técnica | 49 |
-| B. Avisos `[REVISAR_VIGENCIA]` visibles en páginas | 38 |
+| B. Avisos `[REVISAR_VIGENCIA]` visibles en páginas | 39 |
 | B. Marcas `[REVISAR_VIGENCIA]` en snippets (sin aviso propio) | 2 |
-| C. Tareas antes de publicar | 15 |
+| C. Tareas antes de publicar | 17 |
