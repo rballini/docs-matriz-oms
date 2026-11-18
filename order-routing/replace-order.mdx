@@ -1,0 +1,156 @@
+---
+title: "Reemplazar una orden"
+sidebarTitle: "Reemplazar orden"
+description: "Modificá el precio y el tamaño de una orden ingresada en el mercado."
+api: "GET /rest/order/replaceById"
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+import VerificarEstadoOrden from '/snippets/verificar-estado-orden.mdx';
+
+Permite **reemplazar una orden** ingresada en el mercado, modificando su **precio** y su **tamaño**. La orden se identifica por el Client Order ID (`clOrdId`) del request original de alta.
+
+```http
+GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/order/replaceById
+```
+
+## Parámetros
+
+<AuthHeader />
+
+<ParamField query="clOrdId" type="string" required>
+  ID del request original, devuelto en `order.clientId` al [ingresar la orden](/order-routing/new-order). Ej.: `user1179491234567890`.
+</ParamField>
+
+<ParamField query="proprietary" type="string" required>
+  ID del participante de mercado (fijo por cuenta). Usá el valor devuelto en `order.proprietary` al ingresar la orden. Ej.: `PBCP`.
+</ParamField>
+
+<ParamField query="orderQty" type="integer" required>
+  Nuevo tamaño de la orden.
+</ParamField>
+
+<ParamField query="price" type="number" required>
+  Nuevo precio de la orden. Ej.: `1597.5`.
+</ParamField>
+
+{/* [PENDIENTE] Confirmar: (1) si se pueden modificar solo el precio o solo el tamaño, o si ambos parámetros son siempre obligatorios; (2) qué clOrdId usar para un segundo reemplazo o una cancelación posterior: el original o el devuelto por este método; (3) qué estados reciben la orden original y la de reemplazo (en el ejemplo WebSocket del manual, la orden aparece CANCELLED con texto "Reemplazada"). */}
+
+## Ejemplos de request
+
+Reemplazo de la orden `user1179491234567890`: nuevo precio `1597.5` y nuevo tamaño `15`.
+
+<CodeGroup>
+```bash cURL
+# BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+curl --get "$BASE_URL/rest/order/replaceById" \
+  -H "X-Auth-Token: $MATRIZ_TOKEN" \
+  --data-urlencode "clOrdId=user1179491234567890" \
+  --data-urlencode "proprietary=PBCP" \
+  --data-urlencode "orderQty=15" \
+  --data-urlencode "price=1597.5"
+```
+
+```python Python
+import os
+import requests
+
+BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+TOKEN = os.environ["MATRIZ_TOKEN"]
+
+respuesta = requests.get(
+    f"{BASE_URL}/rest/order/replaceById",
+    headers={"X-Auth-Token": TOKEN},
+    params={
+        "clOrdId": "user1179491234567890",
+        "proprietary": "PBCP",
+        "orderQty": 15,
+        "price": 1597.5,
+    },
+    timeout=10,
+)
+respuesta.raise_for_status()
+datos = respuesta.json()
+
+if datos["status"] == "OK":
+    print("Reemplazo recibido. clOrdId:", datos["order"]["clientId"])
+else:
+    print("Error:", datos.get("description") or datos.get("message"))
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+const params = new URLSearchParams({
+  clOrdId: "user1179491234567890",
+  proprietary: "PBCP",
+  orderQty: "15",
+  price: "1597.5",
+});
+
+const respuesta = await fetch(`${BASE_URL}/rest/order/replaceById?${params}`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+});
+const datos = await respuesta.json();
+
+if (datos.status === "OK") {
+  console.log("Reemplazo recibido. clOrdId:", datos.order.clientId);
+} else {
+  console.error("Error:", datos.description ?? datos.message);
+}
+```
+</CodeGroup>
+
+## Verificá el resultado del reemplazo
+
+<VerificarEstadoOrden />
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 25. El manual vigente define los parámetros, pero no la respuesta de este método. */}
+<RevisarVigencia dato="La estructura de la respuesta del reemplazo" />
+
+<ResponseField name="status" type="string">
+  `OK` si el request fue **recibido**; `ERROR` si falló. Ver [Errores](/reference/errors).
+</ResponseField>
+
+<ResponseField name="order" type="object">
+  Identificación del request de reemplazo.
+  <Expandable title="propiedades">
+    <ResponseField name="clientId" type="string">
+      Client Order ID del request de reemplazo.
+    </ResponseField>
+    <ResponseField name="proprietary" type="string">
+      Participante de mercado del request.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Solo cuando `status` es `ERROR`: detalle del error.
+</ResponseField>
+
+<ResponseExample>
+```json Request recibido
+{
+  "status": "OK",
+  "order": {
+    "clientId": "user1179491234567891",
+    "proprietary": "PBCP"
+  }
+}
+```
+
+```json Error · orden inexistente
+{
+  "status": "ERROR",
+  "description": "Order user1179499999999999 doesn't exist"
+}
+```
+</ResponseExample>

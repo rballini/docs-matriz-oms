@@ -1,0 +1,122 @@
+---
+title: "Lista de instrumentos por código CFI"
+sidebarTitle: "Por código CFI"
+description: "Listá todos los instrumentos de un mismo tipo (acciones, bonos, futuros, opciones, CEDEARs u obligaciones negociables) a partir de su código CFI."
+api: "GET /rest/instruments/byCFICode"
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+Cada tipo de instrumento se identifica con un **código CFI** (Classification of Financial Instruments). Este método permite listar todos los instrumentos que pertenecen al mismo tipo.
+
+```http
+GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/instruments/byCFICode
+```
+
+## Parámetros
+
+<AuthHeader />
+
+<ParamField query="CFICode" type="string" required>
+  Código que identifica al tipo de instrumento. El nombre del parámetro se escribe exactamente así: `CFICode`. Valores posibles:
+
+  | Código | Tipo de instrumento |
+  | --- | --- |
+  | `ESXXXX` | Acción |
+  | `DBXXXX` | Bono |
+  | `OCASPS` | Opción call sobre acción |
+  | `OPASPS` | Opción put sobre acción |
+  | `FXXXSX` | Futuro |
+  | `OCAFXS` | Opción call sobre futuro |
+  | `OPAFXS` | Opción put sobre futuro |
+  | `EMXXXX` | CEDEAR |
+  | `DBXXFR` | Obligación negociable |
+</ParamField>
+
+## Ejemplos de request
+
+Listar todos los futuros (`FXXXSX`):
+
+<CodeGroup>
+```bash cURL
+# BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+curl --get "$BASE_URL/rest/instruments/byCFICode" \
+  -H "X-Auth-Token: $MATRIZ_TOKEN" \
+  --data-urlencode "CFICode=FXXXSX"
+```
+
+```python Python
+import os
+import requests
+
+BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+TOKEN = os.environ["MATRIZ_TOKEN"]
+
+respuesta = requests.get(
+    f"{BASE_URL}/rest/instruments/byCFICode",
+    headers={"X-Auth-Token": TOKEN},
+    params={"CFICode": "FXXXSX"},
+    timeout=30,
+)
+respuesta.raise_for_status()
+
+for instrumento in respuesta.json()["instruments"]:
+    print(instrumento["symbol"])
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+const params = new URLSearchParams({ CFICode: "FXXXSX" });
+
+const respuesta = await fetch(`${BASE_URL}/rest/instruments/byCFICode?${params}`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+});
+const datos = await respuesta.json();
+
+for (const { symbol } of datos.instruments) {
+  console.log(symbol);
+}
+```
+</CodeGroup>
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+<ResponseField name="status" type="string">
+  Resultado del request: `OK` si fue exitoso o `ERROR` si falló. Ver [Errores](/reference/errors).
+</ResponseField>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, pp. 17-18 */}
+<RevisarVigencia dato="La estructura del objeto instruments" />
+
+<ResponseField name="instruments" type="object[]">
+  Lista de instrumentos del tipo solicitado. A diferencia de [Lista de instrumentos disponibles](/reference-data/instruments/list), cada elemento trae `marketId` y `symbol` directamente, sin el objeto `instrumentId`.
+  <Expandable title="propiedades">
+    <ResponseField name="marketId" type="string">
+      ID del mercado. Ej.: `ROFX`.
+    </ResponseField>
+    <ResponseField name="symbol" type="string">
+      Símbolo del instrumento. Ej.: `DLR/DIC26`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+```json Respuesta exitosa
+{
+  "status": "OK",
+  "instruments": [
+    { "marketId": "ROFX", "symbol": "DLR/DIC26" },
+    { "marketId": "ROFX", "symbol": "DLR/ENE27" },
+    { "marketId": "ROFX", "symbol": "TRI.ROS/DIC26" },
+    { "marketId": "ROFX", "symbol": "SOJ.ROS/ENE27" }
+  ]
+}
+```
+</ResponseExample>

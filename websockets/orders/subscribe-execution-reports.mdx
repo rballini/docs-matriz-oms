@@ -1,0 +1,200 @@
+---
+title: "Suscripción a Execution Reports"
+sidebarTitle: "Suscribirse a reportes (os)"
+description: "Suscribite con el mensaje os para recibir los Execution Reports de las órdenes de una cuenta, de varias o de todas las cuentas de tu usuario."
+---
+
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+Con el mensaje **`os`** (order subscription) te suscribís para recibir los [Execution Reports](/websockets/orders/execution-report-message) de las órdenes asociadas a **una cuenta, a varias o a todas las cuentas** de tu usuario.
+
+<Warning>
+  Enviá la suscripción **antes** de ingresar o cancelar órdenes por WebSocket. Es la única forma de conocer el resultado de esas operaciones.
+</Warning>
+
+## Campos del mensaje
+
+<ParamField body="type" type="string" required>
+  Tipo de mensaje. Valor fijo: `"os"`.
+</ParamField>
+
+<ParamField body="account" type="object">
+  Opcional. Cuenta **única** de la cual se quieren recibir los Execution Reports.
+  <Expandable title="propiedades">
+    <ParamField body="id" type="string" required>
+      Número de cuenta, **como texto**. Ej.: `"30"`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="snapshotOnlyActive" type="boolean">
+  Opcional. Si es `true`, se reciben solo las órdenes **activas** (`NEW` o `PARTIALLY_FILLED`). Se puede combinar con una cuenta, varias o todas.
+</ParamField>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 35. El manual vigente indica que se puede suscribir a una cuenta, a varias o a todas, pero solo documenta el mensaje de una cuenta. */}
+<RevisarVigencia dato="El campo accounts y la suscripción a todas las cuentas omitiendo account" />
+
+<ParamField body="accounts" type="object[]">
+  Opcional. Lista de cuentas de las cuales se quieren recibir los Execution Reports. Cada elemento tiene la forma `{ "id": "30" }`.
+</ParamField>
+
+<Note>
+  Usá **`account`** (objeto) para una cuenta o **`accounts`** (lista) para varias. Si no enviás ninguno de los dos, la suscripción abarca **todas las cuentas** asociadas a tu usuario.
+</Note>
+
+{/* [PENDIENTE] Confirmar: (1) si al suscribirse se recibe un snapshot inicial de las órdenes existentes también cuando snapshotOnlyActive es false; (2) qué ocurre si se envía account y accounts juntos; (3) qué responde el servidor si el usuario no tiene acceso a la cuenta; (4) cómo cancelar una suscripción. */}
+
+## Variantes de suscripción
+
+<Tabs>
+  <Tab title="Una cuenta">
+    Execution Reports de la cuenta `30`:
+
+    ```json Mensaje enviado
+    {
+      "type": "os",
+      "account": {
+        "id": "30"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Varias cuentas">
+    Execution Reports de las cuentas `30` y `31`:
+
+    ```json Mensaje enviado
+    {
+      "type": "os",
+      "accounts": [
+        {
+          "id": "30"
+        },
+        {
+          "id": "31"
+        }
+      ]
+    }
+    ```
+  </Tab>
+  <Tab title="Todas las cuentas">
+    Execution Reports de todas las cuentas asociadas al usuario:
+
+    ```json Mensaje enviado
+    {
+      "type": "os"
+    }
+    ```
+  </Tab>
+  <Tab title="Solo activas">
+    Execution Reports de la cuenta `30`, recibiendo solo las órdenes activas (`NEW` o `PARTIALLY_FILLED`):
+
+    ```json Mensaje enviado
+    {
+      "type": "os",
+      "account": {
+        "id": "30"
+      },
+      "snapshotOnlyActive": true
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Tip>
+  Después de una **reconexión**, suscribite con `snapshotOnlyActive` para reconstruir rápidamente el estado de tus órdenes vivas. Ver [Reconexión](/websockets/overview).
+</Tip>
+
+## Ejemplos de código
+
+Suscripción a las cuentas `"30"` y `"31"`, imprimiendo cada Execution Report recibido:
+
+<CodeGroup>
+```python Python
+# pip install "websockets>=14"
+import asyncio
+import json
+import os
+
+import websockets
+
+WS_URL = f"wss://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar/"
+TOKEN = os.environ["MATRIZ_TOKEN"]  # obtenido con POST /auth/getToken
+
+
+async def main() -> None:
+    async with websockets.connect(WS_URL, additional_headers={"X-Auth-Token": TOKEN}) as ws:
+        await ws.send(json.dumps({"type": "os", "accounts": [{"id": "30"}, {"id": "31"}]}))
+
+        async for crudo in ws:
+            mensaje = json.loads(crudo)
+            if mensaje.get("type") == "or":
+                reporte = mensaje["orderReport"]
+                print(reporte["accountId"]["id"], reporte["clOrdId"], reporte["status"])
+
+
+asyncio.run(main())
+```
+
+```javascript Node.js
+// npm install ws   ·   Node.js 18 o superior (ES modules)
+import WebSocket from "ws";
+
+const WS_URL = `wss://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar/`;
+const ws = new WebSocket(WS_URL, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN }, // obtenido con POST /auth/getToken
+});
+
+ws.on("open", () => {
+  ws.send(JSON.stringify({"type": "os", "accounts": [{"id": "30"}, {"id": "31"}]}));
+});
+
+ws.on("message", (datos) => {
+  const mensaje = JSON.parse(datos.toString());
+  if (mensaje.type === "or") {
+    const reporte = mensaje.orderReport;
+    console.log(reporte.accountId.id, reporte.clOrdId, reporte.status);
+  }
+});
+
+ws.on("error", (error) => console.error("Error de WebSocket:", error.message));
+```
+</CodeGroup>
+
+## Mensajes recibidos
+
+A partir de la suscripción, el servidor envía un mensaje [`or`](/websockets/orders/execution-report-message) por cada cambio de estado de las órdenes de las cuentas suscriptas.
+
+<ResponseExample>
+```json Execution Report recibido
+{
+  "type": "or",
+  "timestamp": 1794925415948,
+  "orderReport": {
+    "orderId": "1130835",
+    "clOrdId": "user1179491234567890",
+    "proprietary": "PBCP",
+    "execId": "261117142335-fix1-493",
+    "accountId": {
+      "id": "30"
+    },
+    "instrumentId": {
+      "marketId": "ROFX",
+      "symbol": "DLR/DIC26"
+    },
+    "price": 1596.0,
+    "orderQty": 10,
+    "ordType": "LIMIT",
+    "side": "BUY",
+    "timeInForce": "DAY",
+    "transactTime": "20261117-14:23:35",
+    "avgPx": 0,
+    "lastPx": 0,
+    "lastQty": 0,
+    "cumQty": 0,
+    "leavesQty": 10,
+    "status": "NEW",
+    "text": "Aceptada"
+  }
+}
+```
+</ResponseExample>

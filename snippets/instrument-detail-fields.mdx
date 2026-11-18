@@ -1,0 +1,146 @@
+{/*
+  SNIPPET: instrument-detail-fields
+  Campos del objeto "instrumento detallado". Lo usan:
+    - /reference-data/instruments/list-detailed  (cada elemento de "instruments")
+    - /reference-data/instruments/detail         (objeto "instrument")
+
+  Uso (dentro de un <Expandable>):
+    import InstrumentDetailFields from '/snippets/instrument-detail-fields.mdx';
+    <InstrumentDetailFields />
+
+  [REVISAR_VIGENCIA] origen: PDF v1.21, pp. 14-16 y Anexo Diccionario (p. 51).
+  Las descripciones vienen del diccionario anterior, excepto "cficode",
+  que figura en el manual vigente. El aviso visible lo pone cada página
+  que usa este snippet.
+
+  [PENDIENTE] El diccionario anterior nombra "timeInForces", pero la
+  respuesta de ejemplo usa "timesInForce". Confirmar el nombre real del
+  campo contra un ambiente vigente.
+*/}
+
+<ResponseField name="instrumentId" type="object">
+  Identificador del instrumento.
+  <Expandable title="propiedades">
+    <ResponseField name="marketId" type="string">
+      ID del mercado. Ej.: `ROFX`.
+    </ResponseField>
+    <ResponseField name="symbol" type="string">
+      Símbolo del instrumento. Ej.: `DLR/DIC26`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="symbol" type="string | null">
+  Campo heredado; en las respuestas de ejemplo llega en `null`. Usá `instrumentId.symbol` para identificar el instrumento.
+</ResponseField>
+
+<ResponseField name="segment" type="object">
+  Segmento al que pertenece el instrumento.
+  <Expandable title="propiedades">
+    <ResponseField name="marketSegmentId" type="string">
+      Identificador del segmento. Ej.: `DDF`.
+    </ResponseField>
+    <ResponseField name="marketId" type="string">
+      ID del mercado al que pertenece el segmento. Ej.: `ROFX`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="cficode" type="string">
+  Código CFI del contrato. Ver [Lista de instrumentos por código CFI](/reference-data/instruments/by-cfi-code).
+</ResponseField>
+
+<ResponseField name="securityDescription" type="string">
+  Descripción del instrumento.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  Moneda de liquidación del contrato. Ej.: `ARS`, `USD`.
+</ResponseField>
+
+<ResponseField name="maturityDate" type="string">
+  Fecha de vencimiento o maduración del contrato, en formato `AAAAMMDD`.
+</ResponseField>
+
+<ResponseField name="lowLimitPrice" type="number">
+  Límite mínimo de precio para operar el contrato.
+</ResponseField>
+
+<ResponseField name="highLimitPrice" type="number">
+  Límite máximo de precio para operar el contrato.
+</ResponseField>
+
+<ResponseField name="minPriceIncrement" type="number">
+  Incremento mínimo de precio (tick de precio).
+</ResponseField>
+
+<ResponseField name="tickPriceRanges" type="object">
+  Ticks de precio dinámicos del contrato. Cada clave (`"0"`, `"1"`, …) define un rango de precios con su propio tick.
+  <Expandable title="propiedades de cada rango">
+    <ResponseField name="lowerLimit" type="number">
+      Límite inferior del rango de precios.
+    </ResponseField>
+    <ResponseField name="upperLimit" type="number | null">
+      Límite superior del rango de precios. `null` indica que el rango no tiene tope.
+    </ResponseField>
+    <ResponseField name="tick" type="number">
+      Tick de precio aplicable dentro del rango.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="minTradeVol" type="number">
+  Volumen mínimo con el que se puede operar el contrato.
+</ResponseField>
+
+<ResponseField name="maxTradeVol" type="number">
+  Volumen máximo con el que se puede operar el contrato.
+</ResponseField>
+
+<ResponseField name="tickSize" type="number">
+  Incremento de cantidad.
+</ResponseField>
+
+<ResponseField name="contractMultiplier" type="number">
+  Tamaño del contrato.
+</ResponseField>
+
+<ResponseField name="roundLot" type="number">
+  Multiplicador.
+</ResponseField>
+
+<ResponseField name="priceConvertionFactor" type="number">
+  Valor por el cual se multiplica el precio del contrato para llevarlo a precio unitario. El nombre del campo se escribe así (`Convertion`) en la API.
+</ResponseField>
+
+<ResponseField name="instrumentPricePrecision" type="integer">
+  Cantidad de decimales del precio.
+</ResponseField>
+
+<ResponseField name="instrumentSizePrecision" type="integer">
+  Cantidad de decimales de la cantidad.
+</ResponseField>
+
+<ResponseField name="orderTypes" type="string[]">
+  Tipos de orden soportados por el contrato. Ej.: `LIMIT`, `MARKET`, `STOP_LIMIT`, `MARKET_TO_LIMIT`.
+</ResponseField>
+
+<ResponseField name="timesInForce" type="string[]">
+  Modalidades de vigencia (time in force) soportadas por el contrato. Ej.: `DAY`, `IOC`, `FOK`, `GTD`.
+</ResponseField>
+
+<ResponseField name="securityType" type="string | null">
+  Tipo del security.
+</ResponseField>
+
+<ResponseField name="settlType" type="string | null">
+  Tipo de liquidación del contrato.
+</ResponseField>
+
+<ResponseField name="securityId" type="string | null">
+  ID del security.
+</ResponseField>
+
+<ResponseField name="securityIdSource" type="string | null">
+  Fuente del identificador informado en `securityId`.
+</ResponseField>

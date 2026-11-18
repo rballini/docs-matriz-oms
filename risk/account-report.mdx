@@ -1,0 +1,316 @@
+---
+title: "Reporte de cuenta"
+sidebarTitle: "Reporte de cuenta"
+description: "Consultá garantías, márgenes, disponible para colateral, tenencia de moneda y diferencias diarias de una cuenta."
+api: "GET /oms-webservices/rest/risk/accountReport/{accountName}"
+groups: ["alyc-admin"]
+---
+
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+<Warning>
+  **API exclusiva para Administradores de ALyC.** Matriz Risk API expone funciones de WebAdmin y de gestión de riesgo. Solo pueden usarla usuarios con credenciales de **Administrador de ALyC** habilitadas sobre el dominio `api-risk.{urlbase}.(matrizoms|xoms).com.ar`. Las credenciales de trading del dominio `api` no tienen acceso a esta API.
+</Warning>
+
+{/* [PENDIENTE] Confirmar con el equipo técnico el prefijo /oms-webservices/rest de todas las rutas del dominio api-risk (nota pendiente del manual vigente). La documentación anterior usaba /rest/risk/... sin ese prefijo y autenticación HTTP Basic; el manual vigente indica token. */}
+
+Devuelve el **reporte de la cuenta**: garantías, márgenes, disponible para colateral, tenencia de moneda y diferencias diarias. La respuesta es **multimoneda**.
+
+```http
+GET https://api-risk.{urlbase}.(matrizoms|xoms).com.ar/oms-webservices/rest/risk/accountReport/{accountName}
+```
+
+## Parámetros
+
+<ParamField header="X-Auth-Token" type="string" required>
+  Token de acceso obtenido con `POST /oms-webservices/rest/auth/getToken` contra el dominio **`api-risk`**. Es distinto del token del dominio `api`. Validez: 24 horas. Ver [Matriz Risk API](/risk/overview).
+</ParamField>
+
+<ParamField path="accountName" type="string" required>
+  Nombre de la cuenta a consultar. Ej.: `30`. Va como **segmento de la ruta**, no como query parameter.
+</ParamField>
+
+## Ejemplos de request
+
+<CodeGroup>
+```bash cURL
+# RISK_URL=https://api-risk.{urlbase}.matrizoms.com.ar/oms-webservices/rest  (o .xoms.com.ar)
+# RISK_TOKEN: token obtenido contra el dominio api-risk
+curl "$RISK_URL/risk/accountReport/30" \
+  -H "X-Auth-Token: $RISK_TOKEN"
+```
+
+```python Python
+import os
+from urllib.parse import quote
+
+import requests
+
+RISK_URL = (
+    f"https://api-risk.{os.environ['MATRIZ_URLBASE']}."
+    f"{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar/oms-webservices/rest"
+)
+TOKEN = os.environ["MATRIZ_RISK_TOKEN"]  # token del dominio api-risk
+CUENTA = "30"
+
+respuesta = requests.get(
+    f"{RISK_URL}/risk/accountReport/{quote(CUENTA)}",
+    headers={"X-Auth-Token": TOKEN},
+    timeout=30,
+)
+respuesta.raise_for_status()
+datos = respuesta.json()
+
+if datos["status"] == "OK":
+    cuenta = datos["accountData"]
+    if cuenta["hasError"]:
+        print("El cálculo informó un error:", cuenta["errorDetail"])
+    print("Margen:", cuenta["margin"])
+    print("Disponible para colateral:", cuenta["availableToCollateral"])
+    print("Diferencia diaria:", cuenta["dailyDiff"])
+    for plazo, reporte in cuenta["detailedAccountReports"].items():
+        saldos = reporte["currencyBalance"]["detailedCurrencyBalance"]
+        for moneda, saldo in saldos.items():
+            if saldo["available"] or saldo["consumed"]:
+                print(f"  [{plazo}] {moneda}: disponible {saldo['available']} | consumido {saldo['consumed']}")
+else:
+    print("Error:", datos.get("description") or datos.get("message"))
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const RISK_URL = `https://api-risk.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar/oms-webservices/rest`;
+const CUENTA = "30";
+
+const respuesta = await fetch(`${RISK_URL}/risk/accountReport/${encodeURIComponent(CUENTA)}`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_RISK_TOKEN }, // token del dominio api-risk
+});
+const datos = await respuesta.json();
+
+if (datos.status === "OK") {
+  const cuenta = datos.accountData;
+  if (cuenta.hasError) {
+    console.warn("El cálculo informó un error:", cuenta.errorDetail);
+  }
+  console.log("Margen:", cuenta.margin);
+  console.log("Disponible para colateral:", cuenta.availableToCollateral);
+  console.log("Diferencia diaria:", cuenta.dailyDiff);
+  for (const [plazo, reporte] of Object.entries(cuenta.detailedAccountReports)) {
+    const saldos = reporte.currencyBalance.detailedCurrencyBalance;
+    for (const [moneda, saldo] of Object.entries(saldos)) {
+      if (saldo.available || saldo.consumed) {
+        console.log(`  [${plazo}] ${moneda}: disponible ${saldo.available} | consumido ${saldo.consumed}`);
+      }
+    }
+  }
+} else {
+  console.error("Error:", datos.description ?? datos.message);
+}
+```
+</CodeGroup>
+
+<Tip>
+  Revisá siempre `hasError` antes de usar los valores: si es `true`, el detalle del problema viene en `errorDetail`.
+</Tip>
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, pp. 47-49. El manual vigente define el endpoint, su parámetro y los conceptos que devuelve, pero no la estructura de la respuesta. */}
+<RevisarVigencia dato="La estructura y la descripción de los campos del reporte de cuenta" />
+
+<ResponseField name="status" type="string">
+  Resultado del request: `OK` o `ERROR`. Ver [Errores](/reference/errors).
+</ResponseField>
+
+<ResponseField name="accountData" type="object">
+  Reporte de la cuenta.
+  <Expandable title="propiedades">
+    <ResponseField name="accountName" type="string">
+      Cuenta consultada.
+    </ResponseField>
+    <ResponseField name="marketMember" type="string">
+      Nombre del agente (ALyC) al que pertenece la cuenta.
+    </ResponseField>
+    <ResponseField name="marketMemberIdentity" type="string">
+      Identificador del agente.
+    </ResponseField>
+    <ResponseField name="collateral" type="number">
+      Garantías (colateral) de la cuenta.
+    </ResponseField>
+    <ResponseField name="margin" type="number">
+      Margen requerido.
+    </ResponseField>
+    <ResponseField name="ordersMargin" type="number">
+      Margen consumido por órdenes.
+    </ResponseField>
+    <ResponseField name="uncoveredMargin" type="number">
+      Margen no cubierto.
+    </ResponseField>
+    <ResponseField name="availableToCollateral" type="number">
+      Disponible para colateral.
+    </ResponseField>
+    <ResponseField name="portfolio" type="number">
+      Valuación de la cartera.
+    </ResponseField>
+    <ResponseField name="currentCash" type="number">
+      Efectivo actual.
+    </ResponseField>
+    <ResponseField name="dailyDiff" type="number">
+      Diferencias diarias.
+    </ResponseField>
+    <ResponseField name="detailedAccountReports" type="object">
+      Reportes detallados, uno por cada clave de liquidación (en el ejemplo, `"0"`).
+      <Expandable title="propiedades de cada reporte">
+        <ResponseField name="currencyBalance" type="object">
+          Tenencia por moneda.
+          <Expandable title="propiedades">
+            <ResponseField name="detailedCurrencyBalance" type="object">
+              Una clave por moneda (ej.: `ARS`, `USD D`, `USD C`, `USD G`, `USD R`, `USD MtR`, `ARS BCRA`, `U$S`, `EUR`), cada una con `available` (disponible) y `consumed` (consumido).
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+        <ResponseField name="availableToOperate" type="object">
+          Disponible para operar.
+          <Expandable title="propiedades">
+            <ResponseField name="cash" type="object">
+              Efectivo: `totalCash` (total) y `detailedCash` (una clave por moneda con su importe).
+            </ResponseField>
+            <ResponseField name="movements" type="number">
+              Movimientos.
+            </ResponseField>
+            <ResponseField name="pendingMovements" type="number">
+              Movimientos pendientes.
+            </ResponseField>
+            <ResponseField name="credit" type="number | null">
+              Crédito asignado. Puede llegar en `null`.
+            </ResponseField>
+            <ResponseField name="total" type="number">
+              Total disponible para operar.
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+        <ResponseField name="settlementDate" type="integer">
+          Fecha de liquidación, en milisegundos desde epoch (Unix).
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="hasError" type="boolean">
+      `true` si el cálculo del reporte informó un error.
+    </ResponseField>
+    <ResponseField name="errorDetail" type="string | null">
+      Detalle del error cuando `hasError` es `true`.
+    </ResponseField>
+    <ResponseField name="lastCalculation" type="integer">
+      Momento del último cálculo del Risk Manager, en milisegundos desde epoch (Unix).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+{/* [PENDIENTE] Obtener definiciones oficiales de: significado de las claves de detailedAccountReports ("0" = ¿plazo de liquidación?), significado de cada moneda (USD D, USD C, USD G, USD R, USD MtR, ARS BCRA, U$S), relación entre totalCash, total y currentCash, y la moneda de referencia de margin, portfolio y dailyDiff. */}
+
+<ResponseExample>
+```json Respuesta exitosa
+{
+  "status": "OK",
+  "accountData": {
+    "accountName": "30",
+    "marketMember": "ALyC Ejemplo S.A.",
+    "marketMemberIdentity": "ALYCEJ",
+    "collateral": 0,
+    "margin": 3192000.0,
+    "availableToCollateral": 96808000.0,
+    "detailedAccountReports": {
+      "0": {
+        "currencyBalance": {
+          "detailedCurrencyBalance": {
+            "USD MtR": {
+              "consumed": 0,
+              "available": 0
+            },
+            "ARS BCRA": {
+              "consumed": 0,
+              "available": 0
+            },
+            "ARS": {
+              "consumed": 3192000,
+              "available": 96808000
+            },
+            "EUR": {
+              "consumed": 0,
+              "available": 0
+            },
+            "U$S": {
+              "consumed": 0,
+              "available": 0
+            },
+            "USD G": {
+              "consumed": 0,
+              "available": 0
+            },
+            "USD R": {
+              "consumed": 0,
+              "available": 0
+            },
+            "USD C": {
+              "consumed": 0,
+              "available": 0
+            },
+            "USD D": {
+              "consumed": 0,
+              "available": 10000
+            }
+          }
+        },
+        "availableToOperate": {
+          "cash": {
+            "totalCash": 112768000,
+            "detailedCash": {
+              "USD MtR": 0,
+              "ARS BCRA": 0,
+              "ARS": 96808000,
+              "EUR": 0,
+              "U$S": 0,
+              "USD G": 0,
+              "USD R": 0,
+              "USD C": 0,
+              "USD D": 10000
+            }
+          },
+          "movements": 0,
+          "credit": null,
+          "total": 96796300,
+          "pendingMovements": 0
+        },
+        "settlementDate": 1794884400000
+      }
+    },
+    "hasError": false,
+    "errorDetail": null,
+    "lastCalculation": 1794925844232,
+    "portfolio": -189000,
+    "ordersMargin": 0,
+    "currentCash": 96796300,
+    "dailyDiff": -11700,
+    "uncoveredMargin": 0
+  }
+}
+```
+
+```json Error · cuenta sin acceso
+{
+  "status": "ERROR",
+  "description": "No tiene acceso a la cuenta 30"
+}
+```
+
+```json Error · método sin acceso
+{
+  "status": "ERROR",
+  "message": "Access Denied"
+}
+```
+</ResponseExample>

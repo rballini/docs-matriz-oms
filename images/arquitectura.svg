@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="160" viewBox="0 0 720 160" role="img" aria-label="Tu sistema se conecta por REST y WebSocket a Matriz OMS API, que se conecta por FIX a Primary Trading Platform de A3 Mercados">
+  <!-- PLACEHOLDER: diagrama de arquitectura. Reemplazar por la versión oficial de diseño. -->
+  <defs>
+    <marker id="flecha" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7B2CBF"/>
+    </marker>
+  </defs>
+  <g font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" text-anchor="middle">
+    <rect x="10" y="40" width="180" height="80" rx="12" fill="#FFFFFF" stroke="#111D4A" stroke-width="2"/>
+    <text x="100" y="76" font-size="16" font-weight="700" fill="#111D4A">Tu sistema</text>
+    <text x="100" y="98" font-size="12" fill="#0B132B">ALyC · institución · integrador</text>
+
+    <rect x="270" y="40" width="180" height="80" rx="12" fill="#111D4A"/>
+    <text x="360" y="76" font-size="16" font-weight="700" fill="#FFFFFF">Matriz OMS API</text>
+    <text x="360" y="98" font-size="12" fill="#C9A7EB">REST · WebSocket</text>
+
+    <rect x="530" y="40" width="180" height="80" rx="12" fill="#FFFFFF" stroke="#111D4A" stroke-width="2"/>
+    <text x="620" y="76" font-size="16" font-weight="700" fill="#111D4A">Primary Trading Platform</text>
+    <text x="620" y="98" font-size="12" fill="#0B132B">A3 Mercados</text>
+
+    <line x1="190" y1="80" x2="266" y2="80" stroke="#7B2CBF" stroke-width="2.5" marker-end="url(#flecha)"/>
+    <text x="230" y="70" font-size="11" fill="#7B2CBF">REST / WS</text>
+    <line x1="450" y1="80" x2="526" y2="80" stroke="#7B2CBF" stroke-width="2.5" marker-end="url(#flecha)"/>
+    <text x="490" y="70" font-size="11" fill="#7B2CBF">FIX</text>
+  </g>
+</svg>

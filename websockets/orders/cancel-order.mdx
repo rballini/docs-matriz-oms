@@ -1,0 +1,150 @@
+---
+title: "Cancelar una orden (WebSocket)"
+sidebarTitle: "Cancelar orden (co)"
+description: "Cancelá una orden ingresada en el mercado por WebSocket con el mensaje co."
+---
+
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+Con el mensaje **`co`** (cancel order) se cancela una orden ingresada en el mercado a través de la conexión WebSocket.
+
+<Info>
+  Igual que al ingresar una orden, el resultado de la cancelación llega como [Execution Report](/websockets/orders/execution-report-message) (`or`). Asegurate de estar [suscripto](/websockets/orders/subscribe-execution-reports) a los Execution Reports de la cuenta de la orden.
+</Info>
+
+## Campos del mensaje
+
+<ParamField body="type" type="string" required>
+  Tipo de mensaje. Valor fijo: `"co"`.
+</ParamField>
+
+<ParamField body="clientId" type="string" required>
+  Client Order ID (`clOrdId`) del request de la orden que se quiere cancelar. Lo obtenés del Execution Report de la orden. Ej.: `"user1179491234567890"`.
+</ParamField>
+
+<ParamField body="proprietary" type="string" required>
+  ID del participante de mercado. Usá el valor de `proprietary` del Execution Report de la orden. Ej.: `"PBCP"`.
+</ParamField>
+
+<Note>
+  En WebSocket el identificador de la orden se envía en el campo **`clientId`**. En la [API REST](/order-routing/cancel-order) el mismo valor se envía en el parámetro **`clOrdId`**.
+</Note>
+
+{/* [PENDIENTE] Confirmar: (1) si clientId puede ser el clOrdId de cualquier request de la orden (alta o reemplazo) o solo el del alta; (2) qué Execution Report recibe el cliente si la orden ya no existe o ya fue operada. */}
+
+## Ejemplo de mensaje
+
+```json Mensaje enviado
+{
+  "type": "co",
+  "clientId": "user1179491234567890",
+  "proprietary": "PBCP"
+}
+```
+
+## Ejemplos de código
+
+Cada ejemplo se suscribe a los Execution Reports de la cuenta `"30"`, envía la cancelación y espera el estado `CANCELLED`.
+
+<CodeGroup>
+```python Python
+# pip install "websockets>=14"
+import asyncio
+import json
+import os
+
+import websockets
+
+WS_URL = f"wss://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar/"
+TOKEN = os.environ["MATRIZ_TOKEN"]  # obtenido con POST /auth/getToken
+
+
+async def main() -> None:
+    async with websockets.connect(WS_URL, additional_headers={"X-Auth-Token": TOKEN}) as ws:
+        await ws.send(json.dumps({"type": "os", "account": {"id": "30"}}))
+        await ws.send(json.dumps({"type": "co", "clientId": "user1179491234567890", "proprietary": "PBCP"}))
+
+        async for crudo in ws:
+            mensaje = json.loads(crudo)
+            if mensaje.get("type") != "or":
+                continue
+            reporte = mensaje["orderReport"]
+            print(reporte["clOrdId"], reporte["status"], reporte.get("text"))
+            if reporte["status"] == "CANCELLED":
+                print("Orden cancelada. orderId:", reporte["orderId"])
+                break
+
+
+asyncio.run(main())
+```
+
+```javascript Node.js
+// npm install ws   ·   Node.js 18 o superior (ES modules)
+import WebSocket from "ws";
+
+const WS_URL = `wss://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar/`;
+const ws = new WebSocket(WS_URL, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN }, // obtenido con POST /auth/getToken
+});
+
+ws.on("open", () => {
+  ws.send(JSON.stringify({"type": "os", "account": {"id": "30"}}));
+  ws.send(JSON.stringify({"type": "co", "clientId": "user1179491234567890", "proprietary": "PBCP"}));
+});
+
+ws.on("message", (datos) => {
+  const mensaje = JSON.parse(datos.toString());
+  if (mensaje.type !== "or") return;
+  const reporte = mensaje.orderReport;
+  console.log(reporte.clOrdId, reporte.status, reporte.text);
+  if (reporte.status === "CANCELLED") {
+    console.log("Orden cancelada. orderId:", reporte.orderId);
+    ws.close();
+  }
+});
+
+ws.on("error", (error) => console.error("Error de WebSocket:", error.message));
+```
+</CodeGroup>
+
+## Resultado
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, pp. 32-33 (estructura del estado CANCELLED con Client Order ID propio de la cancelación). */}
+<RevisarVigencia dato="La estructura del Execution Report de una cancelación" />
+
+La cancelación genera un request con **su propio Client Order ID**, asociado al mismo `orderId` que la orden original. El Execution Report de una cancelación exitosa llega con estado `CANCELLED`.
+
+<ResponseExample>
+```json Execution Report de la cancelación
+{
+  "type": "or",
+  "timestamp": 1794925895948,
+  "orderReport": {
+    "orderId": "1130835",
+    "clOrdId": "user1179491234567890Cnl5",
+    "proprietary": "PBCP",
+    "execId": "261117143135-fix1-494",
+    "accountId": {
+      "id": "30"
+    },
+    "instrumentId": {
+      "marketId": "ROFX",
+      "symbol": "DLR/DIC26"
+    },
+    "price": 1596.0,
+    "orderQty": 10,
+    "ordType": "LIMIT",
+    "side": "BUY",
+    "timeInForce": "DAY",
+    "transactTime": "20261117-14:31:35",
+    "avgPx": 0,
+    "lastPx": 0,
+    "lastQty": 0,
+    "cumQty": 0,
+    "leavesQty": 10,
+    "status": "CANCELLED",
+    "text": "Cancelada"
+  }
+}
+```
+</ResponseExample>

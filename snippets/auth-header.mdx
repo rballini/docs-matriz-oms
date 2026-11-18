@@ -1,0 +1,10 @@
+{/*
+  SNIPPET: auth-header
+  Uso (en páginas de endpoints, dentro de la sección de parámetros):
+    import AuthHeader from '/snippets/auth-header.mdx';
+    <AuthHeader />
+*/}
+
+<ParamField header="X-Auth-Token" type="string" required>
+  Token de acceso obtenido con `POST /auth/getToken` contra el **mismo dominio** al que pertenece este endpoint (`api` o `api-risk`). Tiene una validez de **24 horas**. Consultá cómo obtenerlo en [Autenticación](/authentication).
+</ParamField>

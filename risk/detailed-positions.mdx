@@ -1,0 +1,310 @@
+---
+title: "Detalle de posiciones"
+sidebarTitle: "Detalle de posiciones"
+description: "Consultá el detalle de las posiciones de una cuenta, agrupado por tipo de contrato e instrumento."
+api: "GET /oms-webservices/rest/risk/detailedPosition/{accountName}"
+groups: ["alyc-admin"]
+---
+
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+<Warning>
+  **API exclusiva para Administradores de ALyC.** Matriz Risk API expone funciones de WebAdmin y de gestión de riesgo. Solo pueden usarla usuarios con credenciales de **Administrador de ALyC** habilitadas sobre el dominio `api-risk.{urlbase}.(matrizoms|xoms).com.ar`. Las credenciales de trading del dominio `api` no tienen acceso a esta API.
+</Warning>
+
+{/* [PENDIENTE] Confirmar con el equipo técnico el prefijo /oms-webservices/rest de todas las rutas del dominio api-risk (nota pendiente del manual vigente). La documentación anterior usaba /rest/risk/... sin ese prefijo y autenticación HTTP Basic; el manual vigente indica token. */}
+
+Devuelve el **detalle de las posiciones** de una cuenta, **agrupado por tipo de contrato** y, dentro de cada tipo, **por instrumento**. Para cada instrumento distingue la posición inicial, lo operado en el día y la posición actual, junto con las diferencias diarias.
+
+```http
+GET https://api-risk.{urlbase}.(matrizoms|xoms).com.ar/oms-webservices/rest/risk/detailedPosition/{accountName}
+```
+
+## Parámetros
+
+<ParamField header="X-Auth-Token" type="string" required>
+  Token de acceso obtenido con `POST /oms-webservices/rest/auth/getToken` contra el dominio **`api-risk`**. Es distinto del token del dominio `api`. Validez: 24 horas. Ver [Matriz Risk API](/risk/overview).
+</ParamField>
+
+<ParamField path="accountName" type="string" required>
+  Nombre de la cuenta a consultar. Ej.: `30`. Va como **segmento de la ruta**, no como query parameter.
+</ParamField>
+
+## Ejemplos de request
+
+<CodeGroup>
+```bash cURL
+# RISK_URL=https://api-risk.{urlbase}.matrizoms.com.ar/oms-webservices/rest  (o .xoms.com.ar)
+# RISK_TOKEN: token obtenido contra el dominio api-risk
+curl "$RISK_URL/risk/detailedPosition/30" \
+  -H "X-Auth-Token: $RISK_TOKEN"
+```
+
+```python Python
+import os
+from urllib.parse import quote
+
+import requests
+
+RISK_URL = (
+    f"https://api-risk.{os.environ['MATRIZ_URLBASE']}."
+    f"{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar/oms-webservices/rest"
+)
+TOKEN = os.environ["MATRIZ_RISK_TOKEN"]  # token del dominio api-risk
+CUENTA = "30"
+
+respuesta = requests.get(
+    f"{RISK_URL}/risk/detailedPosition/{quote(CUENTA)}",
+    headers={"X-Auth-Token": TOKEN},
+    timeout=30,
+)
+respuesta.raise_for_status()
+datos = respuesta.json()
+
+if datos["status"] == "OK":
+    detalle = datos["detailedPosition"]
+    print("Cuenta:", detalle["account"], "| valor de mercado:", detalle["totalMarketValue"])
+    for tipo, instrumentos in detalle["report"].items():
+        for simbolo, info in instrumentos.items():
+            print(f"{tipo} · {simbolo}: posición actual {info['instrumentCurrentSize']}")
+else:
+    print("Error:", datos.get("description") or datos.get("message"))
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const RISK_URL = `https://api-risk.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar/oms-webservices/rest`;
+const CUENTA = "30";
+
+const respuesta = await fetch(`${RISK_URL}/risk/detailedPosition/${encodeURIComponent(CUENTA)}`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_RISK_TOKEN }, // token del dominio api-risk
+});
+const datos = await respuesta.json();
+
+if (datos.status === "OK") {
+  const detalle = datos.detailedPosition;
+  console.log("Cuenta:", detalle.account, "| valor de mercado:", detalle.totalMarketValue);
+  for (const [tipo, instrumentos] of Object.entries(detalle.report)) {
+    for (const [simbolo, info] of Object.entries(instrumentos)) {
+      console.log(`${tipo} · ${simbolo}: posición actual ${info.instrumentCurrentSize}`);
+    }
+  }
+} else {
+  console.error("Error:", datos.description ?? datos.message);
+}
+```
+</CodeGroup>
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, pp. 45-46. El manual vigente define el endpoint y su parámetro, pero no la respuesta. */}
+<RevisarVigencia dato="La estructura y la descripción de los campos del detalle de posiciones" />
+
+<ResponseField name="status" type="string">
+  Resultado del request: `OK` o `ERROR`. Ver [Errores](/reference/errors).
+</ResponseField>
+
+<ResponseField name="detailedPosition" type="object">
+  Detalle de posiciones de la cuenta.
+  <Expandable title="propiedades">
+    <ResponseField name="account" type="string">
+      Cuenta consultada.
+    </ResponseField>
+    <ResponseField name="totalDailyDiffPlain" type="number">
+      Diferencia diaria total de la cuenta, expresada en valor monetario.
+    </ResponseField>
+    <ResponseField name="totalMarketValue" type="number">
+      Valor de mercado total de las posiciones.
+    </ResponseField>
+    <ResponseField name="lastCalculation" type="integer">
+      Momento del último cálculo del Risk Manager, en milisegundos desde epoch (Unix).
+    </ResponseField>
+    <ResponseField name="report" type="object">
+      Posiciones agrupadas en dos niveles: primero por **tipo de contrato** (ej.: `FUTURE_OPTION_CALL`) y luego por **símbolo**. Cada símbolo contiene:
+      <Expandable title="propiedades de cada instrumento">
+        <ResponseField name="instrumentInitialSize" type="number">
+          Posición inicial neta del instrumento.
+        </ResponseField>
+        <ResponseField name="instrumentFilledSize" type="number">
+          Cantidad neta operada en el día.
+        </ResponseField>
+        <ResponseField name="instrumentCurrentSize" type="number">
+          Posición actual neta del instrumento.
+        </ResponseField>
+        <ResponseField name="detailedPositions" type="object[]">
+          Detalle de la posición del instrumento.
+          <Expandable title="propiedades de cada detalle">
+            <ResponseField name="symbolReference" type="string">
+              Referencia del instrumento.
+            </ResponseField>
+            <ResponseField name="contractType" type="string">
+              Tipo de contrato. Ej.: `FUTURE_OPTION_CALL`.
+            </ResponseField>
+            <ResponseField name="currency" type="string">
+              Moneda del contrato. Ej.: `ARS`, `USD G`.
+            </ResponseField>
+            <ResponseField name="exchangeRate" type="number">
+              Tipo de cambio aplicado para valuar la posición.
+            </ResponseField>
+            <ResponseField name="marketPrice" type="number">
+              Precio de mercado usado para la valuación.
+            </ResponseField>
+            <ResponseField name="contractSize" type="number">
+              Tamaño del contrato.
+            </ResponseField>
+            <ResponseField name="contractMultiplier" type="number">
+              Multiplicador del contrato.
+            </ResponseField>
+            <ResponseField name="priceConversionFactor" type="number">
+              Factor de conversión del precio.
+            </ResponseField>
+            <ResponseField name="totalInitialSize" type="number">
+              Posición inicial neta (compras menos ventas). Se desagrega en `buyInitialSize` y `sellInitialSize`, con sus precios `buyInitialPrice` y `sellInitialPrice`.
+            </ResponseField>
+            <ResponseField name="totalFilledSize" type="number">
+              Cantidad neta operada en el día. Se desagrega en `buyFilledSize` y `sellFilledSize`, con sus precios `buyFilledPrice` y `sellFilledPrice`.
+            </ResponseField>
+            <ResponseField name="totalCurrentSize" type="number">
+              Posición actual neta. Se desagrega en `buyCurrentSize` y `sellCurrentSize`.
+            </ResponseField>
+            <ResponseField name="detailedDailyDiff" type="object">
+              Diferencias diarias de la posición.
+              <Expandable title="propiedades">
+                <ResponseField name="buyPricePPPDiff" type="number">
+                  Precio de referencia usado para la diferencia diaria del lado comprador.
+                </ResponseField>
+                <ResponseField name="sellPricePPPDiff" type="number">
+                  Precio de referencia usado para la diferencia diaria del lado vendedor.
+                </ResponseField>
+                <ResponseField name="totalDailyDiff" type="number">
+                  Diferencia diaria total, en puntos de precio. Se desagrega en `buyDailyDiff` y `sellDailyDiff`.
+                </ResponseField>
+                <ResponseField name="totalDailyDiffPlain" type="number">
+                  Diferencia diaria total, en valor monetario. Se desagrega en `buyDailyDiffPlain` y `sellDailyDiffPlain`.
+                </ResponseField>
+              </Expandable>
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+{/* [PENDIENTE] Obtener definiciones oficiales de: valores posibles de contractType (las fuentes solo muestran FUTURE_OPTION_CALL), significado de "PPP" en buyPricePPPDiff / sellPricePPPDiff, diferencia entre totalDailyDiff (puntos) y totalDailyDiffPlain (valor monetario) y la moneda en que se expresan totalMarketValue y totalDailyDiffPlain. */}
+
+<ResponseExample>
+```json Respuesta exitosa
+{
+  "status": "OK",
+  "detailedPosition": {
+    "account": "30",
+    "totalDailyDiffPlain": -1300,
+    "totalMarketValue": -201000,
+    "report": {
+      "FUTURE_OPTION_CALL": {
+        "DLR/DIC26 1500 C": {
+          "detailedPositions": [
+            {
+              "symbolReference": "DLR/DIC26 1500 C",
+              "contractType": "FUTURE_OPTION_CALL",
+              "priceConversionFactor": 1,
+              "contractSize": 1000,
+              "marketPrice": 100.5,
+              "currency": "ARS",
+              "exchangeRate": 1,
+              "contractMultiplier": 1,
+              "totalInitialSize": -2,
+              "buyInitialSize": 0,
+              "sellInitialSize": 2,
+              "buyInitialPrice": 0,
+              "sellInitialPrice": 101.5,
+              "totalFilledSize": 0,
+              "buyFilledSize": 0,
+              "sellFilledSize": 0,
+              "buyFilledPrice": 0,
+              "sellFilledPrice": 0,
+              "totalCurrentSize": -2,
+              "buyCurrentSize": 0,
+              "sellCurrentSize": 2,
+              "detailedDailyDiff": {
+                "buyPricePPPDiff": 100.5,
+                "sellPricePPPDiff": 100.5,
+                "totalDailyDiff": -2,
+                "buyDailyDiff": 0,
+                "sellDailyDiff": -2,
+                "totalDailyDiffPlain": -2000,
+                "buyDailyDiffPlain": 0,
+                "sellDailyDiffPlain": -2000
+              }
+            }
+          ],
+          "instrumentInitialSize": -2,
+          "instrumentFilledSize": 0,
+          "instrumentCurrentSize": -2
+        },
+        "DLR/DIC26 1550 C": {
+          "detailedPositions": [
+            {
+              "symbolReference": "DLR/DIC26 1550 C",
+              "contractType": "FUTURE_OPTION_CALL",
+              "priceConversionFactor": 1,
+              "contractSize": 1000,
+              "marketPrice": 64.7,
+              "currency": "ARS",
+              "exchangeRate": 1,
+              "contractMultiplier": 1,
+              "totalInitialSize": 3,
+              "buyInitialSize": 3,
+              "sellInitialSize": 0,
+              "buyInitialPrice": 64.0,
+              "sellInitialPrice": 0,
+              "totalFilledSize": 0,
+              "buyFilledSize": 0,
+              "sellFilledSize": 0,
+              "buyFilledPrice": 0,
+              "sellFilledPrice": 0,
+              "totalCurrentSize": 3,
+              "buyCurrentSize": 3,
+              "sellCurrentSize": 0,
+              "detailedDailyDiff": {
+                "buyPricePPPDiff": 64.7,
+                "sellPricePPPDiff": 64.7,
+                "totalDailyDiff": 0.7,
+                "buyDailyDiff": 0.7,
+                "sellDailyDiff": 0,
+                "totalDailyDiffPlain": 700,
+                "buyDailyDiffPlain": 700,
+                "sellDailyDiffPlain": 0
+              }
+            }
+          ],
+          "instrumentInitialSize": 3,
+          "instrumentFilledSize": 0,
+          "instrumentCurrentSize": 3
+        }
+      }
+    },
+    "lastCalculation": 1794925844232
+  }
+}
+```
+
+```json Error · cuenta sin acceso
+{
+  "status": "ERROR",
+  "description": "No tiene acceso a la cuenta 30"
+}
+```
+
+```json Error · método sin acceso
+{
+  "status": "ERROR",
+  "message": "Access Denied"
+}
+```
+</ResponseExample>

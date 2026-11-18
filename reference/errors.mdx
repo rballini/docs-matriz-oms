@@ -1,0 +1,143 @@
+---
+title: "Errores"
+description: "Formato de las respuestas de error de Matriz OMS API y casos frecuentes."
+icon: "triangle-exclamation"
+---
+
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+Cuando un request falla, la API responde con `"status": "ERROR"` y, según el tipo de error, incluye el detalle en el campo **`description`**, en el campo **`message`** o en ambos.
+
+```json Formato general
+{
+  "status": "ERROR",
+  "description": "Detalle del error",
+  "message": null
+}
+```
+
+<Note>
+  Revisá siempre el campo `status` de la respuesta: un request puede devolver `ERROR` en el cuerpo aunque la conexión HTTP haya funcionado. Leé el detalle con `description` y, si no viene, con `message`.
+</Note>
+
+## Errores frecuentes
+
+| Caso | Campo con el detalle | Respuesta |
+| --- | --- | --- |
+| Cuenta sin acceso | `description` | `No tiene acceso a la cuenta 30` |
+| Cancelar una orden inexistente | `description` | `Order … doesn't exist` |
+| Símbolo inexistente | `description` | `Product … doesn't exist` |
+| Método sin acceso | `message` | `Access Denied` |
+
+<AccordionGroup>
+  <Accordion title="Cuenta sin acceso" icon="user-lock">
+    Se produce al operar o consultar una cuenta a la que tu usuario no tiene acceso.
+
+    ```json
+    {
+      "status": "ERROR",
+      "description": "No tiene acceso a la cuenta 30"
+    }
+    ```
+
+    **Qué revisar:** que el número de cuenta sea correcto y que tu usuario esté habilitado para operarla.
+  </Accordion>
+  <Accordion title="Cancelar una orden inexistente" icon="ban">
+    Se produce al cancelar una orden con un Client Order ID que no existe.
+
+    ```json
+    {
+      "status": "ERROR",
+      "description": "Order user1179499999999999 doesn't exist"
+    }
+    ```
+
+    **Qué revisar:** que uses el `clientId` devuelto al ingresar la orden y el `proprietary` correspondiente.
+  </Accordion>
+  <Accordion title="Símbolo inexistente" icon="magnifying-glass">
+    Se produce al usar un símbolo que no existe en el mercado indicado.
+
+    ```json
+    {
+      "status": "ERROR",
+      "description": "Product DLR/DIC99:ROFX doesn't exist"
+    }
+    ```
+
+    **Qué revisar:** el símbolo exacto (incluidos `/` y espacios) con [Lista de instrumentos disponibles](/reference-data/instruments/list), y que esté codificado en la URL.
+  </Accordion>
+  <Accordion title="Método sin acceso" icon="lock">
+    Se produce al invocar un método al que tu usuario no tiene acceso.
+
+    ```json
+    {
+      "status": "ERROR",
+      "message": "Access Denied"
+    }
+    ```
+
+    **Qué revisar:** que el token sea del dominio correcto (`api` o `api-risk`), que esté vigente y que tu perfil tenga permisos para el método.
+  </Accordion>
+</AccordionGroup>
+
+## Ruta inválida
+
+{/* [REVISAR_VIGENCIA] origen: Anexo Errores del PDF v1.21 (p. 50), presentado como alternativa al caso "Método sin acceso". No figura en el manual vigente. */}
+<RevisarVigencia dato="El caso de error “Ruta invalida”" />
+
+Al invocar un método que no existe, la API puede responder con el detalle en `description` y `message` vacío:
+
+```json
+{
+  "status": "ERROR",
+  "description": "Ruta invalida",
+  "message": ""
+}
+```
+
+**Qué revisar:** la ruta del endpoint (mayúsculas, prefijos y dominio).
+
+## Manejo de errores recomendado
+
+<CodeGroup>
+```python Python
+import requests
+
+
+class MatrizError(Exception):
+    """Error informado por Matriz OMS API en el cuerpo de la respuesta."""
+
+
+def verificar(respuesta: requests.Response) -> dict:
+    respuesta.raise_for_status()  # errores HTTP
+    datos = respuesta.json()
+    if datos.get("status") == "ERROR":
+        detalle = datos.get("description") or datos.get("message") or "Error sin detalle"
+        raise MatrizError(detalle)
+    return datos
+
+
+# Uso:
+# datos = verificar(requests.get(url, headers=headers, params=params, timeout=10))
+```
+
+```javascript Node.js
+class MatrizError extends Error {}
+
+async function verificar(respuesta) {
+  if (!respuesta.ok) {
+    throw new Error(`HTTP ${respuesta.status}`); // errores HTTP
+  }
+  const datos = await respuesta.json();
+  if (datos.status === "ERROR") {
+    throw new MatrizError(datos.description || datos.message || "Error sin detalle");
+  }
+  return datos;
+}
+
+// Uso:
+// const datos = await verificar(await fetch(url, { headers }));
+```
+</CodeGroup>
+
+{/* [PENDIENTE] Documentar: (1) los códigos HTTP asociados a cada caso; (2) la respuesta ante token vencido o inválido; (3) cómo se informan los errores en la API WebSocket. Ninguna fuente lo define. */}

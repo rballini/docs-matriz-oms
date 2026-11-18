@@ -1,0 +1,157 @@
+---
+title: "Descripción detallada de un instrumento"
+sidebarTitle: "Detalle de un instrumento"
+description: "Obtené las características operativas de un instrumento puntual: precios límite, ticks, volúmenes, vencimiento y tipos de orden soportados."
+api: "GET /rest/instruments/detail"
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+import InstrumentDetailFields from '/snippets/instrument-detail-fields.mdx';
+
+Este método devuelve la descripción detallada de **un solo instrumento**, el que se especifica en los parámetros.
+
+```http
+GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/instruments/detail
+```
+
+<Tip>
+  Consultá el detalle antes de enviar órdenes: te permite validar del lado de tu sistema el precio (`minPriceIncrement`, `lowLimitPrice`, `highLimitPrice`) y la cantidad (`minTradeVol`, `maxTradeVol`) antes de que el mercado rechace la orden.
+</Tip>
+
+## Parámetros
+
+<AuthHeader />
+
+<ParamField query="marketId" type="string" required>
+  ID del mercado al que pertenece el instrumento. Valor permitido: `ROFX`.
+</ParamField>
+
+<ParamField query="symbol" type="string" required>
+  Símbolo del instrumento. Ej.: `DLR/DIC26`.
+</ParamField>
+
+## Ejemplos de request
+
+<CodeGroup>
+```bash cURL
+# BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+curl --get "$BASE_URL/rest/instruments/detail" \
+  -H "X-Auth-Token: $MATRIZ_TOKEN" \
+  --data-urlencode "marketId=ROFX" \
+  --data-urlencode "symbol=DLR/DIC26"
+```
+
+```python Python
+import os
+import requests
+
+BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+TOKEN = os.environ["MATRIZ_TOKEN"]
+
+respuesta = requests.get(
+    f"{BASE_URL}/rest/instruments/detail",
+    headers={"X-Auth-Token": TOKEN},
+    params={"marketId": "ROFX", "symbol": "DLR/DIC26"},
+    timeout=10,
+)
+respuesta.raise_for_status()
+datos = respuesta.json()
+
+if datos["status"] == "OK":
+    instrumento = datos["instrument"]
+    print(instrumento["minPriceIncrement"], instrumento["maturityDate"])
+else:
+    print("Error:", datos.get("description") or datos.get("message"))
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+const params = new URLSearchParams({ marketId: "ROFX", symbol: "DLR/DIC26" });
+
+const respuesta = await fetch(`${BASE_URL}/rest/instruments/detail?${params}`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+});
+const datos = await respuesta.json();
+
+if (datos.status === "OK") {
+  console.log(datos.instrument.minPriceIncrement, datos.instrument.maturityDate);
+} else {
+  console.error("Error:", datos.description ?? datos.message);
+}
+```
+</CodeGroup>
+
+<Note>
+  Los símbolos contienen `/` y, en el caso de opciones, espacios (por ejemplo, `DLR/DIC26 1500 C`). Codificá siempre los parámetros de la URL: `--data-urlencode` en cURL, `params` en Python o `URLSearchParams` en JavaScript.
+</Note>
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+<ResponseField name="status" type="string">
+  Resultado del request: `OK` si fue exitoso o `ERROR` si falló. Ver [Errores](/reference/errors).
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Solo cuando `status` es `ERROR`: detalle del error. Ej.: el símbolo no existe.
+</ResponseField>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 16 y Anexo Diccionario (p. 51) */}
+<RevisarVigencia dato="La estructura y la descripción de los campos del objeto instrument" />
+
+<ResponseField name="instrument" type="object">
+  Detalle completo del instrumento solicitado.
+  <Expandable title="propiedades">
+    <InstrumentDetailFields />
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+```json Respuesta exitosa
+{
+  "status": "OK",
+  "instrument": {
+    "symbol": null,
+    "segment": { "marketSegmentId": "DDF", "marketId": "ROFX" },
+    "lowLimitPrice": 1350.0,
+    "highLimitPrice": 1650.0,
+    "minPriceIncrement": 0.05,
+    "minTradeVol": 1,
+    "maxTradeVol": 10000,
+    "tickSize": 1,
+    "contractMultiplier": 1000,
+    "roundLot": 1,
+    "priceConvertionFactor": 1,
+    "maturityDate": "20261230",
+    "currency": "ARS",
+    "orderTypes": ["STOP_LIMIT", "MARKET_TO_LIMIT", "MARKET", "LIMIT"],
+    "timesInForce": ["IOC", "DAY", "GTD"],
+    "securityType": null,
+    "settlType": null,
+    "instrumentPricePrecision": 2,
+    "instrumentSizePrecision": 0,
+    "securityId": null,
+    "securityIdSource": null,
+    "securityDescription": "DLR/DIC26",
+    "tickPriceRanges": {
+      "0": { "lowerLimit": 0, "upperLimit": null, "tick": 0.05 }
+    },
+    "cficode": "FXXXSX",
+    "instrumentId": { "marketId": "ROFX", "symbol": "DLR/DIC26" }
+  }
+}
+```
+
+```json Error · símbolo inexistente
+{
+  "status": "ERROR",
+  "description": "Product DLR/DIC99:ROFX doesn't exist"
+}
+```
+</ResponseExample>

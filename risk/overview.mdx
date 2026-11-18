@@ -1,0 +1,140 @@
+---
+title: "Matriz Risk API"
+sidebarTitle: "Introducción y autenticación"
+description: "API de gestión de riesgo para Administradores de ALyC: posiciones, detalle de posiciones y reporte de cuenta sobre el sistema RIMA."
+icon: "shield-halved"
+groups: ["alyc-admin"]
+---
+
+<Warning>
+  **API exclusiva para Administradores de ALyC.** Matriz Risk API expone funciones de WebAdmin y de gestión de riesgo. Solo pueden usarla usuarios con credenciales de **Administrador de ALyC** habilitadas sobre el dominio `api-risk.{urlbase}.(matrizoms|xoms).com.ar`. Las credenciales de trading del dominio `api` no tienen acceso a esta API.
+</Warning>
+
+{/* [PENDIENTE] Confirmar con el equipo técnico el prefijo /oms-webservices/rest de todas las rutas del dominio api-risk (nota pendiente del manual vigente). La documentación anterior usaba /rest/risk/... sin ese prefijo y autenticación HTTP Basic; el manual vigente indica token. */}
+
+**Matriz Risk API** es la interfaz que permite comunicarse con el sistema **RIMA (Risk Manager)**. Soporta consultas de **posiciones** y el **reporte de cuenta**.
+
+Todas sus rutas van contra el dominio **`api-risk`**, con el prefijo **`/oms-webservices/rest`**.
+
+```text
+https://api-risk.{urlbase}.(matrizoms|xoms).com.ar/oms-webservices/rest
+```
+
+## Métodos disponibles
+
+<CardGroup cols={1}>
+  <Card title="Posiciones de una cuenta" icon="list" href="/risk/positions">
+    `GET /oms-webservices/rest/risk/position/getPositions/{accountName}`
+  </Card>
+  <Card title="Detalle de posiciones" icon="table-list" href="/risk/detailed-positions">
+    `GET /oms-webservices/rest/risk/detailedPosition/{accountName}`
+  </Card>
+  <Card title="Reporte de cuenta" icon="file-invoice-dollar" href="/risk/account-report">
+    `GET /oms-webservices/rest/risk/accountReport/{accountName}`: garantías, márgenes, disponible para colateral, tenencia de moneda y diferencias diarias.
+  </Card>
+</CardGroup>
+
+## Autenticación
+
+Se usa el **mismo mecanismo** que en el dominio de Trading (token por headers), pero **contra el dominio de riesgo** y con el prefijo adicional `/oms-webservices/rest` en la URL.
+
+```http
+POST https://api-risk.{urlbase}.(matrizoms|xoms).com.ar/oms-webservices/rest/auth/getToken
+```
+
+<ParamField header="X-Username" type="string" required>
+  Usuario con perfil de Administrador de ALyC.
+</ParamField>
+
+<ParamField header="X-Password" type="string" required>
+  Contraseña del usuario.
+</ParamField>
+
+<ResponseField name="X-Auth-Token" type="string" required>
+  Token de acceso, en los **headers** de la respuesta. Usalo en el header `X-Auth-Token` de los requests posteriores contra el dominio `api-risk`. Validez: 24 horas.
+</ResponseField>
+
+<Warning>
+  **Un token por dominio.** El token obtenido en `api` no sirve para `api-risk`, y viceversa. Si tu sistema consulta ambas APIs, gestioná los dos tokens por separado.
+</Warning>
+
+<CodeGroup>
+```bash cURL
+# -i muestra los headers de la respuesta, donde viene X-Auth-Token
+curl -i -X POST "https://api-risk.demo.matrizoms.com.ar/oms-webservices/rest/auth/getToken" \
+  -H "X-Username: $MATRIZ_RISK_USERNAME" \
+  -H "X-Password: $MATRIZ_RISK_PASSWORD"
+```
+
+```python Python
+import os
+
+import requests
+
+URLBASE = os.environ["MATRIZ_URLBASE"]                    # ej.: "demo"
+DOMINIO = os.environ.get("MATRIZ_DOMINIO", "matrizoms")   # "matrizoms" o "xoms"
+RISK_URL = f"https://api-risk.{URLBASE}.{DOMINIO}.com.ar/oms-webservices/rest"
+
+respuesta = requests.post(
+    f"{RISK_URL}/auth/getToken",
+    headers={
+        "X-Username": os.environ["MATRIZ_RISK_USERNAME"],
+        "X-Password": os.environ["MATRIZ_RISK_PASSWORD"],
+    },
+    timeout=10,
+)
+respuesta.raise_for_status()
+risk_token = respuesta.headers["X-Auth-Token"]
+
+# Ejemplo: posiciones de la cuenta "30"
+posiciones = requests.get(
+    f"{RISK_URL}/risk/position/getPositions/30",
+    headers={"X-Auth-Token": risk_token},
+    timeout=30,
+)
+print(posiciones.json())
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const URLBASE = process.env.MATRIZ_URLBASE;                 // ej.: "demo"
+const DOMINIO = process.env.MATRIZ_DOMINIO ?? "matrizoms";  // "matrizoms" o "xoms"
+const RISK_URL = `https://api-risk.${URLBASE}.${DOMINIO}.com.ar/oms-webservices/rest`;
+
+const respuesta = await fetch(`${RISK_URL}/auth/getToken`, {
+  method: "POST",
+  headers: {
+    "X-Username": process.env.MATRIZ_RISK_USERNAME,
+    "X-Password": process.env.MATRIZ_RISK_PASSWORD,
+  },
+});
+if (!respuesta.ok) {
+  throw new Error(`No se pudo obtener el token de riesgo: HTTP ${respuesta.status}`);
+}
+const riskToken = respuesta.headers.get("X-Auth-Token");
+
+// Ejemplo: posiciones de la cuenta "30"
+const posiciones = await fetch(`${RISK_URL}/risk/position/getPositions/30`, {
+  headers: { "X-Auth-Token": riskToken },
+});
+console.log(await posiciones.json());
+```
+</CodeGroup>
+
+## Parámetro común: `accountName`
+
+Los tres métodos reciben la cuenta como **segmento de la ruta** (`{accountName}`), en formato **texto**. Ej.: `/risk/accountReport/30`.
+
+| Interfaz | Cómo se envía la cuenta |
+| --- | --- |
+| Risk API | `accountName` en la ruta · texto (`30`) |
+| API REST de Trading | `account` / `accountId` en la query · entero (`30`) |
+| API WebSocket | `account` en el mensaje · texto (`"30"`) |
+
+## Buenas prácticas
+
+- **Restringí el acceso:** usá estas credenciales solo en sistemas internos de la ALyC (backoffice, WebAdmin, monitoreo de riesgo), nunca en aplicaciones de clientes finales.
+- **No consultes en forma intensiva:** el reporte se basa en cálculos del Risk Manager. Usá el campo `lastCalculation` de la respuesta para saber cuándo se actualizaron los datos.
+- **Separá credenciales y tokens** de los dominios `api` y `api-risk`.
+
+{/* [PENDIENTE] Confirmar la frecuencia de recálculo de RIMA y si existen límites de consumo para el dominio api-risk. */}

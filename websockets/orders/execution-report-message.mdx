@@ -1,0 +1,337 @@
+---
+title: "Mensaje de Execution Report"
+sidebarTitle: "Execution Report (or)"
+description: "Estructura del mensaje or que envía el servidor con el estado actualizado de cada orden, y los estados posibles."
+---
+
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+import OrderFields from '/snippets/order-fields.mdx';
+
+El mensaje **`or`** (order report) es el que envía el servidor a **todos los suscriptos a los Execution Reports** de la cuenta de una orden, cada vez que su estado cambia.
+
+<Info>
+  Para recibir estos mensajes tenés que estar [suscripto a los Execution Reports](/websockets/orders/subscribe-execution-reports) de la cuenta. Los reportes llegan tanto para órdenes enviadas por WebSocket como para las ingresadas por otras vías en las cuentas suscriptas.
+</Info>
+
+{/* [PENDIENTE] Confirmar que los Execution Reports incluyen órdenes ingresadas por otras vías (REST, otras pantallas) en las cuentas suscriptas. */}
+
+## Estructura del mensaje
+
+<ResponseField name="type" type="string">
+  Tipo de mensaje. Valor fijo: `"or"`.
+</ResponseField>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, pp. 22 y 36 y Anexo Diccionario (p. 51). El manual vigente muestra orderId, clOrdId, accountId, instrumentId, status y text; el resto de los campos viene del documento anterior. */}
+<RevisarVigencia dato="Los campos timestamp, wsClOrdId y los campos de orderReport que no figuran en el ejemplo del manual vigente" />
+
+<ResponseField name="timestamp" type="integer">
+  Marca de tiempo del mensaje, en milisegundos desde epoch (Unix).
+</ResponseField>
+
+<ResponseField name="orderReport" type="object">
+  Estado actualizado de la orden.
+  <Expandable title="propiedades">
+    <OrderFields />
+    <ResponseField name="wsClOrdId" type="string">
+      Identificador propio enviado en el mensaje [`no`](/websockets/orders/new-order). Llega **solo en el primer Execution Report** de la orden (estado `PENDING_NEW` o `REJECTED`) y solo si se envió al ingresarla.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Estados posibles
+
+| Estado | Significado | ¿Sigue activa? |
+| --- | --- | --- |
+| `PENDING_NEW` | La orden fue enviada y está pendiente de aceptación por el mercado. | Pendiente |
+| `NEW` | La orden fue **aceptada** y está en el book sin operar. | Sí |
+| `PARTIALLY_FILLED` | La orden operó **parcialmente**; el remanente (`leavesQty`) sigue en el book. | Sí |
+| `FILLED` | La orden operó **totalmente**. | No |
+| `PENDING_CANCEL` | Hay una cancelación pendiente de confirmación. | Pendiente |
+| `CANCELLED` | La orden fue **cancelada**. El motivo viene en `text`. | No |
+| `PENDING_REPLACE` | Hay un reemplazo pendiente de confirmación. | Pendiente |
+| `REPLACED` | La orden fue reemplazada. | — |
+| `PENDING_APPROVAL` | La orden está pendiente de aprobación. | Pendiente |
+| `REJECTED` | La orden fue **rechazada**. El motivo viene en `text` y `orderId` llega en `null`. | No |
+
+{/* [REVISAR_VIGENCIA] origen: Anexo Diccionario del PDF v1.21 (p. 51) para PENDING_CANCEL, PENDING_REPLACE y PENDING_APPROVAL. Los demás estados figuran en el manual vigente. [PENDIENTE] Confirmar el significado operativo de PENDING_APPROVAL y de REPLACED, y en qué casos se usa cada uno. */}
+
+<Note>
+  Un reemplazo puede informarse con estado `CANCELLED` y texto `Reemplazada` para la versión anterior de la orden, como muestra el ejemplo de la pestaña **Reemplazada**. Ver también [Estados de una orden](/reference/order-statuses).
+</Note>
+
+{/* [PENDIENTE] Confirmar la secuencia completa de Execution Reports que genera un reemplazo (estado de la orden original y de la nueva). */}
+
+## Ejemplo de procesamiento
+
+<CodeGroup>
+```python Python
+# pip install "websockets>=14"
+import asyncio
+import json
+import os
+
+import websockets
+
+WS_URL = f"wss://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar/"
+TOKEN = os.environ["MATRIZ_TOKEN"]  # obtenido con POST /auth/getToken
+
+
+async def main() -> None:
+    async with websockets.connect(WS_URL, additional_headers={"X-Auth-Token": TOKEN}) as ws:
+        await ws.send(json.dumps({"type": "os", "account": {"id": "30"}}))
+
+        async for crudo in ws:
+            mensaje = json.loads(crudo)
+            if mensaje.get("type") != "or":
+                continue
+            r = mensaje["orderReport"]
+            estado = r["status"]
+            if estado in ("NEW", "PARTIALLY_FILLED"):
+                print(f"Activa {r['clOrdId']}: operado {r.get('cumQty', 0)} de {r['orderQty']}")
+            elif estado == "FILLED":
+                print(f"Operada {r['clOrdId']}: {r['cumQty']} @ {r['avgPx']}")
+            elif estado == "REJECTED":
+                print(f"Rechazada {r['clOrdId']}: {r.get('text')}")
+            elif estado == "CANCELLED":
+                print(f"Cancelada {r['clOrdId']}: {r.get('text')}")
+            else:
+                print(f"{estado} {r['clOrdId']}")
+
+
+asyncio.run(main())
+```
+
+```javascript Node.js
+// npm install ws   ·   Node.js 18 o superior (ES modules)
+import WebSocket from "ws";
+
+const WS_URL = `wss://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar/`;
+const ws = new WebSocket(WS_URL, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN }, // obtenido con POST /auth/getToken
+});
+
+ws.on("open", () => {
+  ws.send(JSON.stringify({"type": "os", "account": {"id": "30"}}));
+});
+
+ws.on("message", (datos) => {
+  const mensaje = JSON.parse(datos.toString());
+  if (mensaje.type !== "or") return;
+  const r = mensaje.orderReport;
+  switch (r.status) {
+    case "NEW":
+    case "PARTIALLY_FILLED":
+      console.log(`Activa ${r.clOrdId}: operado ${r.cumQty ?? 0} de ${r.orderQty}`);
+      break;
+    case "FILLED":
+      console.log(`Operada ${r.clOrdId}: ${r.cumQty} @ ${r.avgPx}`);
+      break;
+    case "REJECTED":
+      console.log(`Rechazada ${r.clOrdId}: ${r.text}`);
+      break;
+    case "CANCELLED":
+      console.log(`Cancelada ${r.clOrdId}: ${r.text}`);
+      break;
+    default:
+      console.log(`${r.status} ${r.clOrdId}`);
+  }
+});
+
+ws.on("error", (error) => console.error("Error de WebSocket:", error.message));
+```
+</CodeGroup>
+
+<ResponseExample>
+```json PENDING_NEW
+{
+  "type": "or",
+  "timestamp": 1794925415948,
+  "orderReport": {
+    "orderId": null,
+    "clOrdId": "user1179491234567890",
+    "proprietary": "PBCP",
+    "accountId": {
+      "id": "30"
+    },
+    "instrumentId": {
+      "marketId": "ROFX",
+      "symbol": "DLR/DIC26"
+    },
+    "price": 1596.0,
+    "orderQty": 10,
+    "ordType": "LIMIT",
+    "side": "BUY",
+    "timeInForce": "DAY",
+    "transactTime": "20261117-14:23:34",
+    "status": "PENDING_NEW",
+    "text": "Enviada",
+    "wsClOrdId": "alyc30-20261117-0001"
+  }
+}
+```
+
+```json NEW
+{
+  "type": "or",
+  "timestamp": 1794925415948,
+  "orderReport": {
+    "orderId": "1130835",
+    "clOrdId": "user1179491234567890",
+    "proprietary": "PBCP",
+    "execId": "261117142335-fix1-493",
+    "accountId": {
+      "id": "30"
+    },
+    "instrumentId": {
+      "marketId": "ROFX",
+      "symbol": "DLR/DIC26"
+    },
+    "price": 1596.0,
+    "orderQty": 10,
+    "ordType": "LIMIT",
+    "side": "BUY",
+    "timeInForce": "DAY",
+    "transactTime": "20261117-14:23:35",
+    "avgPx": 0,
+    "lastPx": 0,
+    "lastQty": 0,
+    "cumQty": 0,
+    "leavesQty": 10,
+    "status": "NEW",
+    "text": "Aceptada"
+  }
+}
+```
+
+```json PARTIALLY_FILLED
+{
+  "type": "or",
+  "timestamp": 1794925502113,
+  "orderReport": {
+    "orderId": "1130835",
+    "clOrdId": "user1179491234567890",
+    "proprietary": "PBCP",
+    "execId": "T3567020",
+    "accountId": {
+      "id": "30"
+    },
+    "instrumentId": {
+      "marketId": "ROFX",
+      "symbol": "DLR/DIC26"
+    },
+    "price": 1596.0,
+    "orderQty": 10,
+    "ordType": "LIMIT",
+    "side": "BUY",
+    "timeInForce": "DAY",
+    "transactTime": "20261117-14:25:02",
+    "avgPx": 1596.0,
+    "lastPx": 1596.0,
+    "lastQty": 4,
+    "cumQty": 4,
+    "leavesQty": 6,
+    "status": "PARTIALLY_FILLED",
+    "text": "Operada parcialmente"
+  }
+}
+```
+
+```json FILLED
+{
+  "type": "or",
+  "timestamp": 1794925561280,
+  "orderReport": {
+    "orderId": "1130835",
+    "clOrdId": "user1179491234567890",
+    "proprietary": "PBCP",
+    "execId": "T3567021",
+    "accountId": {
+      "id": "30"
+    },
+    "instrumentId": {
+      "marketId": "ROFX",
+      "symbol": "DLR/DIC26"
+    },
+    "price": 1596.0,
+    "orderQty": 10,
+    "ordType": "LIMIT",
+    "side": "BUY",
+    "timeInForce": "DAY",
+    "transactTime": "20261117-14:26:01",
+    "avgPx": 1596.0,
+    "lastPx": 1596.0,
+    "lastQty": 6,
+    "cumQty": 10,
+    "leavesQty": 0,
+    "status": "FILLED",
+    "text": "Operada"
+  }
+}
+```
+
+```json REJECTED
+{
+  "type": "or",
+  "timestamp": 1794925415948,
+  "orderReport": {
+    "orderId": null,
+    "clOrdId": "user1179491234567890",
+    "proprietary": "PBCP",
+    "execId": "261117142335-fix1-501",
+    "accountId": {
+      "id": "30"
+    },
+    "instrumentId": {
+      "marketId": "ROFX",
+      "symbol": "DLR/DIC26"
+    },
+    "price": 1596.0,
+    "orderQty": 10,
+    "ordType": "LIMIT",
+    "side": "BUY",
+    "timeInForce": "DAY",
+    "transactTime": "20261117-14:23:35",
+    "avgPx": 0,
+    "lastPx": 0,
+    "lastQty": 0,
+    "cumQty": 0,
+    "leavesQty": 0,
+    "status": "REJECTED",
+    "text": "Precio fuera de los límites permitidos"
+  }
+}
+```
+
+```json Reemplazada
+{
+  "type": "or",
+  "timestamp": 1794925895948,
+  "orderReport": {
+    "orderId": "1130835",
+    "clOrdId": "user1179491234567890",
+    "proprietary": "PBCP",
+    "execId": "261117143135-fix1-1368",
+    "accountId": {
+      "id": "30"
+    },
+    "instrumentId": {
+      "marketId": "ROFX",
+      "symbol": "DLR/DIC26"
+    },
+    "price": 1596.0,
+    "orderQty": 10,
+    "ordType": "LIMIT",
+    "side": "BUY",
+    "timeInForce": "DAY",
+    "transactTime": "20261117-14:31:35",
+    "avgPx": 0,
+    "lastPx": 0,
+    "lastQty": 0,
+    "cumQty": 0,
+    "leavesQty": 10,
+    "status": "CANCELLED",
+    "text": "Reemplazada"
+  }
+}
+```
+</ResponseExample>

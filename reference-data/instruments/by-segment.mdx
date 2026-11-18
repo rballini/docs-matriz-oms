@@ -1,0 +1,122 @@
+---
+title: "Lista de instrumentos por segmento"
+sidebarTitle: "Por segmento"
+description: "Listá todos los instrumentos que pertenecen a un mismo segmento de mercado."
+api: "GET /rest/instruments/bySegment"
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+Este método permite listar todos los instrumentos que pertenecen al mismo **segmento de mercado**. Podés obtener los segmentos habilitados con [Lista de segmentos disponibles](/reference-data/segments/list).
+
+```http
+GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/instruments/bySegment
+```
+
+## Parámetros
+
+<Warning>
+  Los nombres de los parámetros de este método llevan **mayúsculas**: `MarketSegmentID` y `MarketID`. Respetá exactamente esa escritura.
+</Warning>
+
+<AuthHeader />
+
+<ParamField query="MarketSegmentID" type="string" required>
+  Código que identifica al segmento. Valores posibles: `DDF`, `DDA`, `DUAL`, `U-DDF`, `U-DDA`, `U-DUAL`, `MERV`.
+</ParamField>
+
+<ParamField query="MarketID" type="string" required>
+  ID del mercado al que pertenece el segmento. Valor permitido: `ROFX`.
+</ParamField>
+
+{/* [PENDIENTE] Ninguna fuente describe los segmentos U-DDF, U-DDA y U-DUAL. Agregar su descripción. */}
+
+## Ejemplos de request
+
+Listar los instrumentos del segmento `DDF`:
+
+<CodeGroup>
+```bash cURL
+# BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+curl --get "$BASE_URL/rest/instruments/bySegment" \
+  -H "X-Auth-Token: $MATRIZ_TOKEN" \
+  --data-urlencode "MarketSegmentID=DDF" \
+  --data-urlencode "MarketID=ROFX"
+```
+
+```python Python
+import os
+import requests
+
+BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+TOKEN = os.environ["MATRIZ_TOKEN"]
+
+respuesta = requests.get(
+    f"{BASE_URL}/rest/instruments/bySegment",
+    headers={"X-Auth-Token": TOKEN},
+    params={"MarketSegmentID": "DDF", "MarketID": "ROFX"},
+    timeout=30,
+)
+respuesta.raise_for_status()
+
+for instrumento in respuesta.json()["instruments"]:
+    print(instrumento["symbol"])
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+const params = new URLSearchParams({ MarketSegmentID: "DDF", MarketID: "ROFX" });
+
+const respuesta = await fetch(`${BASE_URL}/rest/instruments/bySegment?${params}`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+});
+const datos = await respuesta.json();
+
+for (const { symbol } of datos.instruments) {
+  console.log(symbol);
+}
+```
+</CodeGroup>
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+<ResponseField name="status" type="string">
+  Resultado del request: `OK` si fue exitoso o `ERROR` si falló. Ver [Errores](/reference/errors).
+</ResponseField>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 19 */}
+<RevisarVigencia dato="La estructura del objeto instruments" />
+
+<ResponseField name="instruments" type="object[]">
+  Lista de instrumentos del segmento solicitado.
+  <Expandable title="propiedades">
+    <ResponseField name="marketId" type="string">
+      ID del mercado. Ej.: `ROFX`.
+    </ResponseField>
+    <ResponseField name="symbol" type="string">
+      Símbolo del instrumento. Ej.: `DLR/DIC26`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+```json Respuesta exitosa
+{
+  "status": "OK",
+  "instruments": [
+    { "marketId": "ROFX", "symbol": "DLR/DIC26" },
+    { "marketId": "ROFX", "symbol": "DLR/DIC26 1500 C" },
+    { "marketId": "ROFX", "symbol": "DLR/DIC26 1550 C" },
+    { "marketId": "ROFX", "symbol": "DLR/ENE27" },
+    { "marketId": "ROFX", "symbol": "DLR/DIC26/ENE27" }
+  ]
+}
+```
+</ResponseExample>

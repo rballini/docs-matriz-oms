@@ -1,0 +1,145 @@
+---
+title: "Cancelar una orden"
+sidebarTitle: "Cancelar orden"
+description: "Cancelá una orden ingresada en el mercado a partir de su Client Order ID."
+api: "GET /rest/order/cancelById"
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+import VerificarEstadoOrden from '/snippets/verificar-estado-orden.mdx';
+
+Permite **cancelar una orden** ingresada en el mercado. La orden se identifica por el Client Order ID (`clOrdId`) del request que se quiere cancelar.
+
+```http
+GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/order/cancelById
+```
+
+<Info>
+  La cancelación es un **request nuevo**: el mercado le asigna su propio Client Order ID, distinto del de alta, aunque ambos quedan asociados al mismo Order ID. Ver [Client Order ID vs. Order ID](/guides/client-order-id-vs-order-id).
+</Info>
+
+## Parámetros
+
+<AuthHeader />
+
+<ParamField query="clOrdId" type="string" required>
+  ID del request a cancelar: el valor devuelto en `order.clientId` al [ingresar la orden](/order-routing/new-order). Ej.: `user1179491234567890`.
+</ParamField>
+
+<ParamField query="proprietary" type="string" required>
+  ID del participante de mercado. Usá el valor devuelto en `order.proprietary` al ingresar la orden. Ej.: `PBCP`.
+</ParamField>
+
+## Ejemplos de request
+
+<CodeGroup>
+```bash cURL
+# BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+curl --get "$BASE_URL/rest/order/cancelById" \
+  -H "X-Auth-Token: $MATRIZ_TOKEN" \
+  --data-urlencode "clOrdId=user1179491234567890" \
+  --data-urlencode "proprietary=PBCP"
+```
+
+```python Python
+import os
+import requests
+
+BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+TOKEN = os.environ["MATRIZ_TOKEN"]
+
+respuesta = requests.get(
+    f"{BASE_URL}/rest/order/cancelById",
+    headers={"X-Auth-Token": TOKEN},
+    params={"clOrdId": "user1179491234567890", "proprietary": "PBCP"},
+    timeout=10,
+)
+respuesta.raise_for_status()
+datos = respuesta.json()
+
+if datos["status"] == "OK":
+    # Client Order ID propio del request de cancelación
+    print("Cancelación recibida. clOrdId:", datos["order"]["clientId"])
+else:
+    print("Error:", datos.get("description") or datos.get("message"))
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+const params = new URLSearchParams({
+  clOrdId: "user1179491234567890",
+  proprietary: "PBCP",
+});
+
+const respuesta = await fetch(`${BASE_URL}/rest/order/cancelById?${params}`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+});
+const datos = await respuesta.json();
+
+if (datos.status === "OK") {
+  // Client Order ID propio del request de cancelación
+  console.log("Cancelación recibida. clOrdId:", datos.order.clientId);
+} else {
+  console.error("Error:", datos.description ?? datos.message);
+}
+```
+</CodeGroup>
+
+## Verificá el resultado de la cancelación
+
+<VerificarEstadoOrden />
+
+<Tip>
+  Para confirmar la cancelación, consultá el estado con el `clientId` que devuelve **este** método: el estado `CANCELLED` queda asociado al request de cancelación, no al de alta. Ver [Todos los estados por Client Order ID](/order-routing/status/history-by-client-order-id).
+</Tip>
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 26. El manual vigente confirma que la cancelación devuelve un Client Order ID propio; la estructura completa viene del documento anterior. */}
+<RevisarVigencia dato="La estructura de la respuesta de la cancelación" />
+
+<ResponseField name="status" type="string">
+  `OK` si el request fue **recibido**; `ERROR` si falló. Ver [Errores](/reference/errors).
+</ResponseField>
+
+<ResponseField name="order" type="object">
+  Identificación del request de cancelación.
+  <Expandable title="propiedades">
+    <ResponseField name="clientId" type="string">
+      Client Order ID del request de cancelación, distinto del de alta.
+    </ResponseField>
+    <ResponseField name="proprietary" type="string">
+      Participante de mercado del request.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Solo cuando `status` es `ERROR`: detalle del error.
+</ResponseField>
+
+<ResponseExample>
+```json Request recibido
+{
+  "status": "OK",
+  "order": {
+    "clientId": "user1179491234567890Cnl5",
+    "proprietary": "PBCP"
+  }
+}
+```
+
+```json Error · orden inexistente
+{
+  "status": "ERROR",
+  "description": "Order user1179499999999999 doesn't exist"
+}
+```
+</ResponseExample>

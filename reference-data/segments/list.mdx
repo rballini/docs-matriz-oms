@@ -1,0 +1,125 @@
+---
+title: "Lista de segmentos disponibles"
+sidebarTitle: "Segmentos"
+description: "Obtené los segmentos o ruedas de negociación en los que está organizada la operatoria de A3 Mercados y BYMA."
+api: "GET /rest/segment/all"
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+Los **segmentos** son los distintos ambientes o ruedas de negociación en los que está organizada la operatoria de **A3 Mercados** y **BYMA**: `DDF`, `DDA`, `DUAL`, `MERV`, entre otros.
+
+Este método devuelve la lista de segmentos disponibles. Usá el valor de `marketSegmentId` para filtrar instrumentos con [Lista de instrumentos por segmento](/reference-data/instruments/by-segment).
+
+```http
+GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/segment/all
+```
+
+## Parámetros
+
+Este método **no recibe parámetros**. Solo requiere el header de autenticación.
+
+<AuthHeader />
+
+## Ejemplos de request
+
+<CodeGroup>
+```bash cURL
+# BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+curl "$BASE_URL/rest/segment/all" \
+  -H "X-Auth-Token: $MATRIZ_TOKEN"
+```
+
+```python Python
+import os
+import requests
+
+BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+TOKEN = os.environ["MATRIZ_TOKEN"]
+
+respuesta = requests.get(
+    f"{BASE_URL}/rest/segment/all",
+    headers={"X-Auth-Token": TOKEN},
+    timeout=10,
+)
+respuesta.raise_for_status()
+
+for segmento in respuesta.json()["segments"]:
+    print(segmento["marketSegmentId"], segmento["marketId"])
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+const respuesta = await fetch(`${BASE_URL}/rest/segment/all`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+});
+const datos = await respuesta.json();
+
+for (const { marketSegmentId, marketId } of datos.segments) {
+  console.log(marketSegmentId, marketId);
+}
+```
+</CodeGroup>
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+<ResponseField name="status" type="string">
+  Resultado del request: `OK` si fue exitoso o `ERROR` si falló. Ver [Errores](/reference/errors).
+</ResponseField>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 12 y Anexo Diccionario (p. 51) */}
+<RevisarVigencia dato="La estructura del objeto segments" />
+
+<ResponseField name="segments" type="object[]">
+  Lista de segmentos disponibles.
+  <Expandable title="propiedades">
+    <ResponseField name="marketSegmentId" type="string">
+      Identificador del segmento. Ej.: `DDF`.
+    </ResponseField>
+    <ResponseField name="marketId" type="string">
+      ID del mercado al que pertenece el segmento. Ej.: `ROFX`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Segmentos habituales
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 12. El manual vigente solo enumera los códigos; las descripciones vienen del documento anterior. */}
+<RevisarVigencia dato="La descripción de cada segmento" />
+
+| Segmento | Descripción |
+| --- | --- |
+| `DDF` | Instrumentos de la División Derivados Financieros. |
+| `DDA` | Instrumentos de la División Derivados Agropecuarios. |
+| `DUAL` | Instrumentos listados en ambas divisiones. |
+| `MERV` | Instrumentos de mercados externos a A3 Mercados. |
+
+El método de [instrumentos por segmento](/reference-data/instruments/by-segment) acepta, además, las variantes `U-DDF`, `U-DDA` y `U-DUAL`.
+
+<ResponseExample>
+```json Respuesta exitosa
+{
+  "status": "OK",
+  "segments": [
+    { "marketSegmentId": "DDF", "marketId": "ROFX" },
+    { "marketSegmentId": "DDA", "marketId": "ROFX" },
+    { "marketSegmentId": "DUAL", "marketId": "ROFX" },
+    { "marketSegmentId": "MERV", "marketId": "ROFX" }
+  ]
+}
+```
+
+```json Error · método sin acceso
+{
+  "status": "ERROR",
+  "message": "Access Denied"
+}
+```
+</ResponseExample>

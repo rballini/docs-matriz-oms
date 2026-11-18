@@ -1,0 +1,185 @@
+---
+title: "Órdenes activas por cuenta"
+sidebarTitle: "Activas por cuenta"
+description: "Consultá el estado de las órdenes activas de una cuenta. Es la consulta principal por cuenta."
+api: "GET /rest/order/actives"
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+import OrderFields from '/snippets/order-fields.mdx';
+
+Devuelve el **estado de las órdenes activas** de una cuenta, identificada por su **Account ID**. Es la **consulta principal por cuenta**: usala para conocer qué órdenes siguen vivas en el mercado.
+
+```http
+GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/order/actives
+```
+
+<Info>
+  Se consideran **activas** las órdenes en estado `NEW` (aceptada, sin operar) o `PARTIALLY_FILLED` (parcialmente operada, con remanente vivo).
+</Info>
+
+### Otras consultas por cuenta
+
+| Necesitás… | Usá |
+| --- | --- |
+| Las órdenes vivas de la cuenta | **Esta consulta** (`/rest/order/actives`) |
+| Las órdenes total o parcialmente operadas | [Órdenes operadas por cuenta](/order-routing/status/filled-by-account) |
+| El último estado de **todos** los requests de la cuenta | [Estado de todas las órdenes por cuenta](/order-routing/status/all-by-account) |
+
+## Parámetros
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 30 (URL de ejemplo /rest/order/actives?accountId=10). El manual vigente define el endpoint, pero no sus parámetros ni su respuesta. */}
+<RevisarVigencia dato="El nombre del parámetro accountId y la estructura de la respuesta" />
+
+<AuthHeader />
+
+<ParamField query="accountId" type="integer" required>
+  Número de cuenta. En la API REST es un **entero**. Ej.: `30`.
+</ParamField>
+
+<Note>
+  En la API REST la cuenta se envía como **entero** (`accountId=30`), pero en la respuesta llega como **texto** dentro de `accountId.id` (`"id": "30"`). En la API WebSocket la cuenta siempre se envía como texto. Ver la aclaración completa en [Ingresar una orden](/order-routing/new-order).
+</Note>
+
+{/* [PENDIENTE] Confirmar que "activas" incluye exactamente NEW y PARTIALLY_FILLED (criterio tomado de snapshotOnlyActive en WebSocket) y si también incluye estados PENDING_*. */}
+
+## Ejemplos de request
+
+<CodeGroup>
+```bash cURL
+# BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+curl --get "$BASE_URL/rest/order/actives" \
+  -H "X-Auth-Token: $MATRIZ_TOKEN" \
+  --data-urlencode "accountId=30"
+```
+
+```python Python
+import os
+import requests
+
+BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+TOKEN = os.environ["MATRIZ_TOKEN"]
+
+respuesta = requests.get(
+    f"{BASE_URL}/rest/order/actives",
+    headers={"X-Auth-Token": TOKEN},
+    params={"accountId": 30},
+    timeout=10,
+)
+respuesta.raise_for_status()
+datos = respuesta.json()
+
+if datos["status"] == "OK":
+    for orden in datos["orders"]:
+        print(orden["clOrdId"], orden["status"], orden["cumQty"], "/", orden["orderQty"])
+else:
+    print("Error:", datos.get("description") or datos.get("message"))
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+const params = new URLSearchParams({ accountId: "30" });
+
+const respuesta = await fetch(`${BASE_URL}/rest/order/actives?${params}`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+});
+const datos = await respuesta.json();
+
+if (datos.status === "OK") {
+  for (const orden of datos.orders) {
+    console.log(orden.clOrdId, orden.status, `${orden.cumQty}/${orden.orderQty}`);
+  }
+} else {
+  console.error("Error:", datos.description ?? datos.message);
+}
+```
+</CodeGroup>
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+<ResponseField name="status" type="string">
+  Resultado del request: `OK` si fue exitoso o `ERROR` si falló. Este `status` es el del request, no el de la orden: el estado de cada orden viene en su propio campo `status`. Ver [Errores](/reference/errors).
+</ResponseField>
+
+<ResponseField name="orders" type="object[]">
+  Lista de órdenes activas de la cuenta, con su último estado.
+  <Expandable title="propiedades de cada orden">
+    <OrderFields />
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+```json Respuesta exitosa
+{
+  "status": "OK",
+  "orders": [
+    {
+      "orderId": "1130835",
+      "clOrdId": "user1179491234567890",
+      "proprietary": "PBCP",
+      "execId": "261117142335-fix1-493",
+      "accountId": {
+        "id": "30"
+      },
+      "instrumentId": {
+        "marketId": "ROFX",
+        "symbol": "DLR/DIC26"
+      },
+      "price": 1596.0,
+      "orderQty": 10,
+      "ordType": "LIMIT",
+      "side": "BUY",
+      "timeInForce": "DAY",
+      "transactTime": "20261117-14:23:35",
+      "avgPx": 0,
+      "lastPx": 0,
+      "lastQty": 0,
+      "cumQty": 0,
+      "leavesQty": 10,
+      "status": "NEW",
+      "text": "Aceptada"
+    },
+    {
+      "orderId": "1130841",
+      "clOrdId": "user1179491234567912",
+      "proprietary": "PBCP",
+      "execId": "T3567021",
+      "accountId": {
+        "id": "30"
+      },
+      "instrumentId": {
+        "marketId": "ROFX",
+        "symbol": "DLR/DIC26"
+      },
+      "price": 1599.5,
+      "orderQty": 20,
+      "ordType": "LIMIT",
+      "side": "SELL",
+      "timeInForce": "DAY",
+      "transactTime": "20261117-14:41:02",
+      "avgPx": 1599.5,
+      "lastPx": 1599.5,
+      "lastQty": 8,
+      "cumQty": 8,
+      "leavesQty": 12,
+      "status": "PARTIALLY_FILLED",
+      "text": "Operada parcialmente"
+    }
+  ]
+}
+```
+
+```json Error · cuenta sin acceso
+{
+  "status": "ERROR",
+  "description": "No tiene acceso a la cuenta 30"
+}
+```
+</ResponseExample>

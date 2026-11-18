@@ -1,0 +1,223 @@
+---
+title: "Posiciones de una cuenta"
+sidebarTitle: "Posiciones"
+description: "Consultá las posiciones abiertas de una cuenta en Matriz Risk API."
+api: "GET /oms-webservices/rest/risk/position/getPositions/{accountName}"
+groups: ["alyc-admin"]
+---
+
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+<Warning>
+  **API exclusiva para Administradores de ALyC.** Matriz Risk API expone funciones de WebAdmin y de gestión de riesgo. Solo pueden usarla usuarios con credenciales de **Administrador de ALyC** habilitadas sobre el dominio `api-risk.{urlbase}.(matrizoms|xoms).com.ar`. Las credenciales de trading del dominio `api` no tienen acceso a esta API.
+</Warning>
+
+{/* [PENDIENTE] Confirmar con el equipo técnico el prefijo /oms-webservices/rest de todas las rutas del dominio api-risk (nota pendiente del manual vigente). La documentación anterior usaba /rest/risk/... sin ese prefijo y autenticación HTTP Basic; el manual vigente indica token. */}
+
+Devuelve las **posiciones** de la cuenta indicada: cantidades y precios comprados y vendidos por instrumento, con sus diferencias.
+
+```http
+GET https://api-risk.{urlbase}.(matrizoms|xoms).com.ar/oms-webservices/rest/risk/position/getPositions/{accountName}
+```
+
+## Parámetros
+
+<ParamField header="X-Auth-Token" type="string" required>
+  Token de acceso obtenido con `POST /oms-webservices/rest/auth/getToken` contra el dominio **`api-risk`**. Es distinto del token del dominio `api`. Validez: 24 horas. Ver [Matriz Risk API](/risk/overview).
+</ParamField>
+
+<ParamField path="accountName" type="string" required>
+  Nombre de la cuenta a consultar. Ej.: `30`. Va como **segmento de la ruta**, no como query parameter.
+</ParamField>
+
+## Ejemplos de request
+
+<CodeGroup>
+```bash cURL
+# RISK_URL=https://api-risk.{urlbase}.matrizoms.com.ar/oms-webservices/rest  (o .xoms.com.ar)
+# RISK_TOKEN: token obtenido contra el dominio api-risk
+curl "$RISK_URL/risk/position/getPositions/30" \
+  -H "X-Auth-Token: $RISK_TOKEN"
+```
+
+```python Python
+import os
+from urllib.parse import quote
+
+import requests
+
+RISK_URL = (
+    f"https://api-risk.{os.environ['MATRIZ_URLBASE']}."
+    f"{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar/oms-webservices/rest"
+)
+TOKEN = os.environ["MATRIZ_RISK_TOKEN"]  # token del dominio api-risk
+CUENTA = "30"
+
+respuesta = requests.get(
+    f"{RISK_URL}/risk/position/getPositions/{quote(CUENTA)}",
+    headers={"X-Auth-Token": TOKEN},
+    timeout=30,
+)
+respuesta.raise_for_status()
+datos = respuesta.json()
+
+if datos["status"] == "OK":
+    for p in datos["positions"]:
+        neto = p["buySize"] - p["sellSize"]
+        print(f"{p['tradingSymbol']}: neto {neto} | diferencia diaria {p['totalDailyDiff']}")
+else:
+    print("Error:", datos.get("description") or datos.get("message"))
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const RISK_URL = `https://api-risk.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar/oms-webservices/rest`;
+const CUENTA = "30";
+
+const respuesta = await fetch(`${RISK_URL}/risk/position/getPositions/${encodeURIComponent(CUENTA)}`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_RISK_TOKEN }, // token del dominio api-risk
+});
+const datos = await respuesta.json();
+
+if (datos.status === "OK") {
+  for (const p of datos.positions) {
+    const neto = p.buySize - p.sellSize;
+    console.log(`${p.tradingSymbol}: neto ${neto} | diferencia diaria ${p.totalDailyDiff}`);
+  }
+} else {
+  console.error("Error:", datos.description ?? datos.message);
+}
+```
+</CodeGroup>
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, pp. 43-44. El manual vigente define el endpoint y su parámetro, pero no la respuesta. */}
+<RevisarVigencia dato="La estructura y la descripción de los campos de la respuesta de posiciones" />
+
+<ResponseField name="status" type="string">
+  Resultado del request: `OK` o `ERROR`. Ver [Errores](/reference/errors).
+</ResponseField>
+
+<ResponseField name="positions" type="object[]">
+  Posiciones de la cuenta, una por instrumento.
+  <Expandable title="propiedades de cada posición">
+    <ResponseField name="instrument" type="object">
+      Referencia del instrumento en el Risk Manager.
+      <Expandable title="propiedades">
+        <ResponseField name="symbolReference" type="string">
+          Referencia del instrumento. Puede diferir del símbolo de negociación (ej.: `DLR122026` para `DLR/DIC26`).
+        </ResponseField>
+        <ResponseField name="settlType" type="integer">
+          Tipo de liquidación. Solo aparece en algunos instrumentos (por ejemplo, los de BYMA).
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="symbol" type="string">
+      Símbolo del instrumento.
+    </ResponseField>
+    <ResponseField name="tradingSymbol" type="string">
+      Símbolo de negociación. Para instrumentos de BYMA tiene el formato `MERV - XMEV - <especie> - <plazo>`.
+    </ResponseField>
+    <ResponseField name="buySize" type="number">
+      Cantidad comprada.
+    </ResponseField>
+    <ResponseField name="buyPrice" type="number">
+      Precio de compra.
+    </ResponseField>
+    <ResponseField name="sellSize" type="number">
+      Cantidad vendida.
+    </ResponseField>
+    <ResponseField name="sellPrice" type="number">
+      Precio de venta.
+    </ResponseField>
+    <ResponseField name="totalDailyDiff" type="number">
+      Diferencia diaria total de la posición.
+    </ResponseField>
+    <ResponseField name="totalDiff" type="number">
+      Diferencia total de la posición.
+    </ResponseField>
+    <ResponseField name="originalBuyPrice" type="number">
+      Precio de compra original.
+    </ResponseField>
+    <ResponseField name="originalSellPrice" type="number">
+      Precio de venta original.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+{/* [PENDIENTE] Obtener definiciones oficiales de: totalDailyDiff, totalDiff (base de cálculo y moneda), originalBuyPrice / originalSellPrice (cuándo difieren de buyPrice / sellPrice), buyPrice / sellPrice (precio promedio o último) y los valores posibles de settlType. Confirmar también la nomenclatura de symbolReference para futuros. */}
+
+<ResponseExample>
+```json Respuesta exitosa
+{
+  "status": "OK",
+  "positions": [
+    {
+      "instrument": {
+        "symbolReference": "DLR122026"
+      },
+      "symbol": "DLR/DIC26",
+      "buySize": 10,
+      "buyPrice": 1596.0,
+      "sellSize": 0,
+      "sellPrice": 0,
+      "totalDailyDiff": -5000.0,
+      "totalDiff": 12000.0,
+      "tradingSymbol": "DLR/DIC26",
+      "originalBuyPrice": 0,
+      "originalSellPrice": 0
+    },
+    {
+      "instrument": {
+        "symbolReference": "DLR/DIC26 1500 C"
+      },
+      "symbol": "DLR/DIC26 1500 C",
+      "buySize": 0,
+      "buyPrice": 0,
+      "sellSize": 2,
+      "sellPrice": 101.5,
+      "totalDailyDiff": -1300.0,
+      "totalDiff": -900.0,
+      "tradingSymbol": "DLR/DIC26 1500 C",
+      "originalBuyPrice": 0,
+      "originalSellPrice": 0
+    },
+    {
+      "instrument": {
+        "symbolReference": "AL30",
+        "settlType": 0
+      },
+      "symbol": "MERV - XMEV - AL30 - CI",
+      "buySize": 100,
+      "buyPrice": 0.8215,
+      "sellSize": 0,
+      "sellPrice": 0,
+      "totalDailyDiff": 745.0,
+      "totalDiff": 1120.0,
+      "tradingSymbol": "MERV - XMEV - AL30 - CI",
+      "originalBuyPrice": 0,
+      "originalSellPrice": 0
+    }
+  ]
+}
+```
+
+```json Error · cuenta sin acceso
+{
+  "status": "ERROR",
+  "description": "No tiene acceso a la cuenta 30"
+}
+```
+
+```json Error · método sin acceso
+{
+  "status": "ERROR",
+  "message": "Access Denied"
+}
+```
+</ResponseExample>

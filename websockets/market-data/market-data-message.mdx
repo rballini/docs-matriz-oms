@@ -1,0 +1,182 @@
+---
+title: "Mensaje de Market Data"
+sidebarTitle: "Market Data (Md)"
+description: "Estructura del mensaje Md que envía el servidor con la Market Data actualizada de cada instrumento suscripto."
+---
+
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+El mensaje **`Md`** es el que envía el servidor a **todos los suscriptos a la Market Data** de un instrumento, cada vez que esta cambia. Llega un mensaje por instrumento, con los entries pedidos en la [suscripción](/websockets/market-data/subscribe).
+
+<Info>
+  El campo `type` llega como **`"Md"`**, con M mayúscula. Si filtrás mensajes por tipo, respetá mayúsculas y minúsculas.
+</Info>
+
+## Estructura del mensaje
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, pp. 40-41. El manual vigente no documenta el mensaje Md recibido. */}
+<RevisarVigencia dato="La estructura completa del mensaje Md" />
+
+<ResponseField name="type" type="string">
+  Tipo de mensaje. Valor fijo: `"Md"`.
+</ResponseField>
+
+<ResponseField name="instrumentId" type="object">
+  Instrumento al que corresponde la Market Data.
+  <Expandable title="propiedades">
+    <ResponseField name="marketId" type="string">
+      ID del mercado. Ej.: `"ROFX"`.
+    </ResponseField>
+    <ResponseField name="symbol" type="string">
+      Símbolo del instrumento. Ej.: `"DLR/DIC26"`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="marketData" type="object">
+  Objeto con una clave por cada entry solicitado.
+  <Expandable title="propiedades">
+    <ResponseField name="BI" type="object[]">
+      Puntas compradoras, de la mejor a la peor. La cantidad de niveles depende de `depth`.
+      <Expandable title="propiedades de cada nivel">
+        <ResponseField name="price" type="number">
+          Precio del nivel.
+        </ResponseField>
+        <ResponseField name="size" type="number">
+          Cantidad en ese nivel.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="OF" type="object[]">
+      Puntas vendedoras, de la mejor a la peor. Misma estructura que `BI`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+{/* [PENDIENTE] Las fuentes solo muestran la estructura de BI y OF en el mensaje Md. Confirmar la estructura del resto de los entries (LA, OP, CL, SE, HI, LO, TV, OI, IV, EV, NV, ACP) y si coincide con la de Market Data REST (price, size, date). Confirmar también si cada mensaje trae todos los entries suscriptos o solo los que cambiaron, y si incluye timestamp. */}
+
+<Tip>
+  Procesá cada mensaje validando la presencia de cada entry antes de usarlo: un entry sin dato puede no venir o venir vacío. Para los entries que no son puntas, consultá la estructura de referencia en [Market Data (REST)](/market-data/snapshot).
+</Tip>
+
+## Ejemplo de procesamiento
+
+Ejemplo que mantiene en memoria el último book recibido de cada instrumento:
+
+<CodeGroup>
+```python Python
+# pip install "websockets>=14"
+import asyncio
+import json
+import os
+
+import websockets
+
+WS_URL = f"wss://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar/"
+TOKEN = os.environ["MATRIZ_TOKEN"]  # obtenido con POST /auth/getToken
+
+books: dict[str, dict] = {}
+
+
+async def main() -> None:
+    async with websockets.connect(WS_URL, additional_headers={"X-Auth-Token": TOKEN}) as ws:
+        await ws.send(json.dumps({"type": "smd", "level": 1, "entries": ["BI", "OF"], "products": [{"symbol": "DLR/DIC26", "marketId": "ROFX"}], "depth": 2}))
+
+        async for crudo in ws:
+            mensaje = json.loads(crudo)
+            if mensaje.get("type") != "Md":
+                continue
+            simbolo = mensaje["instrumentId"]["symbol"]
+            books.setdefault(simbolo, {}).update(mensaje["marketData"])
+            book = books[simbolo]
+            mejor_compra = (book.get("BI") or [None])[0]
+            mejor_venta = (book.get("OF") or [None])[0]
+            print(simbolo, "compra:", mejor_compra, "venta:", mejor_venta)
+
+
+asyncio.run(main())
+```
+
+```javascript Node.js
+// npm install ws   ·   Node.js 18 o superior (ES modules)
+import WebSocket from "ws";
+
+const WS_URL = `wss://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar/`;
+const ws = new WebSocket(WS_URL, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN }, // obtenido con POST /auth/getToken
+});
+
+const books = new Map();
+
+ws.on("open", () => {
+  ws.send(JSON.stringify({"type": "smd", "level": 1, "entries": ["BI", "OF"], "products": [{"symbol": "DLR/DIC26", "marketId": "ROFX"}], "depth": 2}));
+});
+
+ws.on("message", (datos) => {
+  const mensaje = JSON.parse(datos.toString());
+  if (mensaje.type !== "Md") return;
+  const simbolo = mensaje.instrumentId.symbol;
+  const book = { ...(books.get(simbolo) ?? {}), ...mensaje.marketData };
+  books.set(simbolo, book);
+  console.log(simbolo, "compra:", book.BI?.[0], "venta:", book.OF?.[0]);
+});
+
+ws.on("error", (error) => console.error("Error de WebSocket:", error.message));
+```
+</CodeGroup>
+
+<ResponseExample>
+```json Suscripción a OF con profundidad 2
+{
+  "type": "Md",
+  "instrumentId": {
+    "marketId": "ROFX",
+    "symbol": "DLR/DIC26"
+  },
+  "marketData": {
+    "OF": [
+      {
+        "price": 1596.5,
+        "size": 21
+      },
+      {
+        "price": 1597.0,
+        "size": 13
+      }
+    ]
+  }
+}
+```
+
+```json Suscripción a BI y OF con profundidad 2
+{
+  "type": "Md",
+  "instrumentId": {
+    "marketId": "ROFX",
+    "symbol": "DLR/DIC26"
+  },
+  "marketData": {
+    "BI": [
+      {
+        "price": 1595.5,
+        "size": 15
+      },
+      {
+        "price": 1595.0,
+        "size": 40
+      }
+    ],
+    "OF": [
+      {
+        "price": 1596.5,
+        "size": 21
+      },
+      {
+        "price": 1597.0,
+        "size": 13
+      }
+    ]
+  }
+}
+```
+</ResponseExample>

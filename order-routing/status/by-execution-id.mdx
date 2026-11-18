@@ -1,0 +1,134 @@
+---
+title: "Estado de orden por Execution ID"
+sidebarTitle: "Por Execution ID"
+description: "Identificá qué orden está involucrada en una ejecución puntual a partir de su Execution ID."
+api: "GET /rest/order/byExecId"
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+import OrderFields from '/snippets/order-fields.mdx';
+
+Devuelve la **orden asociada a una ejecución puntual**, identificada por su **Execution ID** (`execId`). Te permite saber qué orden participó en una operación determinada.
+
+```http
+GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/order/byExecId
+```
+
+## Parámetros
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 34. El manual vigente define el endpoint y el campo execId, pero no los parámetros ni la respuesta de esta consulta. */}
+<RevisarVigencia dato="El parámetro execId de esta consulta y la estructura de la respuesta" />
+
+<AuthHeader />
+
+<ParamField query="execId" type="string" required>
+  ID de ejecución de la orden. Ej.: `T3567006`.
+</ParamField>
+
+## Ejemplos de request
+
+<CodeGroup>
+```bash cURL
+# BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+curl --get "$BASE_URL/rest/order/byExecId" \
+  -H "X-Auth-Token: $MATRIZ_TOKEN" \
+  --data-urlencode "execId=T3567006"
+```
+
+```python Python
+import os
+import requests
+
+BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+TOKEN = os.environ["MATRIZ_TOKEN"]
+
+respuesta = requests.get(
+    f"{BASE_URL}/rest/order/byExecId",
+    headers={"X-Auth-Token": TOKEN},
+    params={"execId": "T3567006"},
+    timeout=10,
+)
+respuesta.raise_for_status()
+datos = respuesta.json()
+
+if datos["status"] == "OK":
+    for orden in datos["orders"]:
+        print(orden["clOrdId"], orden["status"], orden["cumQty"], "/", orden["orderQty"])
+else:
+    print("Error:", datos.get("description") or datos.get("message"))
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+const params = new URLSearchParams({ execId: "T3567006" });
+
+const respuesta = await fetch(`${BASE_URL}/rest/order/byExecId?${params}`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+});
+const datos = await respuesta.json();
+
+if (datos.status === "OK") {
+  for (const orden of datos.orders) {
+    console.log(orden.clOrdId, orden.status, `${orden.cumQty}/${orden.orderQty}`);
+  }
+} else {
+  console.error("Error:", datos.description ?? datos.message);
+}
+```
+</CodeGroup>
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+<ResponseField name="status" type="string">
+  Resultado del request: `OK` si fue exitoso o `ERROR` si falló. Este `status` es el del request, no el de la orden: el estado de cada orden viene en su propio campo `status`. Ver [Errores](/reference/errors).
+</ResponseField>
+
+<ResponseField name="orders" type="object[]">
+  Orden u órdenes asociadas a la ejecución consultada.
+  <Expandable title="propiedades de cada orden">
+    <OrderFields />
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+```json Respuesta exitosa
+{
+  "status": "OK",
+  "orders": [
+    {
+      "orderId": "125366222",
+      "clOrdId": "user1179491234567855",
+      "proprietary": "PBCP",
+      "execId": "T3567006",
+      "accountId": {
+        "id": "30"
+      },
+      "instrumentId": {
+        "marketId": "ROFX",
+        "symbol": "DLR/DIC26"
+      },
+      "price": 1596.0,
+      "orderQty": 50,
+      "ordType": "LIMIT",
+      "side": "BUY",
+      "timeInForce": "DAY",
+      "transactTime": "20261117-14:23:35",
+      "avgPx": 1596.0,
+      "lastPx": 1596.0,
+      "lastQty": 50,
+      "cumQty": 50,
+      "leavesQty": 0,
+      "status": "FILLED",
+      "text": "Operada"
+    }
+  ]
+}
+```
+</ResponseExample>

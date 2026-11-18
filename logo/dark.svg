@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="40" viewBox="0 0 220 40" role="img" aria-label="Matriz OMS API">
+  <!-- PLACEHOLDER: reemplazar por el logo oficial (versión para fondo oscuro) -->
+  <rect x="0" y="4" width="32" height="32" rx="8" fill="#7B2CBF"/>
+  <path d="M8 28V12l8 9 8-9v16" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="42" y="27" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700" fill="#FFFFFF">Matriz OMS</text>
+  <text x="152" y="27" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#C9A7EB">API</text>
+</svg>

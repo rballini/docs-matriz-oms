@@ -1,0 +1,165 @@
+---
+title: "Todos los estados por Client Order ID"
+sidebarTitle: "Historial (clOrdId)"
+description: "Consultá el historial completo de estados por los que pasó un request puntual, identificado por su Client Order ID."
+api: "GET /rest/order/allById"
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+import OrderFields from '/snippets/order-fields.mdx';
+
+Devuelve el **historial completo de estados** de un request puntual, identificado por su **Client Order ID** (`clOrdId`).
+
+```http
+GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/order/allById
+```
+
+<Note>
+  Para un request de **alta**, el historial incluye todos los estados de la orden **excepto `CANCELLED`**: ese estado queda asociado al request de **cancelación**, que tiene su propio Client Order ID. Para ver la cancelación, consultá con el `clientId` que devolvió [Cancelar una orden](/order-routing/cancel-order).
+</Note>
+
+## Parámetros
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, pp. 28-29. El manual vigente lista el endpoint, pero no sus parámetros, su respuesta ni la regla sobre CANCELLED. */}
+<RevisarVigencia dato="Los parámetros, la estructura de la respuesta y la exclusión del estado CANCELLED" />
+
+<AuthHeader />
+
+<ParamField query="clOrdId" type="string" required>
+  Client Order ID del request a consultar: el valor devuelto en `order.clientId` al [ingresar](/order-routing/new-order), [reemplazar](/order-routing/replace-order) o [cancelar](/order-routing/cancel-order) una orden. Ej.: `user1179491234567890`.
+</ParamField>
+
+<ParamField query="proprietary" type="string" required>
+  ID del participante de mercado mediante el cual se hizo el request (fijo por cuenta). Usá el valor devuelto en `order.proprietary` junto con el `clientId`. Ej.: `PBCP`.
+</ParamField>
+
+{/* [PENDIENTE] Confirmar el valor de proprietary (el documento anterior usa "api" en sus ejemplos) y el orden en que se devuelven los estados (en el ejemplo, del más antiguo al más reciente). */}
+
+## Ejemplos de request
+
+<CodeGroup>
+```bash cURL
+# BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+curl --get "$BASE_URL/rest/order/allById" \
+  -H "X-Auth-Token: $MATRIZ_TOKEN" \
+  --data-urlencode "clOrdId=user1179491234567890" \
+  --data-urlencode "proprietary=PBCP"
+```
+
+```python Python
+import os
+import requests
+
+BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+TOKEN = os.environ["MATRIZ_TOKEN"]
+
+respuesta = requests.get(
+    f"{BASE_URL}/rest/order/allById",
+    headers={"X-Auth-Token": TOKEN},
+    params={"clOrdId": "user1179491234567890", "proprietary": "PBCP"},
+    timeout=10,
+)
+respuesta.raise_for_status()
+datos = respuesta.json()
+
+if datos["status"] == "OK":
+    for estado in datos["orders"]:
+        print(estado["transactTime"], estado["status"], estado["text"])
+else:
+    print("Error:", datos.get("description") or datos.get("message"))
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+const params = new URLSearchParams({ clOrdId: "user1179491234567890", proprietary: "PBCP" });
+
+const respuesta = await fetch(`${BASE_URL}/rest/order/allById?${params}`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+});
+const datos = await respuesta.json();
+
+if (datos.status === "OK") {
+  for (const estado of datos.orders) {
+    console.log(estado.transactTime, estado.status, estado.text);
+  }
+} else {
+  console.error("Error:", datos.description ?? datos.message);
+}
+```
+</CodeGroup>
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+<ResponseField name="status" type="string">
+  Resultado del request: `OK` si fue exitoso o `ERROR` si falló. Este `status` es el del request, no el de la orden: el estado de cada orden viene en su propio campo `status`. Ver [Errores](/reference/errors).
+</ResponseField>
+
+<ResponseField name="orders" type="object[]">
+  Lista de estados por los que pasó el request. En estados previos a la aceptación (por ejemplo, `PENDING_NEW`), `orderId` llega en `null` y no se informan `execId` ni los campos de ejecución.
+  <Expandable title="propiedades de cada orden">
+    <OrderFields />
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+```json Respuesta exitosa
+{
+  "status": "OK",
+  "orders": [
+    {
+      "orderId": null,
+      "clOrdId": "user1179491234567890",
+      "proprietary": "PBCP",
+      "accountId": {
+        "id": "30"
+      },
+      "instrumentId": {
+        "marketId": "ROFX",
+        "symbol": "DLR/DIC26"
+      },
+      "price": 1596.0,
+      "orderQty": 10,
+      "ordType": "LIMIT",
+      "side": "BUY",
+      "timeInForce": "DAY",
+      "transactTime": "20261117-14:23:34",
+      "status": "PENDING_NEW",
+      "text": "Enviada"
+    },
+    {
+      "orderId": "1130835",
+      "clOrdId": "user1179491234567890",
+      "proprietary": "PBCP",
+      "execId": "261117142335-fix1-493",
+      "accountId": {
+        "id": "30"
+      },
+      "instrumentId": {
+        "marketId": "ROFX",
+        "symbol": "DLR/DIC26"
+      },
+      "price": 1596.0,
+      "orderQty": 10,
+      "ordType": "LIMIT",
+      "side": "BUY",
+      "timeInForce": "DAY",
+      "transactTime": "20261117-14:23:35",
+      "avgPx": 0,
+      "lastPx": 0,
+      "lastQty": 0,
+      "cumQty": 0,
+      "leavesQty": 10,
+      "status": "NEW",
+      "text": "Aceptada"
+    }
+  ]
+}
+```
+</ResponseExample>

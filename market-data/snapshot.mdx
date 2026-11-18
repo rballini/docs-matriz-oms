@@ -1,0 +1,222 @@
+---
+title: "Market Data (REST)"
+sidebarTitle: "Último dato de mercado"
+description: "Obtené el último dato de mercado disponible de un instrumento: puntas del book, último precio, apertura, cierre, ajuste e interés abierto."
+api: "GET /rest/marketdata/get"
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+Este método devuelve la Market Data del instrumento indicado, con el **último dato disponible al momento del request**.
+
+<Info>
+  Las **cotizaciones en tiempo real requieren consumo vía WebSocket**. Si necesitás recibir cada cambio del book o cada operación a medida que ocurren, usá [Suscripción a Market Data](/websockets/market-data/subscribe) en lugar de consultar este método en forma repetida.
+</Info>
+
+```http
+GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/marketdata/get
+```
+
+## Parámetros
+
+<AuthHeader />
+
+<ParamField query="marketId" type="string" required>
+  ID del mercado al que pertenece el instrumento. Valor permitido: `ROFX`.
+</ParamField>
+
+<ParamField query="symbol" type="string" required>
+  Símbolo del instrumento. Ej.: `DLR/DIC26`.
+</ParamField>
+
+<ParamField query="entries" type="string" required>
+  Lista de entries de Market Data solicitados, **separados por coma**. Valores posibles: `BI`, `OF`, `LA`, `OP`, `CL`, `SE`, `OI`, `ACP`. Ej.: `BI,OF,LA`.
+</ParamField>
+
+<ParamField query="depth" type="integer" default="1">
+  Opcional. Profundidad del book solicitada, de `1` a `5`. Aplica a las puntas (`BI` y `OF`). Por defecto: `1`.
+</ParamField>
+
+<Accordion title="Qué significa cada entry" icon="table">
+  | Entry | Significado | Descripción |
+  | --- | --- | --- |
+  | `BI` | Bids | Mejor oferta de compra. |
+  | `OF` | Offers | Mejor oferta de venta. |
+  | `LA` | Last | Último precio operado. |
+  | `OP` | Opening Price | Precio de apertura. |
+  | `CL` | Closing Price | Precio de cierre de la rueda anterior. |
+  | `SE` | Settlement Price | Precio de ajuste (solo futuros). |
+  | `OI` | Open Interest | Interés abierto (solo futuros). |
+  | `ACP` | Auction Price | Precio de cierre del día corriente. |
+
+  Consultá la tabla completa, incluidos los entries disponibles por WebSocket, en [Market Data Entries](/reference/market-data-entries).
+</Accordion>
+
+## Ejemplos de request
+
+Puntas con profundidad 2, último precio, apertura, cierre, ajuste e interés abierto de `DLR/DIC26`:
+
+<CodeGroup>
+```bash cURL
+# BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+curl --get "$BASE_URL/rest/marketdata/get" \
+  -H "X-Auth-Token: $MATRIZ_TOKEN" \
+  --data-urlencode "marketId=ROFX" \
+  --data-urlencode "symbol=DLR/DIC26" \
+  --data-urlencode "entries=BI,OF,LA,OP,CL,SE,OI" \
+  --data-urlencode "depth=2"
+```
+
+```python Python
+import os
+import requests
+
+BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+TOKEN = os.environ["MATRIZ_TOKEN"]
+
+respuesta = requests.get(
+    f"{BASE_URL}/rest/marketdata/get",
+    headers={"X-Auth-Token": TOKEN},
+    params={
+        "marketId": "ROFX",
+        "symbol": "DLR/DIC26",
+        "entries": "BI,OF,LA,OP,CL,SE,OI",
+        "depth": 2,
+    },
+    timeout=10,
+)
+respuesta.raise_for_status()
+md = respuesta.json()["marketData"]
+
+mejor_compra = md["BI"][0] if md.get("BI") else None
+mejor_venta = md["OF"][0] if md.get("OF") else None
+print("Compra:", mejor_compra, "| Venta:", mejor_venta)
+print("Último:", md["LA"]["price"] if md.get("LA") else None)
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+const params = new URLSearchParams({
+  marketId: "ROFX",
+  symbol: "DLR/DIC26",
+  entries: "BI,OF,LA,OP,CL,SE,OI",
+  depth: "2",
+});
+
+const respuesta = await fetch(`${BASE_URL}/rest/marketdata/get?${params}`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+});
+const { marketData: md } = await respuesta.json();
+
+console.log("Compra:", md.BI?.[0], "| Venta:", md.OF?.[0]);
+console.log("Último:", md.LA?.price);
+```
+</CodeGroup>
+
+<Note>
+  `URLSearchParams` y `--data-urlencode` codifican las comas de `entries` como `%2C`; el servidor las decodifica igual que si se enviaran sin codificar.
+</Note>
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+<ResponseField name="status" type="string">
+  Resultado del request: `OK` si fue exitoso o `ERROR` si falló. Ver [Errores](/reference/errors).
+</ResponseField>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, pp. 38-39. El manual vigente define los parámetros y los entries, pero no la estructura de la respuesta. */}
+<RevisarVigencia dato="La estructura de la respuesta (objeto marketData y campos depth y aggregated)" />
+
+<ResponseField name="marketData" type="object">
+  Objeto con una clave por cada entry solicitado. Si un entry no tiene dato disponible, puede no venir en la respuesta o venir en `null`: validá su presencia antes de usarlo.
+  <Expandable title="propiedades">
+    <ResponseField name="BI" type="object[]">
+      Puntas compradoras, ordenadas de la mejor a la peor. La cantidad de niveles depende de `depth`.
+      <Expandable title="propiedades de cada nivel">
+        <ResponseField name="price" type="number">
+          Precio del nivel.
+        </ResponseField>
+        <ResponseField name="size" type="number">
+          Cantidad en ese nivel.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="OF" type="object[]">
+      Puntas vendedoras, ordenadas de la mejor a la peor. Misma estructura que `BI`.
+    </ResponseField>
+    <ResponseField name="LA" type="object">
+      Último precio operado.
+      <Expandable title="propiedades">
+        <ResponseField name="price" type="number">
+          Precio.
+        </ResponseField>
+        <ResponseField name="size" type="number | null">
+          Cantidad operada.
+        </ResponseField>
+        <ResponseField name="date" type="integer">
+          Fecha y hora del dato, en milisegundos desde epoch (Unix).
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="OP" type="number">
+      Precio de apertura. En el ejemplo llega como número, no como objeto.
+    </ResponseField>
+    <ResponseField name="CL" type="object">
+      Precio de cierre de la rueda anterior. Misma estructura que `LA` (`price`, `size`, `date`).
+    </ResponseField>
+    <ResponseField name="SE" type="object">
+      Precio de ajuste (solo futuros). Misma estructura que `LA` (`price`, `size`, `date`).
+    </ResponseField>
+    <ResponseField name="OI" type="object">
+      Interés abierto (solo futuros). El valor viene en `size`; `price` llega en `null`. Incluye `date`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="depth" type="integer">
+  Profundidad del book devuelta.
+</ResponseField>
+
+<ResponseField name="aggregated" type="boolean">
+  Indicador booleano informado por la API junto con el book.
+</ResponseField>
+
+{/* [PENDIENTE] Ninguna fuente define el significado de "aggregated" ni la estructura de ACP en la respuesta REST. Confirmar con el equipo técnico. */}
+
+<ResponseExample>
+```json Respuesta exitosa
+{
+  "status": "OK",
+  "marketData": {
+    "BI": [
+      { "price": 1479.75, "size": 275 },
+      { "price": 1478.95, "size": 514 }
+    ],
+    "OF": [
+      { "price": 1479.80, "size": 1000 },
+      { "price": 1480.35, "size": 1000 }
+    ],
+    "LA": { "price": 1479.85, "size": 4, "date": 1794925844232 },
+    "OP": 1480.35,
+    "CL": { "price": 1480.35, "size": null, "date": 1794787200000 },
+    "SE": { "price": 1480.30, "size": null, "date": 1794787200000 },
+    "OI": { "price": null, "size": 217596, "date": 1794787200000 }
+  },
+  "depth": 2,
+  "aggregated": true
+}
+```
+
+```json Error · símbolo inexistente
+{
+  "status": "ERROR",
+  "description": "Product DLR/DIC99:ROFX doesn't exist"
+}
+```
+</ResponseExample>

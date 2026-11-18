@@ -1,0 +1,250 @@
+---
+title: "Market Data histórica"
+sidebarTitle: "Operaciones históricas"
+description: "Consultá las operaciones (trades) realizadas sobre un contrato en una fecha puntual o en un rango de fechas."
+api: "GET /rest/data/getTrades"
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+Este método permite consultar las **operaciones (trades)** realizadas sobre un contrato, en una **fecha puntual** o en un **rango de fechas**.
+
+```http
+GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/data/getTrades
+```
+
+## Parámetros
+
+<AuthHeader />
+
+<ParamField query="marketId" type="string" required>
+  ID del mercado. Valor permitido: `ROFX`.
+</ParamField>
+
+<ParamField query="symbol" type="string" required>
+  Símbolo del contrato. Ej.: `DLR/DIC26`.
+</ParamField>
+
+<ParamField query="date" type="string">
+  Fecha puntual a consultar, en formato `AAAA-MM-DD`. Ej.: `2026-11-16`.
+</ParamField>
+
+<ParamField query="dateFrom" type="string">
+  Fecha de inicio del rango, en formato `AAAA-MM-DD`. Se usa junto con `dateTo`.
+</ParamField>
+
+<ParamField query="dateTo" type="string">
+  Fecha de fin del rango, en formato `AAAA-MM-DD`. Se usa junto con `dateFrom`.
+</ParamField>
+
+<ParamField query="external" type="boolean" default="false">
+  Opcional. Enviá `true` para consultar instrumentos de mercados externos.
+</ParamField>
+
+<ParamField query="environment" type="string">
+  Especifica el entorno sobre el que se realiza la consulta.
+</ParamField>
+
+{/* [PENDIENTE] Confirmar valores vigentes del parámetro environment */}
+
+<Tip>
+  Indicá **una fecha puntual** con `date` **o un rango** con `dateFrom` y `dateTo`. No combines ambas formas en el mismo request.
+</Tip>
+
+{/* [PENDIENTE] Confirmar: (1) el comportamiento si se envían date y dateFrom/dateTo juntos; (2) la amplitud máxima permitida del rango de fechas. */}
+
+## Ejemplos de request
+
+<Tabs>
+  <Tab title="Fecha puntual">
+    Operaciones de `DLR/DIC26` del 16/11/2026:
+
+    <CodeGroup>
+    ```bash cURL
+    # BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+    curl --get "$BASE_URL/rest/data/getTrades" \
+      -H "X-Auth-Token: $MATRIZ_TOKEN" \
+      --data-urlencode "marketId=ROFX" \
+      --data-urlencode "symbol=DLR/DIC26" \
+      --data-urlencode "date=2026-11-16"
+    ```
+
+    ```python Python
+    import os
+    import requests
+
+    BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+    TOKEN = os.environ["MATRIZ_TOKEN"]
+
+    respuesta = requests.get(
+        f"{BASE_URL}/rest/data/getTrades",
+        headers={"X-Auth-Token": TOKEN},
+        params={"marketId": "ROFX", "symbol": "DLR/DIC26", "date": "2026-11-16"},
+        timeout=30,
+    )
+    respuesta.raise_for_status()
+
+    for trade in respuesta.json()["trades"]:
+        print(trade["datetime"], trade["price"], trade["size"])
+    ```
+
+    ```javascript Node.js
+    // Node.js 18 o superior (fetch nativo)
+    const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+    const params = new URLSearchParams({
+      marketId: "ROFX",
+      symbol: "DLR/DIC26",
+      date: "2026-11-16",
+    });
+
+    const respuesta = await fetch(`${BASE_URL}/rest/data/getTrades?${params}`, {
+      headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+    });
+    const datos = await respuesta.json();
+
+    for (const { datetime, price, size } of datos.trades) {
+      console.log(datetime, price, size);
+    }
+    ```
+    </CodeGroup>
+  </Tab>
+  <Tab title="Rango de fechas">
+    Operaciones de `DLR/DIC26` entre el 09/11/2026 y el 16/11/2026:
+
+    <CodeGroup>
+    ```bash cURL
+    # BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+    curl --get "$BASE_URL/rest/data/getTrades" \
+      -H "X-Auth-Token: $MATRIZ_TOKEN" \
+      --data-urlencode "marketId=ROFX" \
+      --data-urlencode "symbol=DLR/DIC26" \
+      --data-urlencode "dateFrom=2026-11-09" \
+      --data-urlencode "dateTo=2026-11-16"
+    ```
+
+    ```python Python
+    import os
+    import requests
+
+    BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+    TOKEN = os.environ["MATRIZ_TOKEN"]
+
+    respuesta = requests.get(
+        f"{BASE_URL}/rest/data/getTrades",
+        headers={"X-Auth-Token": TOKEN},
+        params={
+            "marketId": "ROFX",
+            "symbol": "DLR/DIC26",
+            "dateFrom": "2026-11-09",
+            "dateTo": "2026-11-16",
+        },
+        timeout=60,
+    )
+    respuesta.raise_for_status()
+
+    trades = respuesta.json()["trades"]
+    volumen = sum(t["size"] for t in trades)
+    print(f"{len(trades)} operaciones, volumen total: {volumen}")
+    ```
+
+    ```javascript Node.js
+    // Node.js 18 o superior (fetch nativo)
+    const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+    const params = new URLSearchParams({
+      marketId: "ROFX",
+      symbol: "DLR/DIC26",
+      dateFrom: "2026-11-09",
+      dateTo: "2026-11-16",
+    });
+
+    const respuesta = await fetch(`${BASE_URL}/rest/data/getTrades?${params}`, {
+      headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+    });
+    const { trades } = await respuesta.json();
+
+    const volumen = trades.reduce((total, t) => total + t.size, 0);
+    console.log(`${trades.length} operaciones, volumen total: ${volumen}`);
+    ```
+    </CodeGroup>
+  </Tab>
+</Tabs>
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+<ResponseField name="status" type="string">
+  Resultado del request: `OK` si fue exitoso o `ERROR` si falló. Ver [Errores](/reference/errors).
+</ResponseField>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 42 y Anexo Diccionario (p. 51). El manual vigente define los parámetros, pero no la estructura de la respuesta. */}
+<RevisarVigencia dato="La estructura de la respuesta (campos symbol, market y trades)" />
+
+<ResponseField name="symbol" type="string">
+  Símbolo del contrato consultado.
+</ResponseField>
+
+<ResponseField name="market" type="string">
+  ID del mercado consultado. Ej.: `ROFX`.
+</ResponseField>
+
+<ResponseField name="trades" type="object[]">
+  Lista de operaciones realizadas en la fecha o el rango solicitados.
+  <Expandable title="propiedades de cada operación">
+    <ResponseField name="symbol" type="string">
+      Símbolo del contrato.
+    </ResponseField>
+    <ResponseField name="price" type="number">
+      Precio de la operación.
+    </ResponseField>
+    <ResponseField name="size" type="number">
+      Cantidad operada.
+    </ResponseField>
+    <ResponseField name="datetime" type="string">
+      Fecha y hora de la operación, en formato `AAAA-MM-DD HH:mm:ss.SSS`.
+    </ResponseField>
+    <ResponseField name="servertime" type="integer">
+      Momento en que se registró la operación, en milisegundos desde epoch (Unix).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+{/* [PENDIENTE] El diccionario anterior nombra "serverTime"; la respuesta de ejemplo usa "servertime". Confirmar el nombre real del campo y la zona horaria de "datetime". */}
+
+<ResponseExample>
+```json Respuesta exitosa
+{
+  "status": "OK",
+  "symbol": "DLR/DIC26",
+  "market": "ROFX",
+  "trades": [
+    {
+      "symbol": "DLR/DIC26",
+      "servertime": 1794844075948,
+      "size": 25,
+      "price": 1479.60,
+      "datetime": "2026-11-16 15:47:55.948"
+    },
+    {
+      "symbol": "DLR/DIC26",
+      "servertime": 1794844621103,
+      "size": 1,
+      "price": 1479.55,
+      "datetime": "2026-11-16 15:57:01.103"
+    }
+  ]
+}
+```
+
+```json Error · símbolo inexistente
+{
+  "status": "ERROR",
+  "description": "Product DLR/DIC99:ROFX doesn't exist"
+}
+```
+</ResponseExample>

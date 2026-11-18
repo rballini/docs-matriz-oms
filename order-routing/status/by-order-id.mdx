@@ -1,0 +1,153 @@
+---
+title: "Estado de orden por Order ID"
+sidebarTitle: "Por Order ID"
+description: "Consulta por Order ID heredada de la documentación anterior. Pendiente de validación: para consultas por cuenta, usá Órdenes activas por cuenta."
+api: "GET /rest/order/byOrderId"
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+import OrderFields from '/snippets/order-fields.mdx';
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 30 ("Consultar Order por OrderID"). Este endpoint NO figura en el manual vigente: toda la página proviene del documento anterior. */}
+<RevisarVigencia dato="Este endpoint completo (/rest/order/byOrderId), sus parámetros y su respuesta" />
+
+Según la documentación anterior, este método devuelve el **estado de una orden consultando por su Order ID**.
+
+```http
+GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/order/byOrderId
+```
+
+## Origen y relación con `actives`
+
+El manual vigente de Matriz OMS **no incluye este endpoint**: define [Órdenes activas por cuenta](/order-routing/status/actives-by-account) (`/rest/order/actives`) como la consulta principal por cuenta.
+
+La documentación anterior presenta esta consulta con dos inconsistencias:
+
+- Aunque el método se llama "por Order ID", el único parámetro que documenta es **`accountId`**, no un Order ID.
+- La URL de ejemplo que acompaña la sección no apunta a `/rest/order/byOrderId`, sino a **`/rest/order/actives?accountId=10`**. La respuesta de ejemplo corresponde, por lo tanto, a la consulta de órdenes activas.
+
+<Tip>
+  Mientras este endpoint no se valide, **usá las consultas vigentes**: [Órdenes activas por cuenta](/order-routing/status/actives-by-account) para las órdenes vivas de una cuenta, [Último estado por Client Order ID](/order-routing/status/last-by-client-order-id) para un request puntual o [Estado de orden por Execution ID](/order-routing/status/by-execution-id) para una ejecución.
+</Tip>
+
+{/* [PENDIENTE] Confirmar con el equipo técnico: (1) si el endpoint /rest/order/byOrderId sigue disponible; (2) qué parámetro recibe realmente (orderId, accountId o ambos); (3) su respuesta real. Según el resultado, completar la página o quitarla de la navegación en docs.json. */}
+
+## Parámetros
+
+Parámetro según figura en la documentación anterior:
+
+<AuthHeader />
+
+<ParamField query="accountId" type="integer" required>
+  Número de cuenta, como **entero** (REST). Ej.: `30`. La documentación anterior no incluye un parámetro para el Order ID.
+</ParamField>
+
+## Ejemplos de request
+
+Request armado tal como lo describe la documentación anterior:
+
+<CodeGroup>
+```bash cURL
+# BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+curl --get "$BASE_URL/rest/order/byOrderId" \
+  -H "X-Auth-Token: $MATRIZ_TOKEN" \
+  --data-urlencode "accountId=30"
+```
+
+```python Python
+import os
+import requests
+
+BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+TOKEN = os.environ["MATRIZ_TOKEN"]
+
+respuesta = requests.get(
+    f"{BASE_URL}/rest/order/byOrderId",
+    headers={"X-Auth-Token": TOKEN},
+    params={"accountId": 30},
+    timeout=10,
+)
+respuesta.raise_for_status()
+datos = respuesta.json()
+
+if datos["status"] == "OK":
+    for orden in datos["orders"]:
+        print(orden["clOrdId"], orden["status"], orden["cumQty"], "/", orden["orderQty"])
+else:
+    print("Error:", datos.get("description") or datos.get("message"))
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+const params = new URLSearchParams({ accountId: "30" });
+
+const respuesta = await fetch(`${BASE_URL}/rest/order/byOrderId?${params}`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+});
+const datos = await respuesta.json();
+
+if (datos.status === "OK") {
+  for (const orden of datos.orders) {
+    console.log(orden.clOrdId, orden.status, `${orden.cumQty}/${orden.orderQty}`);
+  }
+} else {
+  console.error("Error:", datos.description ?? datos.message);
+}
+```
+</CodeGroup>
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+<ResponseField name="status" type="string">
+  Resultado del request: `OK` si fue exitoso o `ERROR` si falló. Este `status` es el del request, no el de la orden: el estado de cada orden viene en su propio campo `status`. Ver [Errores](/reference/errors).
+</ResponseField>
+
+<ResponseField name="orders" type="object[]">
+  Lista de órdenes. La estructura proviene del ejemplo de la documentación anterior, que corresponde en realidad a `/rest/order/actives`.
+  <Expandable title="propiedades de cada orden">
+    <OrderFields />
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+```json Ejemplo de la documentación anterior
+{
+  "status": "OK",
+  "orders": [
+    {
+      "orderId": "1130813",
+      "clOrdId": "user1179491234567855",
+      "proprietary": "PBCP",
+      "execId": "261117142708-fix1-414",
+      "accountId": {
+        "id": "30"
+      },
+      "instrumentId": {
+        "marketId": "ROFX",
+        "symbol": "DLR/DIC26"
+      },
+      "price": 1596.0,
+      "orderQty": 1,
+      "ordType": "LIMIT",
+      "side": "BUY",
+      "timeInForce": "DAY",
+      "transactTime": "20261117-14:27:08",
+      "avgPx": 0,
+      "lastPx": 0,
+      "lastQty": 0,
+      "cumQty": 0,
+      "leavesQty": 1,
+      "status": "NEW",
+      "text": "Aceptada"
+    }
+  ]
+}
+```
+</ResponseExample>

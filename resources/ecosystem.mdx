@@ -1,0 +1,107 @@
+---
+title: "Herramientas del ecosistema"
+description: "Documentación interactiva, colecciones, repositorios, guías de implementación y notebooks para acelerar tu integración con Matriz OMS API."
+icon: "toolbox"
+---
+
+Para facilitar las pruebas y la integración, el ecosistema de Matriz OMS API incluye las siguientes herramientas.
+
+<Info>
+  Estamos actualizando los accesos a estas herramientas. Mientras tanto, solicitá el acceso que necesites mediante un ticket en JIRA. Ver [Soporte](/support).
+</Info>
+
+{/* [PENDIENTE] Completar los links vigentes de cada herramienta (nota pendiente del manual). Para cada Card: agregar el atributo href="https://…" y quitar la línea "Acceso: a confirmar". NO usar los links del hub anterior. */}
+
+## Documentación interactiva
+
+<CardGroup cols={2}>
+  <Card title="APIDoc (Swagger)" icon="file-code">
+    Referencia interactiva de los endpoints REST para explorar parámetros y probar requests.
+
+    Acceso: a confirmar.
+  </Card>
+  <Card title="Cliente WebSocket web" icon="bolt">
+    Cliente en el navegador para conectarte al WebSocket, enviar mensajes y ver las respuestas sin escribir código.
+
+    Acceso: a confirmar.
+  </Card>
+</CardGroup>
+
+## Repositorios y colecciones
+
+<CardGroup cols={2}>
+  <Card title="Repositorio de GitHub" icon="github">
+    Ejemplos de código y proyectos de referencia para integrar la API.
+
+    Acceso: a confirmar.
+  </Card>
+  <Card title="Colección de Postman" icon="paper-plane">
+    Colección lista para importar con los requests de la API REST.
+
+    Acceso: a confirmar.
+  </Card>
+</CardGroup>
+
+{/* [PENDIENTE] Verificar que la colección de Postman y el repositorio de GitHub vigentes usen las URLs api.{urlbase}.(matrizoms|xoms).com.ar, la autenticación por token y los nombres de mercado actualizados. */}
+
+## Guías de implementación
+
+<CardGroup cols={2}>
+  <Card title="Guía de implementación de Market Data" icon="chart-line">
+    Cómo consumir Market Data por REST y WebSocket.
+
+    Acceso: a confirmar.
+  </Card>
+  <Card title="Guía de Market Data y Order Routing" icon="route">
+    Implementación combinada de precios y ruteo de órdenes.
+
+    Acceso: a confirmar.
+  </Card>
+  <Card title="Guía de homologación y buenas prácticas" icon="clipboard-check">
+    Requisitos y recomendaciones para homologar tu integración.
+
+    Acceso: a confirmar.
+  </Card>
+  <Card title="Buenas prácticas de consumo" icon="gauge">
+    Recomendaciones para un uso eficiente de la API.
+
+    Acceso: a confirmar.
+  </Card>
+</CardGroup>
+
+{/* [PENDIENTE] Definir si las guías de implementación, homologación y buenas prácticas se migran como páginas de este portal (recomendado) o se enlazan como documentos externos. */}
+
+## Notebooks
+
+<CardGroup cols={2}>
+  <Card title="Google Colab (webinar)" icon="book-open-reader">
+    Notebook usado en el webinar de implementación de ruteo de ofertas y Market Data.
+
+    Acceso: a confirmar.
+  </Card>
+</CardGroup>
+
+## Librerías de terceros usadas en esta documentación
+
+Los ejemplos de este portal usan librerías estándar y de uso extendido. No son mantenidas por Matriz OMS:
+
+| Lenguaje | Uso | Librería | Instalación |
+| --- | --- | --- | --- |
+| Python | REST | `requests` | `pip install requests` |
+| Python | WebSocket | `websockets` (versión 14 o superior) | `pip install "websockets>=14"` |
+| Node.js | REST | `fetch` nativo (Node.js 18 o superior) | — |
+| Node.js | WebSocket | `ws` | `npm install ws` |
+| Navegador | WebSocket | `WebSocket` nativo | — |
+
+{/* [PENDIENTE] Confirmar si existen SDKs oficiales de Matriz OMS API para algún lenguaje y, en ese caso, agregarlos en una sección propia. */}
+
+## Recursos de esta documentación
+
+<CardGroup cols={2}>
+  <Card title="Guía rápida" icon="rocket" href="/quickstart">
+    Tu primera orden verificada, de punta a punta.
+  </Card>
+  <Card title="Webinars" icon="video" href="/resources/webinars">
+    Sesiones grabadas sobre la API y sus herramientas.
+  </Card>
+</CardGroup>

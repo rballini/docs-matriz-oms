@@ -1,0 +1,30 @@
+{/*
+  SNIPPET: base-urls
+  Uso:
+    import BaseUrls from '/snippets/base-urls.mdx';
+    <BaseUrls />
+
+  IMPORTANTE (MDX): fuera de bloques de código, escribir siempre `{urlbase}`
+  entre backticks. Sin backticks, MDX interpreta las llaves como una
+  expresión JavaScript y el build falla.
+*/}
+
+Matriz OMS API expone **dos dominios** distintos según la acción que se quiera realizar. Cada dominio requiere su **propio token**, que se obtiene de la misma forma pero contra su propia URL base.
+
+| Dominio | Uso | Prefijo de rutas |
+| --- | --- | --- |
+| `api.{urlbase}.matrizoms.com.ar` <br /> `api.{urlbase}.xoms.com.ar` | **Trading:** segmentos, instrumentos, órdenes y Market Data (REST y WebSocket) | `/auth/...` y `/rest/...` |
+| `api-risk.{urlbase}.matrizoms.com.ar` <br /> `api-risk.{urlbase}.xoms.com.ar` | **Riesgo:** posiciones, detalle de posiciones y reporte de cuenta. Exclusivo para administradores de ALyC. | `/oms-webservices/rest/...` |
+
+- **`{urlbase}`** es el identificador del cliente o del ambiente (por ejemplo, `demo`).
+- **`matrizoms` o `xoms`**: el dominio depende de cómo esté provisto tu ambiente. Usá siempre el que te fue asignado; no son intercambiables.
+
+<CodeGroup>
+```text Trading · matrizoms
+https://api.{urlbase}.matrizoms.com.ar
+```
+
+```text Trading · xoms
+https://api.{urlbase}.xoms.com.ar
+```
+</CodeGroup>

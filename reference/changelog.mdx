@@ -1,0 +1,31 @@
+---
+title: "Novedades"
+description: "Historial de cambios de la documentación y de Matriz OMS API."
+icon: "clock-rotate-left"
+---
+
+Historial de cambios de Matriz OMS API y de esta documentación. Las entradas más recientes aparecen primero.
+
+{/* [PENDIENTE] Completar el número de versión vigente de Matriz OMS API en la etiqueta de la primera entrada. */}
+
+<Update label="Noviembre 2026" description="Lanzamiento del portal de documentación" tags={["Documentación"]}>
+  ## Nuevo portal de documentación de Matriz OMS API
+
+  Publicamos el portal de documentación de **Matriz OMS API** para la operatoria sobre Primary Trading Platform (PTP) de **A3 Mercados**. Incluye:
+
+  - **Guías:** introducción, ambientes y autenticación.
+  - **API REST de Trading:** segmentos, instrumentos, ingreso, reemplazo y cancelación de órdenes, consultas de estado y Market Data.
+  - **API WebSocket:** conexión y autenticación, órdenes, Execution Reports y Market Data en tiempo real.
+  - **Matriz Risk API:** posiciones, detalle de posiciones y reporte de cuenta, con acceso exclusivo para administradores de ALyC.
+  - **Referencia:** errores, diccionario de campos, Market Data Entries, códigos CFI y estados de una orden.
+
+  ### Si venís de la documentación anterior
+
+  Si tu integración se basó en la documentación anterior de la API, revisá estos puntos:
+
+  - **Dominios:** las URLs base ahora son `api.{urlbase}.(matrizoms|xoms).com.ar` para Trading y `api-risk.{urlbase}.(matrizoms|xoms).com.ar` para Riesgo. Ver [Ambientes](/environments).
+  - **Mercado:** las referencias a la plataforma corresponden a **A3 Mercados**. El valor de `marketId` sigue siendo `ROFX`.
+  - **Risk API:** se autentica con **token** (`X-Auth-Token`) contra el dominio `api-risk`, con el prefijo `/oms-webservices/rest`.
+  - **WebSocket:** el token se envía en el header `X-Auth-Token` del handshake o como query parameter. Ver [API WebSocket](/websockets/overview).
+  - **Soporte:** las consultas se gestionan mediante **ticket en JIRA**. Ver [Soporte](/support).
+</Update>

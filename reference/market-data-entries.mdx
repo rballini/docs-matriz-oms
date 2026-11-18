@@ -1,0 +1,69 @@
+---
+title: "Market Data Entries"
+description: "Tipos de dato de mercado (entries) que se pueden solicitar en las APIs REST y WebSocket."
+icon: "chart-line"
+---
+
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+Al consultar Market Data se indica qué tipos de dato se quieren recibir mediante una lista de **entries**. En REST se envían separados por coma en el parámetro `entries` (ej.: `BI,OF,LA`); en WebSocket, como lista en el campo `entries` del mensaje `smd` (ej.: `["BI", "OF", "LA"]`).
+
+## Entries disponibles
+
+| Entry | Significado | Descripción | REST | WebSocket |
+| --- | --- | --- | --- | --- |
+| `BI` | Bids | Mejor oferta de compra. | Sí | Sí |
+| `OF` | Offers | Mejor oferta de venta. | Sí | Sí |
+| `LA` | Last | Último precio operado. | Sí | Sí |
+| `OP` | Opening Price | Precio de apertura. | Sí | Sí |
+| `CL` | Closing Price | Precio de cierre de la rueda anterior. | Sí | Sí |
+| `SE` | Settlement Price | Precio de ajuste (solo futuros). | Sí | Sí |
+| `HI` | High | Precio máximo de la rueda. | — | Sí |
+| `LO` | Low | Precio mínimo de la rueda. | — | Sí |
+| `TV` | Trade Volume | Volumen operado (contratos/nominales). | — | Sí |
+| `OI` | Open Interest | Interés abierto (solo futuros). | Sí | Sí |
+| `IV` | Index Value | Valor del índice (solo índices). | — | Sí |
+| `EV` | Effective Volume | Volumen efectivo (solo instrumentos de BYMA). | — | Sí |
+| `NV` | Nominal Volume | Volumen nominal (solo instrumentos de BYMA). | — | Sí |
+| `ACP` | Auction Price | Precio de cierre del día corriente. | Sí | Sí |
+
+La columna **REST** refleja los valores permitidos del parámetro `entries` en [Market Data (REST)](/market-data/snapshot).
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 41 (los entries están disponibles "tanto REST como WebSocket"). El manual vigente lista los entries, pero no indica explícitamente cuáles admite la suscripción WebSocket. [PENDIENTE] Confirmar si REST admite también HI, LO, TV, IV, EV y NV. */}
+<RevisarVigencia dato="La disponibilidad de cada entry en la API WebSocket" />
+
+## Notas
+
+<Note>
+  Los entries `EV` y `NV` solo devuelven información para instrumentos de **BYMA**.
+</Note>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 41. */}
+<RevisarVigencia dato="La recomendación de usar TV para el volumen de instrumentos de A3 Mercados" />
+
+<Tip>
+  Para consultar el volumen operado de un instrumento de **A3 Mercados**, usá el entry `TV`.
+</Tip>
+
+## Ejemplos
+
+<CodeGroup>
+```bash REST
+curl --get "$BASE_URL/rest/marketdata/get" \
+  -H "X-Auth-Token: $MATRIZ_TOKEN" \
+  --data-urlencode "marketId=ROFX" \
+  --data-urlencode "symbol=DLR/DIC26" \
+  --data-urlencode "entries=BI,OF,LA,SE,OI" \
+  --data-urlencode "depth=1"
+```
+
+```json WebSocket
+{
+  "type": "smd",
+  "level": 1,
+  "entries": ["BI", "OF", "LA", "HI", "LO", "TV"],
+  "products": [{ "symbol": "DLR/DIC26", "marketId": "ROFX" }],
+  "depth": 1
+}
+```
+</CodeGroup>

@@ -1,0 +1,34 @@
+{/*
+  SNIPPET: verificar-estado-orden
+  Uso (en páginas de ingreso, reemplazo y cancelación de órdenes):
+    import VerificarEstadoOrden from '/snippets/verificar-estado-orden.mdx';
+    <VerificarEstadoOrden />
+*/}
+
+<Warning>
+  Una respuesta `"status": "OK"` al ingresar, reemplazar o cancelar una orden **no garantiza que el mercado haya procesado el request**: solo confirma que fue recibido. Siempre verificá el estado de la orden antes de dar la operación por realizada.
+</Warning>
+
+<Steps>
+  <Step title="Enviá el request">
+    Ingresá, reemplazá o cancelá la orden con el método correspondiente: [Ingresar una orden](/order-routing/new-order), [Reemplazar una orden](/order-routing/replace-order) o [Cancelar una orden](/order-routing/cancel-order).
+  </Step>
+  <Step title="Revisá la respuesta inmediata">
+    Si la respuesta es `"status": "OK"`, guardá el identificador devuelto (por ejemplo, `"clientId": "user14472764…"`). Ese valor es el **Client Order ID** (`clOrdId`) del request.
+  </Step>
+  <Step title="Consultá el estado de la orden">
+    Con ese identificador, consultá [Último estado por Client Order ID](/order-routing/status/last-by-client-order-id).
+  </Step>
+  <Step title="Interpretá el resultado">
+    Al ingresar una orden, el estado puede ser:
+
+    - `NEW`: la orden fue **aceptada** por el mercado.
+    - `REJECTED`: la orden fue **rechazada**. El motivo viene detallado en la respuesta y, en este caso, `orderId` llega en `null`.
+
+    En una cancelación o un reemplazo, verificá que el estado refleje la operación solicitada (por ejemplo, `CANCELLED` en una cancelación) o, si fue rechazada, revisá el motivo. Ver [Estados de una orden](/reference/order-statuses).
+  </Step>
+</Steps>
+
+<Tip>
+  Si operás por WebSocket, el resultado de la orden llega de forma asíncrona: es imprescindible estar suscripto a los [Execution Reports](/websockets/orders/subscribe-execution-reports) de la cuenta utilizada **antes** de enviar la orden.
+</Tip>

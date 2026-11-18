@@ -1,0 +1,96 @@
+---
+title: "Diccionario de campos"
+description: "Definición de los 59 campos que aparecen en los parámetros, respuestas y mensajes de Matriz OMS API."
+icon: "book-open"
+---
+
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+Definición de los campos que aparecen en los parámetros, las respuestas y los mensajes de la API, ordenados alfabéticamente.
+
+La columna **Origen** indica de dónde proviene cada definición:
+
+- **Manual vigente:** definición confirmada en la documentación vigente de Matriz OMS (9 campos).
+- **En revisión:** definición heredada de la documentación anterior, pendiente de validación (50 campos).
+
+{/* [REVISAR_VIGENCIA] origen: Anexo Diccionario del PDF v1.21 (p. 51), vía JSON. Todas las filas con Origen "En revisión" provienen de ese anexo, con nombres de mercado normalizados. */}
+<RevisarVigencia dato="Las definiciones con origen “En revisión”" />
+
+## Campos
+
+| Campo | Descripción | Origen |
+| --- | --- | --- |
+| `accountName` | Nombre de la cuenta. Ej.: `30`. | En revisión |
+| `avgPx` | Precio promedio operado de la orden. | En revisión |
+| `cficode` | Código CFI del contrato. Ver [Códigos CFI](/reference/cfi-codes). | Manual vigente |
+| `clOrdId` | ID del request de una orden. | Manual vigente |
+| `contractMultiplier` | Tamaño del contrato. | En revisión |
+| `cumQty` | Cantidad operada de la orden. | En revisión |
+| `currency` | Moneda de liquidación del contrato. | En revisión |
+| `dateFrom` | Fecha desde, en formato `AAAA-MM-DD`. | En revisión |
+| `datetime` | Fecha y hora en que sucedió el trade. | En revisión |
+| `dateTo` | Fecha hasta, en formato `AAAA-MM-DD`. | En revisión |
+| `depth` | Profundidad del book solicitado en Market Data (`1` a `5`). | Manual vigente |
+| `displayQty` | Cantidad a divulgar en órdenes iceberg (API REST). | En revisión |
+| `displayQuantity` | Cantidad a divulgar en órdenes iceberg (API WebSocket). | En revisión |
+| `execId` | ID de ejecución de una orden. | Manual vigente |
+| `expireDate` | Fecha de vencimiento de una orden `GTD`, en formato `AAAAMMDD`. | En revisión |
+| `highLimitPrice` | Límite máximo de precio para operar el contrato. | En revisión |
+| `iceberg` | Especifica si una orden es del tipo Iceberg. | En revisión |
+| `id` | En los Execution Reports, número de cuenta involucrada en la orden (dentro de `accountId`). Llega como texto. | En revisión |
+| `instrumentPricePrecision` | Precisión de decimales en el precio. | En revisión |
+| `instrumentSizePrecision` | Precisión de decimales en la cantidad. | En revisión |
+| `lastPx` | Último precio al que se operó la orden. | En revisión |
+| `lastQty` | Última cantidad operada de la orden. | En revisión |
+| `leavesQty` | Cantidad remanente de la orden. | En revisión |
+| `lowerLimit` | Rango mínimo de precio de un tick de precio dinámico. | En revisión |
+| `lowLimitPrice` | Límite mínimo de precio para operar el contrato. | En revisión |
+| `marketId` | Identificador del mercado. Valores posibles: `ROFX` (A3 Mercados) y `MERV` (mercados externos). | En revisión |
+| `marketSegmentId` | Identificador de cada segmento. | En revisión |
+| `maturityDate` | Fecha de vencimiento o maduración del contrato, en formato `AAAAMMDD`. | En revisión |
+| `maxTradeVol` | Volumen máximo al que se puede operar el contrato. | En revisión |
+| `minPriceIncrement` | Incremento mínimo de precio (tick price). | En revisión |
+| `minTradeVol` | Volumen mínimo al que se puede operar el contrato. | En revisión |
+| `orderId` | ID de la orden en el mercado (`null` si fue rechazada). | Manual vigente |
+| `orderQty` | Tamaño de la orden. | En revisión |
+| `orderTypes` | Listado de tipos de órdenes soportados por un contrato. | En revisión |
+| `ordType` | Tipo de orden. Valores posibles: `LIMIT`, `MARKET`, `STOP_LIMIT`, `STOP_LIMIT_MERVAL`. | En revisión |
+| `price` | En órdenes, el precio de la orden. En Market Data, el precio del entry correspondiente. | En revisión |
+| `priceConvertionFactor` | Valor por el cual se multiplica el precio de un contrato para llevarlo a precio unitario. | En revisión |
+| `proprietary` | Usuario FIX que envió la orden (`PBCP` / `ISV_PBCP` por API). | Manual vigente |
+| `roundLot` | Multiplicador. | En revisión |
+| `securityDescription` | Descripción del instrumento. | En revisión |
+| `securityId` | ID del Security. | En revisión |
+| `securityType` | Tipo del Security. | En revisión |
+| `segments` | Listado de segmentos. | En revisión |
+| `serverTime` | Timestamp del registro. En `getTrades`, el momento en que se produjo el trade (en la respuesta de ejemplo figura como `servertime`). | En revisión |
+| `settlType` | Tipo de liquidación del contrato. | En revisión |
+| `side` | Lado de la orden: `BUY` / `SELL`. | Manual vigente |
+| `size` | En Market Data, la cantidad del entry correspondiente. | En revisión |
+| `status` | Estado de la orden: `NEW`, `PENDING_NEW`, `REJECTED`, `CANCELLED`, `REPLACED`, etc. Ver [Estados de una orden](/reference/order-statuses). | Manual vigente |
+| `symbol` | Nombre del contrato en el sistema de negociación. Ej.: `DLR/DIC26`. | En revisión |
+| `text` | Campo de texto que refiere el motivo del estado de la orden. | En revisión |
+| `tick` | Tick de precio. | En revisión |
+| `tickPriceRanges` | Listado de ticks de precios dinámicos de cada contrato. | En revisión |
+| `tickSize` | Incremento de cantidad. | En revisión |
+| `timeInForce` | Vigencia de la orden: `DAY` / `IOC` / `FOK` / `GTD`. | Manual vigente |
+| `timeInForces` | Listado de modalidades de vigencia soportadas por un contrato (en la respuesta de ejemplo figura como `timesInForce`). | En revisión |
+| `timestamp` | Marca de tiempo de un registro en particular. | En revisión |
+| `transactTime` | Fecha y hora de la transacción. Ej.: `20261117-14:23:35`. | En revisión |
+| `upperLimit` | Rango máximo de precio de un tick de precio dinámico. | En revisión |
+| `wsClOrdId` | ID propio de la orden enviada vía WebSocket (`wsClOrdId`). Solo llega en el primer Execution Report. | En revisión |
+
+## Diferencias de nombre entre interfaces
+
+Algunos conceptos se nombran distinto según la interfaz o el contexto. Tenelos en cuenta al mapear campos en tu sistema:
+
+| Concepto | API REST | API WebSocket | Respuestas / Execution Reports |
+| --- | --- | --- | --- |
+| Cuenta | `account` / `accountId` · entero | `account` · texto | `accountId.id` · texto |
+| Cantidad de la orden | `orderQty` | `quantity` | `orderQty` |
+| Cantidad a divulgar (iceberg) | `displayQty` | `displayQuantity` | — |
+| ID del request a cancelar | `clOrdId` | `clientId` | `clOrdId` |
+| ID devuelto al ingresar | `order.clientId` | — | `clOrdId` |
+| Cuenta en Risk API | `accountName` en la ruta · texto | — | `account` / `accountName` |
+
+{/* [PENDIENTE] Confirmar los nombres reales de: timeInForces vs. timesInForce (detalle de instrumentos) y serverTime vs. servertime (getTrades). El diccionario anterior y las respuestas de ejemplo no coinciden. */}

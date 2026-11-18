@@ -1,0 +1,452 @@
+---
+title: "Ingresar una orden"
+sidebarTitle: "Ingresar orden"
+description: "Enviá una orden al mercado (LIMIT o MARKET, con vigencia DAY, IOC, FOK o GTD, y opcionalmente iceberg) y verificá que haya sido aceptada."
+api: "GET /rest/order/newSingleOrder"
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+import VerificarEstadoOrden from '/snippets/verificar-estado-orden.mdx';
+
+Es la manera de **enviar una orden al mercado**. Al ingresar una orden hay que verificar que realmente se haya cargado y que no haya sido rechazada.
+
+```http
+GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/order/newSingleOrder
+```
+
+<Note>
+  Aunque este método crea una orden, se invoca con **`GET`** y todos los datos de la orden viajan como parámetros de la URL.
+</Note>
+
+## Flujo recomendado
+
+<VerificarEstadoOrden />
+
+## Parámetros
+
+<AuthHeader />
+
+<ParamField query="marketId" type="string" required>
+  ID del mercado en el que se va a cargar la orden. Válido para órdenes nativas a A3 Mercados y órdenes a BYMA. Valor permitido: `ROFX`.
+</ParamField>
+
+<ParamField query="symbol" type="string" required>
+  Símbolo del instrumento. Ej.: `DLR/DIC26`.
+</ParamField>
+
+<ParamField query="price" type="number" required>
+  Precio de la orden. Ej.: `1596.0`.
+</ParamField>
+
+<ParamField query="orderQty" type="integer" required>
+  Tamaño de la orden.
+</ParamField>
+
+<ParamField query="ordType" type="string" required>
+  Tipo de orden. Valores permitidos: `LIMIT`, `MARKET`.
+</ParamField>
+
+<ParamField query="side" type="string" required>
+  Lado de la orden. Valores permitidos: `BUY`, `SELL`.
+</ParamField>
+
+<ParamField query="timeInForce" type="string" default="DAY">
+  Define el lapso de tiempo durante el cual la orden estará activa. Por defecto: `DAY`. Valores permitidos:
+
+  | Valor | Significado |
+  | --- | --- |
+  | `DAY` | Válida solo por el día. Expira al cerrar la rueda. |
+  | `IOC` | Immediate or Cancel. |
+  | `FOK` | Fill or Kill. |
+  | `GTD` | Good Till Date. Requiere completar `expireDate`. |
+</ParamField>
+
+<ParamField query="account" type="integer" required>
+  Número de cuenta. En la API REST es un **entero**. Ej.: `30`.
+</ParamField>
+
+<ParamField query="cancelPrevious" type="boolean" default="false">
+  Opcional. Si es `true`, cancela las órdenes previas del **mismo contrato, cuenta y lado** antes de ingresar la nueva.
+</ParamField>
+
+<ParamField query="iceberg" type="boolean" default="false">
+  Opcional. Indica si la orden es de tipo **iceberg**. Por defecto: `false`.
+</ParamField>
+
+<ParamField query="displayQty" type="integer">
+  Opcional. Cantidad a divulgar en órdenes iceberg. Se usa junto con `iceberg=true`.
+</ParamField>
+
+<ParamField query="expireDate" type="string">
+  Opcional. Fecha de vencimiento para órdenes `GTD`, en formato `AAAAMMDD`. Ej.: `20261204`.
+</ParamField>
+
+{/* [PENDIENTE] Confirmar: (1) si price es obligatorio u opcional en órdenes MARKET; (2) si timeInForce distingue mayúsculas (el manual dice "Day" en la descripción y "DAY" en el diccionario); (3) la cantidad mínima y máxima de displayQty en órdenes iceberg. */}
+
+<Warning>
+  **El tipo de dato de `account` cambia según la interfaz.** En la **API REST** se envía como **entero** (`account=30`). En la **API WebSocket** se envía como **texto** (`"account": "30"`). En las respuestas de consulta, la cuenta llega como texto dentro de `accountId.id` (`"id": "30"`). Si tu sistema usa ambas interfaces, normalizá la cuenta en un solo lugar y convertila al tipo que corresponde antes de cada envío.
+</Warning>
+
+<Tip>
+  Antes de enviar la orden, validá precio y cantidad contra la [descripción detallada del instrumento](/reference-data/instruments/detail) (`minPriceIncrement`, `lowLimitPrice`, `highLimitPrice`, `minTradeVol`, `maxTradeVol`). Así evitás rechazos evitables.
+</Tip>
+
+## Ejemplos de request
+
+<Tabs>
+  <Tab title="Orden LIMIT">
+    Compra de 10 contratos de `DLR/DIC26` a `1596.0`, vigencia `DAY`, cuenta `30`:
+
+    <CodeGroup>
+    ```bash cURL
+    # BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+    curl --get "$BASE_URL/rest/order/newSingleOrder" \
+      -H "X-Auth-Token: $MATRIZ_TOKEN" \
+      --data-urlencode "marketId=ROFX" \
+      --data-urlencode "symbol=DLR/DIC26" \
+      --data-urlencode "side=BUY" \
+      --data-urlencode "ordType=LIMIT" \
+      --data-urlencode "timeInForce=DAY" \
+      --data-urlencode "orderQty=10" \
+      --data-urlencode "price=1596.0" \
+      --data-urlencode "account=30" \
+      --data-urlencode "cancelPrevious=false" \
+      --data-urlencode "iceberg=false"
+    ```
+
+    ```python Python
+    import os
+    import requests
+
+    BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+    TOKEN = os.environ["MATRIZ_TOKEN"]
+
+    respuesta = requests.get(
+        f"{BASE_URL}/rest/order/newSingleOrder",
+        headers={"X-Auth-Token": TOKEN},
+        params={
+            "marketId": "ROFX",
+            "symbol": "DLR/DIC26",
+            "side": "BUY",
+            "ordType": "LIMIT",
+            "timeInForce": "DAY",
+            "orderQty": 10,
+            "price": 1596.0,
+            "account": 30,  # entero en REST
+            "cancelPrevious": "false",
+            "iceberg": "false",
+        },
+        timeout=10,
+    )
+    respuesta.raise_for_status()
+    datos = respuesta.json()
+
+    if datos["status"] == "OK":
+        cl_ord_id = datos["order"]["clientId"]
+        proprietary = datos["order"]["proprietary"]
+        print("Request recibido. clOrdId:", cl_ord_id)
+    else:
+        print("Error:", datos.get("description") or datos.get("message"))
+    ```
+
+    ```javascript Node.js
+    // Node.js 18 o superior (fetch nativo)
+    const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+    const params = new URLSearchParams({
+      marketId: "ROFX",
+      symbol: "DLR/DIC26",
+      side: "BUY",
+      ordType: "LIMIT",
+      timeInForce: "DAY",
+      orderQty: "10",
+      price: "1596.0",
+      account: "30", // entero en REST: URLSearchParams lo serializa como account=30
+      cancelPrevious: "false",
+      iceberg: "false",
+    });
+
+    const respuesta = await fetch(`${BASE_URL}/rest/order/newSingleOrder?${params}`, {
+      headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+    });
+    const datos = await respuesta.json();
+
+    if (datos.status === "OK") {
+      const { clientId: clOrdId, proprietary } = datos.order;
+      console.log("Request recibido. clOrdId:", clOrdId);
+    } else {
+      console.error("Error:", datos.description ?? datos.message);
+    }
+    ```
+    </CodeGroup>
+  </Tab>
+  <Tab title="Orden iceberg">
+    Compra de 100 contratos de `DLR/DIC26` a `1596.0`, mostrando solo 5 en el book:
+
+    <CodeGroup>
+    ```bash cURL
+    # BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+    curl --get "$BASE_URL/rest/order/newSingleOrder" \
+      -H "X-Auth-Token: $MATRIZ_TOKEN" \
+      --data-urlencode "marketId=ROFX" \
+      --data-urlencode "symbol=DLR/DIC26" \
+      --data-urlencode "side=BUY" \
+      --data-urlencode "ordType=LIMIT" \
+      --data-urlencode "timeInForce=DAY" \
+      --data-urlencode "orderQty=100" \
+      --data-urlencode "price=1596.0" \
+      --data-urlencode "account=30" \
+      --data-urlencode "cancelPrevious=false" \
+      --data-urlencode "iceberg=true" \
+      --data-urlencode "displayQty=5"
+    ```
+
+    ```python Python
+    import os
+    import requests
+
+    BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+    TOKEN = os.environ["MATRIZ_TOKEN"]
+
+    respuesta = requests.get(
+        f"{BASE_URL}/rest/order/newSingleOrder",
+        headers={"X-Auth-Token": TOKEN},
+        params={
+            "marketId": "ROFX",
+            "symbol": "DLR/DIC26",
+            "side": "BUY",
+            "ordType": "LIMIT",
+            "timeInForce": "DAY",
+            "orderQty": 100,
+            "price": 1596.0,
+            "account": 30,  # entero en REST
+            "cancelPrevious": "false",
+            "iceberg": "true",
+            "displayQty": 5,
+        },
+        timeout=10,
+    )
+    respuesta.raise_for_status()
+    print(respuesta.json())
+    ```
+
+    ```javascript Node.js
+    // Node.js 18 o superior (fetch nativo)
+    const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+    const params = new URLSearchParams({
+      marketId: "ROFX",
+      symbol: "DLR/DIC26",
+      side: "BUY",
+      ordType: "LIMIT",
+      timeInForce: "DAY",
+      orderQty: "100",
+      price: "1596.0",
+      account: "30",
+      cancelPrevious: "false",
+      iceberg: "true",
+      displayQty: "5",
+    });
+
+    const respuesta = await fetch(`${BASE_URL}/rest/order/newSingleOrder?${params}`, {
+      headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+    });
+    console.log(await respuesta.json());
+    ```
+    </CodeGroup>
+  </Tab>
+  <Tab title="Orden GTD">
+    Compra de 10 contratos de `DLR/DIC26` a `1590.0`, vigente hasta el 04/12/2026:
+
+    <CodeGroup>
+    ```bash cURL
+    # BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+    curl --get "$BASE_URL/rest/order/newSingleOrder" \
+      -H "X-Auth-Token: $MATRIZ_TOKEN" \
+      --data-urlencode "marketId=ROFX" \
+      --data-urlencode "symbol=DLR/DIC26" \
+      --data-urlencode "side=BUY" \
+      --data-urlencode "ordType=LIMIT" \
+      --data-urlencode "timeInForce=GTD" \
+      --data-urlencode "expireDate=20261204" \
+      --data-urlencode "orderQty=10" \
+      --data-urlencode "price=1590.0" \
+      --data-urlencode "account=30" \
+      --data-urlencode "cancelPrevious=false" \
+      --data-urlencode "iceberg=false"
+    ```
+
+    ```python Python
+    import os
+    import requests
+
+    BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+    TOKEN = os.environ["MATRIZ_TOKEN"]
+
+    respuesta = requests.get(
+        f"{BASE_URL}/rest/order/newSingleOrder",
+        headers={"X-Auth-Token": TOKEN},
+        params={
+            "marketId": "ROFX",
+            "symbol": "DLR/DIC26",
+            "side": "BUY",
+            "ordType": "LIMIT",
+            "timeInForce": "GTD",
+            "expireDate": "20261204",  # AAAAMMDD
+            "orderQty": 10,
+            "price": 1590.0,
+            "account": 30,  # entero en REST
+            "cancelPrevious": "false",
+            "iceberg": "false",
+        },
+        timeout=10,
+    )
+    respuesta.raise_for_status()
+    print(respuesta.json())
+    ```
+
+    ```javascript Node.js
+    // Node.js 18 o superior (fetch nativo)
+    const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+    const params = new URLSearchParams({
+      marketId: "ROFX",
+      symbol: "DLR/DIC26",
+      side: "BUY",
+      ordType: "LIMIT",
+      timeInForce: "GTD",
+      expireDate: "20261204", // AAAAMMDD
+      orderQty: "10",
+      price: "1590.0",
+      account: "30",
+      cancelPrevious: "false",
+      iceberg: "false",
+    });
+
+    const respuesta = await fetch(`${BASE_URL}/rest/order/newSingleOrder?${params}`, {
+      headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+    });
+    console.log(await respuesta.json());
+    ```
+    </CodeGroup>
+  </Tab>
+</Tabs>
+
+<Accordion title="Ejemplo completo en Python: ingresar la orden y verificar su estado" icon="list-check">
+```python
+import os
+import time
+import requests
+
+BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+HEADERS = {"X-Auth-Token": os.environ["MATRIZ_TOKEN"]}
+
+
+def ingresar_orden(symbol: str, side: str, qty: int, price: float, account: int) -> dict:
+    respuesta = requests.get(
+        f"{BASE_URL}/rest/order/newSingleOrder",
+        headers=HEADERS,
+        params={
+            "marketId": "ROFX",
+            "symbol": symbol,
+            "side": side,
+            "ordType": "LIMIT",
+            "timeInForce": "DAY",
+            "orderQty": qty,
+            "price": price,
+            "account": account,  # entero en REST
+        },
+        timeout=10,
+    )
+    respuesta.raise_for_status()
+    datos = respuesta.json()
+    if datos["status"] != "OK":
+        raise RuntimeError(datos.get("description") or datos.get("message"))
+    return datos["order"]  # {"clientId": ..., "proprietary": ...}
+
+
+def estado_orden(cl_ord_id: str, proprietary: str) -> dict:
+    respuesta = requests.get(
+        f"{BASE_URL}/rest/order/id",
+        headers=HEADERS,
+        params={"clOrdId": cl_ord_id, "proprietary": proprietary},
+        timeout=10,
+    )
+    respuesta.raise_for_status()
+    return respuesta.json()["order"]
+
+
+orden = ingresar_orden("DLR/DIC26", "BUY", 10, 1596.0, 30)
+
+# La orden puede pasar unos instantes en PENDING_NEW antes de su estado final.
+for _ in range(5):
+    estado = estado_orden(orden["clientId"], orden["proprietary"])
+    if estado["status"] != "PENDING_NEW":
+        break
+    time.sleep(0.5)
+
+if estado["status"] == "REJECTED":
+    print("Orden rechazada:", estado["text"])
+else:
+    print("Estado:", estado["status"], "| orderId:", estado["orderId"])
+```
+</Accordion>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 27 (parámetros de /rest/order/id) y ejemplos de pp. 28-29 (estado PENDING_NEW previo a NEW). */}
+<RevisarVigencia dato="El uso de PENDING_NEW como estado transitorio y los parámetros de /rest/order/id en el ejemplo completo" />
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+<ResponseField name="status" type="string">
+  `OK` si el request fue **recibido**; `ERROR` si falló. Un `OK` no confirma que el mercado haya aceptado la orden. Ver [Errores](/reference/errors).
+</ResponseField>
+
+<ResponseField name="order" type="object">
+  Identificación del request de alta.
+  <Expandable title="propiedades">
+    <ResponseField name="clientId" type="string">
+      Client Order ID (`clOrdId`) del request de alta. Usalo para consultar el estado, reemplazar o cancelar la orden.
+    </ResponseField>
+    <ResponseField name="proprietary" type="string">
+      Participante de mercado del request. Enviá este mismo valor en el parámetro `proprietary` de las consultas de estado, el reemplazo y la cancelación.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, pp. 24-26. El manual vigente confirma "status" y "clientId"; el campo "order.proprietary" de la respuesta viene del documento anterior. */}
+<RevisarVigencia dato="El campo order.proprietary de la respuesta" />
+
+<ResponseField name="description" type="string">
+  Solo cuando `status` es `ERROR`: detalle del error.
+</ResponseField>
+
+<ResponseExample>
+```json Request recibido
+{
+  "status": "OK",
+  "order": {
+    "clientId": "user1179491234567890",
+    "proprietary": "PBCP"
+  }
+}
+```
+
+```json Error · cuenta sin acceso
+{
+  "status": "ERROR",
+  "description": "No tiene acceso a la cuenta 30"
+}
+```
+
+```json Error · símbolo inexistente
+{
+  "status": "ERROR",
+  "description": "Product DLR/DIC99:ROFX doesn't exist"
+}
+```
+</ResponseExample>

@@ -1,0 +1,49 @@
+---
+title: "Códigos CFI"
+description: "Códigos CFI que identifican el tipo de cada instrumento en Matriz OMS API."
+icon: "tags"
+---
+
+Cada instrumento tiene un **código CFI** (Classification of Financial Instruments, estándar ISO 10962) que identifica su tipo. Lo vas a encontrar en el campo `cficode` de los instrumentos y lo podés usar para filtrar con [Lista de instrumentos por código CFI](/reference-data/instruments/by-cfi-code).
+
+## Códigos disponibles
+
+| Código | Tipo de instrumento | Categoría |
+| --- | --- | --- |
+| `ESXXXX` | Acción | Renta variable |
+| `EMXXXX` | CEDEAR | Renta variable |
+| `DBXXXX` | Bono | Renta fija |
+| `DBXXFR` | Obligación negociable | Renta fija |
+| `FXXXSX` | Futuro | Derivados |
+| `OCAFXS` | Opción call sobre futuro | Derivados |
+| `OPAFXS` | Opción put sobre futuro | Derivados |
+| `OCASPS` | Opción call sobre acción | Derivados |
+| `OPASPS` | Opción put sobre acción | Derivados |
+
+## Cómo leer un código CFI
+
+El código tiene **6 letras**. La primera indica la categoría del instrumento según la norma ISO 10962, y las siguientes agregan atributos; la letra `X` indica un atributo no especificado.
+
+| Primera letra | Categoría | Ejemplos |
+| --- | --- | --- |
+| `E` | Equity: acciones y certificados | `ESXXXX`, `EMXXXX` |
+| `D` | Debt: instrumentos de deuda | `DBXXXX`, `DBXXFR` |
+| `F` | Futures: futuros | `FXXXSX` |
+| `O` | Options: opciones (`C` = call, `P` = put en la segunda letra) | `OCAFXS`, `OPAFXS`, `OCASPS`, `OPASPS` |
+
+<Tip>
+  Para filtrar instrumentos, usá siempre el código **completo** de 6 letras, tal como figura en la tabla de códigos disponibles.
+</Tip>
+
+{/* [PENDIENTE] Confirmar que el parámetro CFICode no admite prefijos ni comodines, y si existen otros códigos CFI vigentes (por ejemplo, para índices o cauciones). */}
+
+## Ejemplo
+
+Instrumento `DLR/DIC26` con su código CFI, tal como lo devuelve [Lista de instrumentos disponibles](/reference-data/instruments/list):
+
+```json
+{
+  "instrumentId": { "marketId": "ROFX", "symbol": "DLR/DIC26" },
+  "cficode": "FXXXSX"
+}
+```

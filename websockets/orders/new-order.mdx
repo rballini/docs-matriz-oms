@@ -1,0 +1,306 @@
+---
+title: "Ingresar una orden (WebSocket)"
+sidebarTitle: "Ingresar orden (no)"
+description: "Enviá una orden al mercado por WebSocket con el mensaje no y seguí su resultado mediante los Execution Reports."
+---
+
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+Con el mensaje **`no`** (new order) se envía una orden al mercado a través de la conexión WebSocket.
+
+<Warning>
+  Para conocer el resultado de la orden es **imprescindible estar suscripto a los [Execution Reports](/websockets/orders/subscribe-execution-reports) de la cuenta usada**. El servidor no responde directamente al mensaje `no`: el resultado llega como mensaje [`or`](/websockets/orders/execution-report-message). Sin la suscripción, no vas a recibir ninguna información sobre la orden.
+</Warning>
+
+## Campos del mensaje
+
+<ParamField body="type" type="string" required>
+  Tipo de mensaje. Valor fijo: `"no"`.
+</ParamField>
+
+<ParamField body="product" type="object" required>
+  Instrumento de la orden.
+  <Expandable title="propiedades">
+    <ParamField body="marketId" type="string" required>
+      ID del mercado. Valor permitido: `"ROFX"`.
+    </ParamField>
+    <ParamField body="symbol" type="string" required>
+      Símbolo del instrumento. Ej.: `"DLR/DIC26"`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="price" type="number" required>
+  Precio de la orden. Ej.: `1596.0`.
+</ParamField>
+
+<ParamField body="quantity" type="integer" required>
+  Cantidad de la orden.
+</ParamField>
+
+<ParamField body="side" type="string" required>
+  Lado de la orden: `"BUY"` o `"SELL"`.
+</ParamField>
+
+<ParamField body="account" type="string" required>
+  Número de cuenta, **como texto**. Ej.: `"30"`.
+</ParamField>
+
+<ParamField body="iceberg" type="boolean" default="false">
+  Opcional. Indica si la orden es de tipo iceberg.
+</ParamField>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, pp. 21-23. El manual vigente solo documenta type, product, price, quantity, side, account e iceberg; tiene una nota pendiente para sumar los mensajes de órdenes iceberg y GTD. */}
+<RevisarVigencia dato="Los campos displayQuantity, timeInForce, expireDate y wsClOrdId del mensaje no" />
+
+<ParamField body="displayQuantity" type="integer">
+  Opcional. Cantidad a divulgar en órdenes iceberg. Se usa junto con `"iceberg": true`.
+</ParamField>
+
+<ParamField body="timeInForce" type="string" default="DAY">
+  Opcional. Vigencia de la orden: `"DAY"`, `"IOC"`, `"FOK"` o `"GTD"`.
+</ParamField>
+
+<ParamField body="expireDate" type="string">
+  Opcional. Fecha de vencimiento para órdenes `GTD`, en formato `AAAAMMDD`. Ej.: `"20261204"`.
+</ParamField>
+
+<ParamField body="wsClOrdId" type="string">
+  Opcional. Identificador propio que le asignás a la orden para reconocerla en el primer Execution Report. Ver [Reglas de wsClOrdId](#reglas-de-wsclordid).
+</ParamField>
+
+{/* [PENDIENTE] Confirmar: (1) cómo se envía una orden MARKET por WebSocket (ningún ejemplo incluye ordType; los Execution Reports de ejemplo muestran LIMIT); (2) si timeInForce tiene valor por defecto DAY también en WebSocket; (3) qué recibe el cliente si el mensaje está mal formado. */}
+
+## Diferencias con la API REST
+
+<Warning>
+  **`account` es texto en WebSocket.** En la API WebSocket la cuenta se envía como **string** (`"account": "30"`). En la API REST se envía como **entero** (`account=30`). En las respuestas y en los Execution Reports llega como texto dentro de `accountId.id`.
+</Warning>
+
+| Concepto | API REST (`newSingleOrder`) | API WebSocket (`no`) |
+| --- | --- | --- |
+| Cuenta | `account` · **entero** (`30`) | `account` · **texto** (`"30"`) |
+| Instrumento | `marketId` y `symbol` como parámetros sueltos | Objeto `product` con `marketId` y `symbol` |
+| Cantidad | `orderQty` | `quantity` |
+| Cantidad a divulgar (iceberg) | `displayQty` | `displayQuantity` |
+| Resultado | Respuesta inmediata con `clientId`; el estado se consulta aparte | Llega por Execution Report (`or`) |
+
+## Reglas de wsClOrdId
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 22 (comentarios sobre wsClOrdId). */}
+<RevisarVigencia dato="Las reglas de funcionamiento de wsClOrdId" />
+
+Como el mensaje `no` no tiene respuesta directa, el campo opcional **`wsClOrdId`** te permite reconocer tu orden entre los Execution Reports que recibís:
+
+<Steps>
+  <Step title="Asigná un identificador propio">
+    Enviá la orden con un `wsClOrdId` que tu sistema pueda reconocer. **La API no valida que sea único**: asegurate de generarlo de forma que identifique la orden sin ambigüedad (por ejemplo, combinando cuenta, fecha y un secuencial).
+  </Step>
+  <Step title="Buscalo en el primer Execution Report">
+    El `wsClOrdId` llega **solamente en el primer Execution Report** de la orden, con estado `PENDING_NEW` o `REJECTED`.
+  </Step>
+  <Step title="Asocialo con el clOrdId">
+    En ese primer reporte, asociá tu `wsClOrdId` con el `clOrdId` que asignó el sistema. A partir de ahí, seguí los estados de la orden **por su `clOrdId`**, que es el que viene en todos los reportes siguientes y el que se usa para cancelar.
+  </Step>
+</Steps>
+
+<Note>
+  Si no enviás `wsClOrdId`, identificá la orden tomando el `clOrdId` del primer Execution Report que recibas para ella.
+</Note>
+
+## Ejemplos de mensaje
+
+<Tabs>
+  <Tab title="Orden simple">
+    ```json Mensaje enviado
+    {
+      "type": "no",
+      "product": {
+        "marketId": "ROFX",
+        "symbol": "DLR/DIC26"
+      },
+      "price": 1596.0,
+      "quantity": 10,
+      "side": "BUY",
+      "account": "30",
+      "iceberg": false
+    }
+    ```
+  </Tab>
+  <Tab title="Con wsClOrdId">
+    ```json Mensaje enviado
+    {
+      "type": "no",
+      "product": {
+        "marketId": "ROFX",
+        "symbol": "DLR/DIC26"
+      },
+      "price": 1596.0,
+      "quantity": 10,
+      "side": "BUY",
+      "account": "30",
+      "iceberg": false,
+      "wsClOrdId": "alyc30-20261117-0001"
+    }
+    ```
+  </Tab>
+  <Tab title="Iceberg">
+    Compra de 100 contratos mostrando solo 5 en el book:
+
+    ```json Mensaje enviado
+    {
+      "type": "no",
+      "product": {
+        "marketId": "ROFX",
+        "symbol": "DLR/DIC26"
+      },
+      "price": 1596.0,
+      "quantity": 100,
+      "side": "BUY",
+      "account": "30",
+      "iceberg": true,
+      "displayQuantity": 5
+    }
+    ```
+  </Tab>
+  <Tab title="GTD">
+    Orden vigente hasta el 04/12/2026:
+
+    ```json Mensaje enviado
+    {
+      "type": "no",
+      "product": {
+        "marketId": "ROFX",
+        "symbol": "DLR/DIC26"
+      },
+      "price": 1590.0,
+      "quantity": 10,
+      "side": "BUY",
+      "account": "30",
+      "timeInForce": "GTD",
+      "expireDate": "20261204"
+    }
+    ```
+  </Tab>
+  <Tab title="Todo o Nada">
+    Para operar un contrato **Todo o Nada**, se usa el símbolo del contrato correspondiente (en el ejemplo, `DLR/DIC26A`):
+
+    ```json Mensaje enviado
+    {
+      "type": "no",
+      "product": {
+        "marketId": "ROFX",
+        "symbol": "DLR/DIC26A"
+      },
+      "price": 1596.0,
+      "quantity": 3000,
+      "side": "BUY",
+      "account": "30",
+      "iceberg": false
+    }
+    ```
+  </Tab>
+</Tabs>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 21 (ejemplo de contrato Todo o Nada con sufijo A). [PENDIENTE] Confirmar la nomenclatura vigente de los contratos Todo o Nada. */}
+<RevisarVigencia dato="La operatoria de contratos Todo o Nada mediante el sufijo A en el símbolo" />
+
+## Ejemplos de código
+
+Cada ejemplo se suscribe a los Execution Reports de la cuenta `"30"`, envía la orden con `wsClOrdId` e imprime sus estados.
+
+<CodeGroup>
+```python Python
+# pip install "websockets>=14"
+import asyncio
+import json
+import os
+
+import websockets
+
+WS_URL = f"wss://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar/"
+TOKEN = os.environ["MATRIZ_TOKEN"]  # obtenido con POST /auth/getToken
+
+
+async def main() -> None:
+    async with websockets.connect(WS_URL, additional_headers={"X-Auth-Token": TOKEN}) as ws:
+        await ws.send(json.dumps({"type": "os", "account": {"id": "30"}}))
+        await ws.send(json.dumps({"type": "no", "product": {"marketId": "ROFX", "symbol": "DLR/DIC26"}, "price": 1596.0, "quantity": 10, "side": "BUY", "account": "30", "iceberg": False, "wsClOrdId": "alyc30-20261117-0001"}))
+
+        async for crudo in ws:
+            mensaje = json.loads(crudo)
+            if mensaje.get("type") != "or":
+                continue
+            reporte = mensaje["orderReport"]
+            # El wsClOrdId solo llega en el primer Execution Report: ahí se asocia con el clOrdId
+            if reporte.get("wsClOrdId") == "alyc30-20261117-0001":
+                mi_cl_ord_id = reporte["clOrdId"]
+                print("Orden identificada. clOrdId:", mi_cl_ord_id)
+            print(reporte["clOrdId"], reporte["status"], reporte.get("text"))
+
+
+asyncio.run(main())
+```
+
+```javascript Node.js
+// npm install ws   ·   Node.js 18 o superior (ES modules)
+import WebSocket from "ws";
+
+const WS_URL = `wss://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar/`;
+const ws = new WebSocket(WS_URL, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN }, // obtenido con POST /auth/getToken
+});
+
+ws.on("open", () => {
+  ws.send(JSON.stringify({"type": "os", "account": {"id": "30"}}));
+  ws.send(JSON.stringify({"type": "no", "product": {"marketId": "ROFX", "symbol": "DLR/DIC26"}, "price": 1596.0, "quantity": 10, "side": "BUY", "account": "30", "iceberg": false, "wsClOrdId": "alyc30-20261117-0001"}));
+});
+
+ws.on("message", (datos) => {
+  const mensaje = JSON.parse(datos.toString());
+  if (mensaje.type !== "or") return;
+  const reporte = mensaje.orderReport;
+  // El wsClOrdId solo llega en el primer Execution Report: ahí se asocia con el clOrdId
+  if (reporte.wsClOrdId === "alyc30-20261117-0001") {
+    console.log("Orden identificada. clOrdId:", reporte.clOrdId);
+  }
+  console.log(reporte.clOrdId, reporte.status, reporte.text);
+});
+
+ws.on("error", (error) => console.error("Error de WebSocket:", error.message));
+```
+</CodeGroup>
+
+## Resultado
+
+El resultado llega como mensaje [`or`](/websockets/orders/execution-report-message). El primero suele tener estado `PENDING_NEW` e incluye el `wsClOrdId` enviado. Luego llegan los estados siguientes (`NEW`, `PARTIALLY_FILLED`, `FILLED`, `REJECTED`, etc.).
+
+<ResponseExample>
+```json Primer Execution Report
+{
+  "type": "or",
+  "timestamp": 1794925415948,
+  "orderReport": {
+    "orderId": null,
+    "clOrdId": "user1179491234567890",
+    "proprietary": "PBCP",
+    "accountId": {
+      "id": "30"
+    },
+    "instrumentId": {
+      "marketId": "ROFX",
+      "symbol": "DLR/DIC26"
+    },
+    "price": 1596.0,
+    "orderQty": 10,
+    "ordType": "LIMIT",
+    "side": "BUY",
+    "timeInForce": "DAY",
+    "transactTime": "20261117-14:23:35",
+    "status": "PENDING_NEW",
+    "text": "Enviada",
+    "wsClOrdId": "alyc30-20261117-0001"
+  }
+}
+```
+</ResponseExample>

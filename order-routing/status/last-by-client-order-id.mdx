@@ -1,0 +1,181 @@
+---
+title: "Último estado por Client Order ID"
+sidebarTitle: "Último estado (clOrdId)"
+description: "Consultá el estado más reciente de un request puntual de alta, reemplazo o cancelación, identificado por su Client Order ID."
+api: "GET /rest/order/id"
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+import OrderFields from '/snippets/order-fields.mdx';
+
+Devuelve el **estado más reciente** de un request puntual, identificado por su **Client Order ID** (`clOrdId`). Es la consulta que tenés que usar para verificar el resultado inmediatamente después de [ingresar](/order-routing/new-order), [reemplazar](/order-routing/replace-order) o [cancelar](/order-routing/cancel-order) una orden.
+
+```http
+GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/order/id
+```
+
+<Info>
+  El Client Order ID identifica un **request**, no la orden: el alta y la cancelación de una misma orden tienen Client Order IDs distintos. Ver [Client Order ID vs. Order ID](/guides/client-order-id-vs-order-id).
+</Info>
+
+## Parámetros
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 27. El manual vigente lista el endpoint, pero no sus parámetros ni su respuesta. */}
+<RevisarVigencia dato="Los parámetros y la estructura de la respuesta de esta consulta" />
+
+<AuthHeader />
+
+<ParamField query="clOrdId" type="string" required>
+  Client Order ID del request a consultar: el valor devuelto en `order.clientId` al [ingresar](/order-routing/new-order), [reemplazar](/order-routing/replace-order) o [cancelar](/order-routing/cancel-order) una orden. Ej.: `user1179491234567890`.
+</ParamField>
+
+<ParamField query="proprietary" type="string" required>
+  ID del participante de mercado mediante el cual se hizo el request (fijo por cuenta). Usá el valor devuelto en `order.proprietary` junto con el `clientId`. Ej.: `PBCP`.
+</ParamField>
+
+{/* [PENDIENTE] Confirmar el valor de proprietary para esta consulta: el documento anterior usa "api" en sus ejemplos, mientras que el manual vigente indica PBCP / ISV_PBCP para órdenes enviadas por API. Confirmar también la respuesta ante un clOrdId inexistente. */}
+
+## Ejemplos de request
+
+<CodeGroup>
+```bash cURL
+# BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+curl --get "$BASE_URL/rest/order/id" \
+  -H "X-Auth-Token: $MATRIZ_TOKEN" \
+  --data-urlencode "clOrdId=user1179491234567890" \
+  --data-urlencode "proprietary=PBCP"
+```
+
+```python Python
+import os
+import requests
+
+BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+TOKEN = os.environ["MATRIZ_TOKEN"]
+
+respuesta = requests.get(
+    f"{BASE_URL}/rest/order/id",
+    headers={"X-Auth-Token": TOKEN},
+    params={"clOrdId": "user1179491234567890", "proprietary": "PBCP"},
+    timeout=10,
+)
+respuesta.raise_for_status()
+datos = respuesta.json()
+
+if datos["status"] == "OK":
+    orden = datos["order"]
+    if orden["status"] == "REJECTED":
+        print("Rechazada:", orden["text"])
+    else:
+        print(orden["status"], "| orderId:", orden["orderId"])
+else:
+    print("Error:", datos.get("description") or datos.get("message"))
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+const params = new URLSearchParams({ clOrdId: "user1179491234567890", proprietary: "PBCP" });
+
+const respuesta = await fetch(`${BASE_URL}/rest/order/id?${params}`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+});
+const datos = await respuesta.json();
+
+if (datos.status === "OK") {
+  const orden = datos.order;
+  if (orden.status === "REJECTED") {
+    console.log("Rechazada:", orden.text);
+  } else {
+    console.log(orden.status, "| orderId:", orden.orderId);
+  }
+} else {
+  console.error("Error:", datos.description ?? datos.message);
+}
+```
+</CodeGroup>
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+<ResponseField name="status" type="string">
+  Resultado del request: `OK` si fue exitoso o `ERROR` si falló. Este `status` es el del request, no el de la orden: el estado de cada orden viene en su propio campo `status`. Ver [Errores](/reference/errors).
+</ResponseField>
+
+<ResponseField name="order" type="object">
+  Último estado del request consultado.
+  <Expandable title="propiedades">
+    <OrderFields />
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+```json Orden aceptada
+{
+  "status": "OK",
+  "order": {
+    "orderId": "1130835",
+    "clOrdId": "user1179491234567890",
+    "proprietary": "PBCP",
+    "execId": "261117142335-fix1-493",
+    "accountId": {
+      "id": "30"
+    },
+    "instrumentId": {
+      "marketId": "ROFX",
+      "symbol": "DLR/DIC26"
+    },
+    "price": 1596.0,
+    "orderQty": 10,
+    "ordType": "LIMIT",
+    "side": "BUY",
+    "timeInForce": "DAY",
+    "transactTime": "20261117-14:23:35",
+    "avgPx": 0,
+    "lastPx": 0,
+    "lastQty": 0,
+    "cumQty": 0,
+    "leavesQty": 10,
+    "status": "NEW",
+    "text": "Aceptada"
+  }
+}
+```
+
+```json Orden rechazada
+{
+  "status": "OK",
+  "order": {
+    "orderId": null,
+    "clOrdId": "user1179491234567890",
+    "proprietary": "PBCP",
+    "execId": "261117142335-fix1-501",
+    "accountId": {
+      "id": "30"
+    },
+    "instrumentId": {
+      "marketId": "ROFX",
+      "symbol": "DLR/DIC26"
+    },
+    "price": 1596.0,
+    "orderQty": 10,
+    "ordType": "LIMIT",
+    "side": "BUY",
+    "timeInForce": "DAY",
+    "transactTime": "20261117-14:23:35",
+    "avgPx": 0,
+    "lastPx": 0,
+    "lastQty": 0,
+    "cumQty": 0,
+    "leavesQty": 0,
+    "status": "REJECTED",
+    "text": "Precio fuera de los límites permitidos"
+  }
+}
+```
+</ResponseExample>

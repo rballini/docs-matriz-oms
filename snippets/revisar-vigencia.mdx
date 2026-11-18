@@ -1,0 +1,25 @@
+{/*
+  SNIPPET: revisar-vigencia
+  ---------------------------------------------------------------------------
+  Marca contenido que proviene EXCLUSIVAMENTE de la documentación anterior
+  (Primary API v1.21 o su transcripción JSON) y que todavía no fue validado
+  contra el manual vigente de Matriz OMS API.
+
+  Uso en una página .mdx:
+
+    import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+    {/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 30 *\/}
+    <RevisarVigencia dato="El endpoint /rest/order/byOrderId" />
+
+  Convención obligatoria:
+  - La prop "dato" es requerida: describe QUÉ está pendiente de validación.
+  - Junto a cada uso, dejar el comentario MDX con el literal [REVISAR_VIGENCIA]
+    y el origen (archivo y página). Así, buscar "[REVISAR_VIGENCIA]" en el
+    repositorio lista todos los pendientes con su trazabilidad.
+  - Al validar el dato, borrar el componente y el comentario.
+*/}
+
+<Warning>
+  **[REVISAR_VIGENCIA]** · {dato} proviene de documentación anterior y está pendiente de validación contra la versión vigente de Matriz OMS API. Antes de utilizarlo en producción, verificalo en tu ambiente de prueba o consultá a soporte mediante un ticket en JIRA.
+</Warning>

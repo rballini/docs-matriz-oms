@@ -1,0 +1,120 @@
+---
+title: "Lista de instrumentos disponibles"
+sidebarTitle: "Lista de instrumentos"
+description: "Obtené todos los instrumentos disponibles para negociar, con su símbolo, mercado y código CFI."
+api: "GET /rest/instruments/all"
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+
+Los **instrumentos** (securities) son los distintos activos disponibles para negociar en **A3 Mercados** y **BYMA**. Se agrupan por tipo, identificado con el estándar **CFI Code**, y cada uno tiene características propias que podés consultar pidiendo su detalle.
+
+Este método devuelve una lista con todos los instrumentos disponibles para negociarse en A3 Mercados. Por cada instrumento devuelve el **símbolo**, el **ID del mercado** al que pertenece y el **código CFI**.
+
+```http
+GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/instruments/all
+```
+
+<Tip>
+  Si necesitás las características operativas de cada instrumento (precios límite, vencimiento, moneda, tipos de orden), usá [Lista detallada de instrumentos](/reference-data/instruments/list-detailed). Si solo necesitás un instrumento, usá [Descripción detallada de un instrumento](/reference-data/instruments/detail).
+</Tip>
+
+## Parámetros
+
+Este método **no recibe parámetros**. Solo requiere el header de autenticación.
+
+<AuthHeader />
+
+## Ejemplos de request
+
+<CodeGroup>
+```bash cURL
+# BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+curl "$BASE_URL/rest/instruments/all" \
+  -H "X-Auth-Token: $MATRIZ_TOKEN"
+```
+
+```python Python
+import os
+import requests
+
+BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+TOKEN = os.environ["MATRIZ_TOKEN"]
+
+respuesta = requests.get(
+    f"{BASE_URL}/rest/instruments/all",
+    headers={"X-Auth-Token": TOKEN},
+    timeout=30,
+)
+respuesta.raise_for_status()
+
+for instrumento in respuesta.json()["instruments"]:
+    print(instrumento["instrumentId"]["symbol"], instrumento["cficode"])
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+const respuesta = await fetch(`${BASE_URL}/rest/instruments/all`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+});
+const datos = await respuesta.json();
+
+for (const { instrumentId, cficode } of datos.instruments) {
+  console.log(instrumentId.symbol, cficode);
+}
+```
+</CodeGroup>
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+<ResponseField name="status" type="string">
+  Resultado del request: `OK` si fue exitoso o `ERROR` si falló. Ver [Errores](/reference/errors).
+</ResponseField>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, p. 13 */}
+<RevisarVigencia dato="La estructura del objeto instruments" />
+
+<ResponseField name="instruments" type="object[]">
+  Lista de instrumentos disponibles.
+  <Expandable title="propiedades">
+    <ResponseField name="instrumentId" type="object">
+      Identificador del instrumento.
+      <Expandable title="propiedades">
+        <ResponseField name="marketId" type="string">
+          ID del mercado. Ej.: `ROFX`.
+        </ResponseField>
+        <ResponseField name="symbol" type="string">
+          Símbolo del instrumento. Ej.: `DLR/DIC26`.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="cficode" type="string">
+      Código CFI del contrato. Ver [Lista de instrumentos por código CFI](/reference-data/instruments/by-cfi-code).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+```json Respuesta exitosa
+{
+  "status": "OK",
+  "instruments": [
+    {
+      "instrumentId": { "marketId": "ROFX", "symbol": "DLR/DIC26" },
+      "cficode": "FXXXSX"
+    },
+    {
+      "instrumentId": { "marketId": "ROFX", "symbol": "DLR/DIC26 1500 C" },
+      "cficode": "OCAFXS"
+    }
+  ]
+}
+```
+</ResponseExample>

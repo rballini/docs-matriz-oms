@@ -1,0 +1,108 @@
+{/*
+  SNIPPET: order-fields
+  Campos del objeto "orden" que devuelven las consultas de estado
+  (/order-routing/status/*). Uso (dentro de un <Expandable>):
+
+    import OrderFields from '/snippets/order-fields.mdx';
+    <OrderFields />
+
+  Origen de las descripciones:
+  - Manual vigente: orderId, clOrdId, proprietary, execId, status, side, timeInForce.
+  - [REVISAR_VIGENCIA] origen: PDF v1.21, pp. 27-34 y Anexo Diccionario (p. 51):
+    accountId, instrumentId, price, orderQty, ordType, transactTime, avgPx,
+    lastPx, lastQty, cumQty, leavesQty, text, y los estados de la lista que
+    no figuran en el manual. El aviso visible lo pone cada página que usa
+    este snippet.
+
+  [PENDIENTE] Confirmar el formato y la zona horaria de transactTime
+  (en los ejemplos: AAAAMMDD-HH:mm:ss).
+*/}
+
+<ResponseField name="orderId" type="string | null">
+  ID de la orden en el mercado. Llega en `null` si la orden fue rechazada o todavía no llegó al mercado.
+</ResponseField>
+
+<ResponseField name="clOrdId" type="string">
+  Client Order ID: ID del request puntual (alta, reemplazo o cancelación) al que corresponde este estado.
+</ResponseField>
+
+<ResponseField name="proprietary" type="string">
+  Usuario FIX que envió la orden. Para órdenes enviadas por API toma el valor `PBCP` o `ISV_PBCP`.
+</ResponseField>
+
+<ResponseField name="execId" type="string">
+  ID de ejecución. Puede no venir en estados previos a la aceptación del mercado (por ejemplo, `PENDING_NEW`).
+</ResponseField>
+
+<ResponseField name="accountId" type="object">
+  Cuenta de la orden.
+  <Expandable title="propiedades">
+    <ResponseField name="id" type="string">
+      Número de cuenta. En la respuesta llega como **texto** (ej.: `"30"`), aunque en los parámetros REST se envía como entero.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="instrumentId" type="object">
+  Instrumento de la orden.
+  <Expandable title="propiedades">
+    <ResponseField name="marketId" type="string">
+      ID del mercado. Ej.: `ROFX`.
+    </ResponseField>
+    <ResponseField name="symbol" type="string">
+      Símbolo del instrumento. Ej.: `DLR/DIC26`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="price" type="number">
+  Precio de la orden.
+</ResponseField>
+
+<ResponseField name="orderQty" type="integer">
+  Tamaño de la orden.
+</ResponseField>
+
+<ResponseField name="ordType" type="string">
+  Tipo de orden. Ej.: `LIMIT`, `MARKET`.
+</ResponseField>
+
+<ResponseField name="side" type="string">
+  Lado de la orden: `BUY` o `SELL`.
+</ResponseField>
+
+<ResponseField name="timeInForce" type="string">
+  Vigencia de la orden: `DAY`, `IOC`, `FOK` o `GTD`.
+</ResponseField>
+
+<ResponseField name="transactTime" type="string">
+  Fecha y hora de la transacción. Ej.: `20261117-14:23:35`.
+</ResponseField>
+
+<ResponseField name="avgPx" type="number">
+  Precio promedio operado de la orden. `0` si todavía no operó.
+</ResponseField>
+
+<ResponseField name="lastPx" type="number">
+  Último precio al que se operó la orden.
+</ResponseField>
+
+<ResponseField name="lastQty" type="integer">
+  Última cantidad operada de la orden.
+</ResponseField>
+
+<ResponseField name="cumQty" type="integer">
+  Cantidad operada acumulada de la orden.
+</ResponseField>
+
+<ResponseField name="leavesQty" type="integer">
+  Cantidad remanente de la orden (pendiente de operar).
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Estado de la orden. Valores posibles: `NEW`, `PENDING_NEW`, `PARTIALLY_FILLED`, `FILLED`, `PENDING_REPLACE`, `REPLACED`, `PENDING_CANCEL`, `CANCELLED`, `REJECTED`, `PENDING_APPROVAL`. Ver [Estados de una orden](/reference/order-statuses).
+</ResponseField>
+
+<ResponseField name="text" type="string">
+  Texto que describe el motivo del estado. Ej.: `Aceptada`, `Operada`, `Cancelada` o el motivo de un rechazo.
+</ResponseField>

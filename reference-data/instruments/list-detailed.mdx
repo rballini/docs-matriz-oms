@@ -1,0 +1,166 @@
+---
+title: "Lista detallada de instrumentos"
+sidebarTitle: "Lista detallada"
+description: "Obtené todos los instrumentos disponibles con su detalle completo: segmento, precios límite, vencimiento, moneda y tipos de orden soportados."
+api: "GET /rest/instruments/details"
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
+import InstrumentDetailFields from '/snippets/instrument-detail-fields.mdx';
+
+Igual que [Lista de instrumentos disponibles](/reference-data/instruments/list), pero con el **detalle completo** de cada instrumento: segmento, precios límite, vencimiento, moneda, tipos de orden soportados, etc.
+
+```http
+GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/instruments/details
+```
+
+<Tip>
+  La respuesta incluye todos los instrumentos disponibles y puede ser extensa. Si solo necesitás un instrumento, usá [Descripción detallada de un instrumento](/reference-data/instruments/detail). Para el resto de los casos, consultá este método una vez y reutilizá el resultado en lugar de pedirlo en cada operación.
+</Tip>
+
+## Parámetros
+
+Este método **no recibe parámetros**. Solo requiere el header de autenticación.
+
+<AuthHeader />
+
+## Ejemplos de request
+
+<CodeGroup>
+```bash cURL
+# BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
+curl "$BASE_URL/rest/instruments/details" \
+  -H "X-Auth-Token: $MATRIZ_TOKEN"
+```
+
+```python Python
+import os
+import requests
+
+BASE_URL = f"https://api.{os.environ['MATRIZ_URLBASE']}.{os.environ.get('MATRIZ_DOMINIO', 'matrizoms')}.com.ar"
+TOKEN = os.environ["MATRIZ_TOKEN"]
+
+respuesta = requests.get(
+    f"{BASE_URL}/rest/instruments/details",
+    headers={"X-Auth-Token": TOKEN},
+    timeout=60,
+)
+respuesta.raise_for_status()
+
+# Índice por símbolo para consultar el detalle sin volver a llamar a la API
+por_simbolo = {
+    i["instrumentId"]["symbol"]: i for i in respuesta.json()["instruments"]
+}
+dlr = por_simbolo.get("DLR/DIC26")
+if dlr:
+    print(dlr["minPriceIncrement"], dlr["lowLimitPrice"], dlr["highLimitPrice"])
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo)
+const BASE_URL = `https://api.${process.env.MATRIZ_URLBASE}.${process.env.MATRIZ_DOMINIO ?? "matrizoms"}.com.ar`;
+
+const respuesta = await fetch(`${BASE_URL}/rest/instruments/details`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+});
+const datos = await respuesta.json();
+
+// Índice por símbolo para consultar el detalle sin volver a llamar a la API
+const porSimbolo = new Map(
+  datos.instruments.map((i) => [i.instrumentId.symbol, i]),
+);
+const dlr = porSimbolo.get("DLR/DIC26");
+if (dlr) {
+  console.log(dlr.minPriceIncrement, dlr.lowLimitPrice, dlr.highLimitPrice);
+}
+```
+</CodeGroup>
+
+## Respuesta
+
+<Note>
+  El contenido de la respuesta es de referencia y podría sufrir modificaciones. Los valores de los ejemplos son ilustrativos.
+</Note>
+
+<ResponseField name="status" type="string">
+  Resultado del request: `OK` si fue exitoso o `ERROR` si falló. Ver [Errores](/reference/errors).
+</ResponseField>
+
+{/* [REVISAR_VIGENCIA] origen: PDF v1.21, pp. 14-15 y Anexo Diccionario (p. 51) */}
+<RevisarVigencia dato="La estructura y la descripción de los campos de cada instrumento detallado" />
+
+<ResponseField name="instruments" type="object[]">
+  Lista de instrumentos con su detalle completo.
+  <Expandable title="propiedades de cada instrumento">
+    <InstrumentDetailFields />
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+```json Respuesta exitosa
+{
+  "status": "OK",
+  "instruments": [
+    {
+      "symbol": null,
+      "segment": { "marketSegmentId": "DDF", "marketId": "ROFX" },
+      "lowLimitPrice": 1350.0,
+      "highLimitPrice": 1650.0,
+      "minPriceIncrement": 0.05,
+      "minTradeVol": 1,
+      "maxTradeVol": 10000,
+      "tickSize": 1,
+      "contractMultiplier": 1000,
+      "roundLot": 1,
+      "priceConvertionFactor": 1,
+      "maturityDate": "20261230",
+      "currency": "ARS",
+      "orderTypes": ["STOP_LIMIT", "MARKET_TO_LIMIT", "MARKET", "LIMIT"],
+      "timesInForce": ["IOC", "DAY", "GTD"],
+      "securityType": null,
+      "settlType": null,
+      "instrumentPricePrecision": 2,
+      "instrumentSizePrecision": 0,
+      "securityId": null,
+      "securityIdSource": null,
+      "securityDescription": "DLR/DIC26",
+      "tickPriceRanges": {
+        "0": { "lowerLimit": 0, "upperLimit": null, "tick": 0.05 }
+      },
+      "cficode": "FXXXSX",
+      "instrumentId": { "marketId": "ROFX", "symbol": "DLR/DIC26" }
+    },
+    {
+      "symbol": null,
+      "segment": { "marketSegmentId": "DDF", "marketId": "ROFX" },
+      "lowLimitPrice": 0.1,
+      "highLimitPrice": 300,
+      "minPriceIncrement": 0.1,
+      "minTradeVol": 1,
+      "maxTradeVol": 1000,
+      "tickSize": 1,
+      "contractMultiplier": 1000,
+      "roundLot": 1,
+      "priceConvertionFactor": 1,
+      "maturityDate": "20261230",
+      "currency": "ARS",
+      "orderTypes": ["STOP_LIMIT", "MARKET_TO_LIMIT", "LIMIT"],
+      "timesInForce": ["FOK", "IOC", "DAY", "GTD"],
+      "securityType": null,
+      "settlType": null,
+      "instrumentPricePrecision": 1,
+      "instrumentSizePrecision": 0,
+      "securityId": null,
+      "securityIdSource": null,
+      "securityDescription": "DLR/DIC26 1500 C",
+      "tickPriceRanges": {
+        "0": { "lowerLimit": 0, "upperLimit": null, "tick": 0.1 }
+      },
+      "cficode": "OCAFXS",
+      "instrumentId": { "marketId": "ROFX", "symbol": "DLR/DIC26 1500 C" }
+    }
+  ]
+}
+```
+</ResponseExample>
