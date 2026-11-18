@@ -187,9 +187,9 @@ Cada fila es un aviso `<RevisarVigencia />` visible en el portal. La columna **O
 
 ## C. Tareas antes de publicar
 
-- [ ] C1. **Logos y favicon:** reemplazar los placeholders `logo/light.svg`, `logo/dark.svg` y `favicon.svg` por los archivos oficiales de marca.
-- [ ] C2. **Imagen de arquitectura:** `images/arquitectura.svg` es un placeholder (hoy no se usa en ninguna página; la introducción usa un diagrama Mermaid). Reemplazar o eliminar.
-- [ ] C3. **Autenticación de Mintlify para Risk API:** activar Authentication en modo parcial con handshake JWT u OAuth, emitir tokens con `groups: ["alyc-admin"]` desde el login de WebAdmin y, una vez probado, cambiar `"hidden": true` a `false` en la pestaña de Risk API de `docs.json`. Hasta entonces, **no publicar la carpeta `risk/`**: `hidden` solo la oculta del menú.
+- [ ] C1. **Logos y favicon:** `logo/light.svg`, `logo/dark.svg` (logo matriz OMS) y `favicon.svg` (isotipo de Primary) se **vectorizaron** a partir de los SVG recibidos, que en realidad contienen imágenes PNG incrustadas (el de matriz OMS, de solo 460 × 91 px). Pedir a diseño los archivos **vectoriales originales** (SVG con trazados o AI/EPS) y reemplazarlos. Color de las letras aplicado: `#1D1464` (en el archivo original era `#1D1482`).
+- [ ] C2. **Imagen de arquitectura:** `images/arquitectura.svg` es un placeholder (ya actualizado a la paleta oficial; hoy no se usa en ninguna página). Reemplazar o eliminar.
+- [ ] C3. **Autenticación de Mintlify para Risk API:** activar Authentication en modo parcial con handshake JWT u OAuth y emitir tokens con `groups: ["alyc-admin"]` desde el login de WebAdmin. Ver también C13: hoy la restricción está **quitada temporalmente** para revisión.
 - [ ] C4. **Dominio del portal:** la autenticación por grupos requiere dominio propio o subdominio de Mintlify (no subpath). Definir el dominio (ej.: `docs.matrizoms.com.ar`).
 - [ ] C5. **Links de herramientas** (`resources/ecosystem.mdx`): APIDoc (Swagger), cliente WebSocket web, GitHub, Postman, 3 guías de implementación, buenas prácticas de consumo y Google Colab. Agregar `href` a cada Card y quitar “Acceso: a confirmar”.
 - [ ] C6. **Links de webinars** (`resources/webinars.mdx`): las 4 grabaciones.
@@ -200,6 +200,16 @@ Cada fila es un aviso `<RevisarVigencia />` visible en el portal. La columna **O
 - [ ] C11. **Playground de API:** hoy en modo `simple`. Si existe un ambiente demo público con CORS habilitado, evaluar el modo `interactive` y configurar `api.mdx.server`.
 - [ ] C12. **Validación final:** correr `mint dev` y `mint broken-links` antes de cada publicación.
 
+- [ ] C13. **⚠️ RESTRICCIÓN DE RISK API QUITADA TEMPORALMENTE (revisión sin SSO).** Para revisar la sección en vivo se hicieron dos cambios que **hay que revertir antes de salir a producción**:
+  - Se quitó la línea `groups: ["alyc-admin"]` del frontmatter de `risk/overview.mdx`, `risk/positions.mdx`, `risk/detailed-positions.mdx` y `risk/account-report.mdx`. Para revertir, volver a agregarla debajo de `api:` (en `overview.mdx`, debajo de `icon:`).
+  - Se cambió `"hidden": true` a `"hidden": false` en la pestaña "Risk API · Administradores ALyC" de `docs.json`. Mantenerla visible solo cuando la autenticación por grupos (C3) esté activa.
+  - Mientras dure la revisión, cualquier persona con la URL del portal puede ver la documentación de Risk API. Preferir un **preview deployment** o un entorno protegido para revisarla.
+- [ ] C14. **Contraste de la paleta oficial en Mintlify** (WCAG AA exige 4,5:1 para texto):
+  - `primary` `#3BB58C` sobre fondo blanco: **2,57:1**. Afecta enlaces y textos destacados en modo claro.
+  - `dark` `#1D1464` sobre el fondo del modo oscuro: **1,20:1**. Mintlify usa `dark` para botones en ambos modos, así que en modo oscuro los botones quedan casi invisibles.
+  - `light` `#5AD1A8` en modo oscuro (**9,99:1**) y el texto blanco sobre botones `#1D1464` (**15,71:1**) no tienen problemas.
+  - Decidir con diseño si se acepta, se usa un verde más oscuro para `primary` en modo claro o se cambia `dark`.
+
 ## Resumen
 
 | Tipo | Cantidad |
@@ -207,4 +217,4 @@ Cada fila es un aviso `<RevisarVigencia />` visible en el portal. La columna **O
 | A. Pendientes de definición técnica | 49 |
 | B. Avisos `[REVISAR_VIGENCIA]` visibles en páginas | 38 |
 | B. Marcas `[REVISAR_VIGENCIA]` en snippets (sin aviso propio) | 2 |
-| C. Tareas antes de publicar | 12 |
+| C. Tareas antes de publicar | 14 |

@@ -4,9 +4,9 @@
   "name": "Matriz OMS API",
   "description": "Documentación oficial de Matriz OMS API: integración REST y WebSocket con Primary Trading Platform (PTP) de A3 Mercados para ALyCs e instituciones financieras.",
   "colors": {
-    "primary": "#111D4A",
-    "light": "#7B2CBF",
-    "dark": "#7B2CBF"
+    "primary": "#3BB58C",
+    "light": "#5AD1A8",
+    "dark": "#1D1464"
   },
   "logo": {
     "light": "/logo/light.svg",
@@ -224,7 +224,7 @@
             ]
           }
         ],
-        "hidden": true
+        "hidden": false
       },
       {
         "tab": "Referencia",
