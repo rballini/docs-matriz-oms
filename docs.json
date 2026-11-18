@@ -95,166 +95,170 @@
     }
   },
   "navigation": {
-    "tabs": [
+    "languages": [
       {
-        "tab": "Guías",
-        "icon": "book-open",
-        "groups": [
+        "language": "es",
+        "tabs": [
           {
-            "group": "Primeros pasos",
-            "public": true,
-            "icon": "rocket",
-            "pages": [
-              "introduction",
-              "quickstart",
-              "environments",
-              "authentication"
-            ],
-            "boost": 1.5
-          },
-          {
-            "group": "Conceptos clave",
-            "public": true,
-            "icon": "lightbulb",
-            "pages": [
-              "guides/order-lifecycle",
-              "guides/client-order-id-vs-order-id",
-              "guides/rest-vs-websocket"
-            ]
-          },
-          {
-            "group": "Recursos",
-            "public": true,
-            "icon": "toolbox",
-            "pages": [
-              "resources/ecosystem",
-              "resources/webinars",
-              "support"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "API REST de Trading",
-        "icon": "code",
-        "groups": [
-          {
-            "group": "Datos de referencia",
-            "public": true,
-            "icon": "layer-group",
-            "pages": [
-              "reference-data/segments/list",
+            "tab": "Guías",
+            "icon": "book-open",
+            "groups": [
               {
-                "group": "Instrumentos",
+                "group": "Primeros pasos",
+                "icon": "rocket",
+                "public": true,
                 "pages": [
-                  "reference-data/instruments/list",
-                  "reference-data/instruments/list-detailed",
-                  "reference-data/instruments/detail",
-                  "reference-data/instruments/by-cfi-code",
-                  "reference-data/instruments/by-segment"
+                  "introduction",
+                  "quickstart",
+                  "environments",
+                  "authentication"
+                ]
+              },
+              {
+                "group": "Conceptos clave",
+                "icon": "lightbulb",
+                "public": true,
+                "pages": [
+                  "guides/order-lifecycle",
+                  "guides/client-order-id-vs-order-id",
+                  "guides/rest-vs-websocket"
+                ]
+              },
+              {
+                "group": "Recursos",
+                "icon": "toolbox",
+                "public": true,
+                "pages": [
+                  "resources/ecosystem",
+                  "resources/webinars",
+                  "support"
                 ]
               }
             ]
           },
           {
-            "group": "Ruteo de órdenes",
-            "public": true,
-            "icon": "paper-plane",
-            "pages": [
-              "order-routing/new-order",
-              "order-routing/replace-order",
-              "order-routing/cancel-order",
+            "tab": "API REST de Trading",
+            "icon": "code",
+            "groups": [
               {
-                "group": "Consulta de estado",
+                "group": "Datos de referencia",
+                "icon": "layer-group",
+                "public": true,
                 "pages": [
-                  "order-routing/status/last-by-client-order-id",
-                  "order-routing/status/history-by-client-order-id",
-                  "order-routing/status/actives-by-account",
-                  "order-routing/status/filled-by-account",
-                  "order-routing/status/all-by-account",
-                  "order-routing/status/by-execution-id",
-                  "order-routing/status/by-order-id"
+                  "reference-data/segments/list",
+                  {
+                    "group": "Instrumentos",
+                    "pages": [
+                      "reference-data/instruments/list",
+                      "reference-data/instruments/list-detailed",
+                      "reference-data/instruments/detail",
+                      "reference-data/instruments/by-cfi-code",
+                      "reference-data/instruments/by-segment"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Ruteo de órdenes",
+                "icon": "paper-plane",
+                "public": true,
+                "pages": [
+                  "order-routing/new-order",
+                  "order-routing/replace-order",
+                  "order-routing/cancel-order",
+                  {
+                    "group": "Consulta de estado",
+                    "pages": [
+                      "order-routing/status/last-by-client-order-id",
+                      "order-routing/status/history-by-client-order-id",
+                      "order-routing/status/actives-by-account",
+                      "order-routing/status/filled-by-account",
+                      "order-routing/status/all-by-account",
+                      "order-routing/status/by-execution-id",
+                      "order-routing/status/by-order-id"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Market Data",
+                "icon": "chart-line",
+                "public": true,
+                "pages": [
+                  "market-data/snapshot",
+                  "market-data/historical-trades"
                 ]
               }
             ]
           },
           {
-            "group": "Market Data",
-            "public": true,
-            "icon": "chart-line",
-            "pages": [
-              "market-data/snapshot",
-              "market-data/historical-trades"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "API WebSocket",
-        "icon": "bolt",
-        "groups": [
-          {
-            "group": "Conexión",
-            "public": true,
-            "icon": "plug",
-            "pages": [
-              "websockets/overview"
+            "tab": "API WebSocket",
+            "icon": "bolt",
+            "groups": [
+              {
+                "group": "Conexión",
+                "icon": "plug",
+                "public": true,
+                "pages": [
+                  "websockets/overview"
+                ]
+              },
+              {
+                "group": "Órdenes",
+                "icon": "paper-plane",
+                "public": true,
+                "pages": [
+                  "websockets/orders/new-order",
+                  "websockets/orders/cancel-order",
+                  "websockets/orders/subscribe-execution-reports",
+                  "websockets/orders/execution-report-message"
+                ]
+              },
+              {
+                "group": "Market Data en tiempo real",
+                "icon": "chart-line",
+                "public": true,
+                "pages": [
+                  "websockets/market-data/subscribe",
+                  "websockets/market-data/market-data-message"
+                ]
+              }
             ]
           },
           {
-            "group": "Órdenes",
-            "public": true,
-            "icon": "paper-plane",
-            "pages": [
-              "websockets/orders/new-order",
-              "websockets/orders/cancel-order",
-              "websockets/orders/subscribe-execution-reports",
-              "websockets/orders/execution-report-message"
-            ]
-          },
-          {
-            "group": "Market Data en tiempo real",
-            "public": true,
-            "icon": "chart-line",
-            "pages": [
-              "websockets/market-data/subscribe",
-              "websockets/market-data/market-data-message"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Risk API · Administradores ALyC",
-        "icon": "lock",
-        "groups": [
-          {
-            "group": "Matriz Risk API (acceso restringido)",
+            "tab": "Risk API · Administradores ALyC",
             "icon": "lock",
-            "pages": [
-              "risk/overview",
-              "risk/positions",
-              "risk/detailed-positions",
-              "risk/account-report"
+            "hidden": false,
+            "groups": [
+              {
+                "group": "Matriz Risk API (acceso restringido)",
+                "icon": "lock",
+                "pages": [
+                  "risk/overview",
+                  "risk/positions",
+                  "risk/detailed-positions",
+                  "risk/account-report"
+                ]
+              }
             ]
-          }
-        ],
-        "hidden": false
-      },
-      {
-        "tab": "Referencia",
-        "icon": "book",
-        "groups": [
+          },
           {
-            "group": "Anexos",
-            "public": true,
-            "icon": "folder-open",
-            "pages": [
-              "reference/errors",
-              "reference/field-dictionary",
-              "reference/market-data-entries",
-              "reference/cfi-codes",
-              "reference/order-statuses",
-              "reference/changelog"
+            "tab": "Referencia",
+            "icon": "book",
+            "groups": [
+              {
+                "group": "Anexos",
+                "icon": "folder-open",
+                "public": true,
+                "pages": [
+                  "reference/errors",
+                  "reference/field-dictionary",
+                  "reference/market-data-entries",
+                  "reference/cfi-codes",
+                  "reference/order-statuses",
+                  "reference/changelog"
+                ]
+              }
             ]
           }
         ]
