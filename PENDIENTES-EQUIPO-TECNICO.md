@@ -204,11 +204,12 @@ Cada fila es un aviso `<RevisarVigencia />` visible en el portal. La columna **O
   - Se quitó la línea `groups: ["alyc-admin"]` del frontmatter de `risk/overview.mdx`, `risk/positions.mdx`, `risk/detailed-positions.mdx` y `risk/account-report.mdx`. Para revertir, volver a agregarla debajo de `api:` (en `overview.mdx`, debajo de `icon:`).
   - Se cambió `"hidden": true` a `"hidden": false` en la pestaña "Risk API · Administradores ALyC" de `docs.json`. Mantenerla visible solo cuando la autenticación por grupos (C3) esté activa.
   - Mientras dure la revisión, cualquier persona con la URL del portal puede ver la documentación de Risk API. Preferir un **preview deployment** o un entorno protegido para revisarla.
-- [ ] C14. **Contraste de la paleta oficial en Mintlify** (WCAG AA exige 4,5:1 para texto):
-  - `primary` `#3BB58C` sobre fondo blanco: **2,57:1**. Afecta enlaces y textos destacados en modo claro.
-  - `dark` `#1D1464` sobre el fondo del modo oscuro: **1,20:1**. Mintlify usa `dark` para botones en ambos modos, así que en modo oscuro los botones quedan casi invisibles.
-  - `light` `#5AD1A8` en modo oscuro (**9,99:1**) y el texto blanco sobre botones `#1D1464` (**15,71:1**) no tienen problemas.
-  - Decidir con diseño si se acepta, se usa un verde más oscuro para `primary` en modo claro o se cambia `dark`.
+- [ ] C14. **Contraste de la paleta en Mintlify.** Configuración actual: `primary` `#3BB58C`, `light` `#1D1464`, `dark` `#3BB58C`, fondo oscuro `#0E0A38`. WCAG AA exige 4,5:1 para texto.
+  - **Crítico · `light` `#1D1464` sobre el fondo oscuro `#0E0A38`: 1,19:1.** Mintlify usa `light` para enlaces, ítem activo del menú y resaltados **en modo oscuro**, que así quedan prácticamente invisibles. Corrección sugerida: `"light": "#5AD1A8"` (9,94:1) o `"light": "#3BB58C"` (7,30:1).
+  - `primary` `#3BB58C` sobre blanco (enlaces en modo claro): 2,57:1.
+  - Botones `#3BB58C`: con texto blanco, 2,57:1; con texto azul `#0E0A38`, 7,30:1. Verificar en vivo qué color de texto aplica Mintlify.
+  - `dark` `#3BB58C` sobre el fondo oscuro (botones en modo oscuro): 7,30:1. Sin problemas.
+- [ ] C15. **Logo de Primary en el footer (`styles.css`).** Se agregó con CSS porque `docs.json` no tiene una propiedad nativa para un segundo logo en el footer. Verificar en vivo en modo claro, modo oscuro y mobile que quede bien ubicado junto al de matriz OMS y ajustar el selector `#footer::after` si hace falta. Las rutas `/logo/primary-*.svg` del CSS asumen que el portal se publica en la raíz de su dominio (no en un subpath). Igual que C1: `logo/primary-light.svg` y `logo/primary-dark.svg` están vectorizados desde un PNG; reemplazarlos por los vectoriales originales cuando estén disponibles.
 
 ## Resumen
 
@@ -217,4 +218,4 @@ Cada fila es un aviso `<RevisarVigencia />` visible en el portal. La columna **O
 | A. Pendientes de definición técnica | 49 |
 | B. Avisos `[REVISAR_VIGENCIA]` visibles en páginas | 38 |
 | B. Marcas `[REVISAR_VIGENCIA]` en snippets (sin aviso propio) | 2 |
-| C. Tareas antes de publicar | 14 |
+| C. Tareas antes de publicar | 15 |

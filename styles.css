@@ -1,0 +1,43 @@
+/*
+ * Identidad visual · Matriz OMS API
+ * ---------------------------------------------------------------------------
+ * Mintlify incluye automáticamente cualquier archivo .css del repositorio en
+ * todas las páginas: no hace falta referenciarlo desde docs.json.
+ *
+ * Logo de Primary en el footer
+ * docs.json no tiene una propiedad nativa para un segundo logo en el footer:
+ * el logo de matriz OMS ("logo" en docs.json) es el único que gestiona
+ * Mintlify. Este bloque agrega el logo de Primary al final del footer, en su
+ * versión para modo claro y para modo oscuro.
+ *
+ * Nota: Mintlify advierte que la estructura interna de sus componentes puede
+ * cambiar. Si una actualización mueve o rompe el logo, revisar el footer con
+ * "Inspeccionar elemento" y ajustar los selectores.
+ */
+
+#footer::after {
+  content: "";
+  display: block;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  width: 120px;
+  height: 27px; /* proporción del logo: 4,51 : 1 */
+  margin-top: 1.5rem;
+  background-image: url("/logo/primary-light.svg");
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: contain;
+}
+
+/* Modo oscuro: Mintlify agrega la clase "dark" al elemento <html> */
+html.dark #footer::after {
+  background-image: url("/logo/primary-dark.svg");
+}
+
+/* Pantallas chicas: logo un poco más chico */
+@media (max-width: 640px) {
+  #footer::after {
+    width: 100px;
+    height: 22px;
+  }
+}
