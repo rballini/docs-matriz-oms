@@ -259,21 +259,7 @@
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Soporte",
-          "icon": "life-ring",
-          "href": "/support"
-        },
-        {
-          "anchor": "Herramientas del ecosistema",
-          "icon": "toolbox",
-          "href": "/resources/ecosystem"
-        }
-      ]
-    }
+    ]
   },
   "footer": {
     "links": [
