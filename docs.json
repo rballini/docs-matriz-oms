@@ -128,7 +128,8 @@
             "icon": "toolbox",
             "pages": [
               "resources/ecosystem",
-              "resources/webinars"
+              "resources/webinars",
+              "support"
             ]
           }
         ]
