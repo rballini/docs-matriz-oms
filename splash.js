@@ -6,13 +6,20 @@
  * docs.json. Los estilos están en styles.css (sección 6b).
  *
  * Comportamiento
- *  - Solo se muestra al entrar a la home ("/" o "/introduction").
- *  - Una vez por pestaña: al pulsar "Conocé más" (o Escape) se guarda un flag
- *    en sessionStorage. Navegar entre páginas internas no lo vuelve a mostrar;
- *    abrir una pestaña nueva, sí.
- *  - Para probarlo sin abrir una pestaña nueva:
- *      ?splash=1  fuerza mostrarlo aunque el flag exista
+ *  - Solo se muestra al entrar a la home ("/" o "/introduction", o sus
+ *    equivalentes "/es" y "/es/introduction").
+ *  - Aparece SIEMPRE que se carga la página: al entrar, al refrescar (F5 o
+ *    Ctrl+R) y en una pestaña nueva. No usa sessionStorage ni cookies.
+ *  - Al pulsar "Conocé más" (o Escape) se marca window.__mxSplashDismissed.
+ *    Esa variable vive solo en la memoria de la página cargada, así que
+ *    desaparece al recargar.
+ *  - Navegación interna (menú lateral de Mintlify, sin recargar): este script
+ *    no se vuelve a ejecutar, por lo que volver a "Introducción" no reabre el
+ *    splash. La variable protege además el caso en que el script se
+ *    reevaluara dentro de la misma carga.
+ *  - Parámetros de URL:
  *      ?splash=0  lo omite
+ *      ?splash=1  lo fuerza aunque ya se haya cerrado en esta carga
  *
  * Mintlify es una SPA: este script se ejecuta una sola vez por carga completa
  * de la página, no en cada navegación interna.
@@ -20,26 +27,18 @@
 (function () {
   "use strict";
 
-  var FLAG = "mx-splash-seen";
   var HOME_PATHS = ["/", "/introduction", "/es", "/es/introduction"];
   var LEAVE_MS = 800; // debe coincidir con la transición de .mx-splash en styles.css
 
   /* ----- utilidades ------------------------------------------------------- */
 
-  function storageGet() {
-    try {
-      return window.sessionStorage.getItem(FLAG) === "1";
-    } catch (e) {
-      return false; // sessionStorage bloqueado (modo privado, políticas): se muestra siempre
-    }
+  // Persistencia solo en memoria: se pierde al recargar la página.
+  function wasDismissed() {
+    return window.__mxSplashDismissed === true;
   }
 
-  function storageSet() {
-    try {
-      window.sessionStorage.setItem(FLAG, "1");
-    } catch (e) {
-      /* sin storage: no pasa nada */
-    }
+  function markDismissed() {
+    window.__mxSplashDismissed = true;
   }
 
   function isHome() {
@@ -52,7 +51,7 @@
     if (param === "0") return false;
     if (!isHome()) return false;
     if (param === "1") return true;
-    return !storageGet();
+    return !wasDismissed();
   }
 
   /* ----- marcado ---------------------------------------------------------- */
@@ -154,7 +153,7 @@
     function dismiss() {
       if (dismissed) return;
       dismissed = true;
-      storageSet();
+      markDismissed();
       overlay.classList.add("is-leaving"); // el overlay se desliza hacia arriba
       // La página queda activa desde el primer instante. Se desbloquea el scroll
       // ahora (y no al final) para que el salto de la barra de desplazamiento
@@ -216,6 +215,7 @@
 
   function start() {
     if (!shouldShow()) return;
+    if (document.querySelector(".mx-splash")) return; // ya hay uno abierto
     try {
       mount();
     } catch (e) {
