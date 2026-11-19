@@ -22,7 +22,7 @@ En esta guía vas a recorrer el flujo completo de una integración, de punta a p
 
 Necesitás:
 
-- **Usuario y contraseña** habilitados para Matriz OMS API.
+- **Usuario y contraseña** habilitados para Matriz OMS API. Las credenciales del entorno Demo te las envía Soporte al completar el [relevamiento previo de homologación](/homologacion/solicitud).
 - Tu **`{urlbase}`** y tu **dominio** (`matrizoms` o `xoms`). Ver [Ambientes](/environments).
 - Una **cuenta** habilitada para operar. En los ejemplos usamos la cuenta `30`.
 - **Python 3.9+** con `requests` y `websockets`, o **Node.js 18+** con `ws`.
@@ -115,7 +115,7 @@ MATRIZ_CUENTA=30
           "quantity": 1,
           "side": "BUY",
           "account": "30",
-          "wsClOrdId": "quickstart-0001"
+          "wsClOrdId": "QUICKSTART0001"
         }
         ```
 
@@ -328,7 +328,7 @@ DOMINIO = os.environ.get("MATRIZ_DOMINIO", "matrizoms")
 REST_URL = f"https://api.{URLBASE}.{DOMINIO}.com.ar"
 WS_URL = f"wss://api.{URLBASE}.{DOMINIO}.com.ar/"
 CUENTA = os.environ.get("MATRIZ_CUENTA", "30")  # texto en WebSocket
-MI_ID = "quickstart-0001"
+MI_ID = "QUICKSTART0001"
 
 ESTADOS_FINALES = {"FILLED", "CANCELLED", "REJECTED"}
 
@@ -400,5 +400,8 @@ asyncio.run(main())
   </Card>
   <Card title="Errores" icon="triangle-exclamation" href="/reference/errors">
     Formato de los errores y casos frecuentes.
+  </Card>
+  <Card title="Homologación de APIs" icon="clipboard-check" href="/homologacion/proceso">
+    El camino a producción y las reglas de consumo que revisamos.
   </Card>
 </CardGroup>

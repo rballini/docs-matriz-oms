@@ -1,0 +1,223 @@
+---
+title: "Homologación de APIs: proceso y reglas de consumo"
+sidebarTitle: "Proceso y reglas de consumo"
+description: "Cómo se homologa una integración con Matriz OMS API: camino a producción en 3 pasos, reglas de consumo obligatorias y qué esperar el día de la homologación."
+icon: "list-check"
+---
+
+## Alcance
+
+La homologación **aplica a cualquier cliente o integrador que conecte a la API de Matriz OMS** (REST y WebSocket): bots de trading, conectores con un ERP o Back Office, pantallas propias de cotizaciones o soluciones provistas por un tercero.
+
+No es una evaluación de tu negocio: es un acompañamiento técnico para asegurar que tu integración sea estable. El equipo de Soporte de Primary revisa **cómo consume la API tu desarrollo**, pero **no participa del desarrollo**.
+
+<Info>
+  En producción conviven miles de usuarios: un programa descontrolado puede degradar la latencia de todos. Por eso, un consumo excesivo puede derivar en el **bloqueo automático de tu usuario o de tu IP**. Homologar evita que te pase en plena rueda.
+</Info>
+
+## Antes de empezar: el relevamiento previo
+
+Completá el relevamiento previo. **Reemplaza la reunión inicial**: Soporte lo recibe por correo, lo revisa y te envía las credenciales del entorno Demo junto con la documentación y las herramientas para empezar.
+
+<CardGroup cols={2}>
+  <Card title="Completá el relevamiento previo" icon="clipboard-list" href="/homologacion/solicitud">
+    Contanos qué querés hacer y cómo te vas a conectar.
+  </Card>
+
+  <Card title="Si sos una ALyC" icon="share-nodes" href="/homologacion/solicitud">
+    Compartí el link del formulario con las cuentas que quieran homologar.
+  </Card>
+</CardGroup>
+
+## Camino a producción en 3 pasos
+
+<Steps>
+  <Step title="Desarrollo y pruebas en Demo" icon="flask-vial">
+    Desarrollás y probás tu integración en el entorno **Demo** con tus credenciales de prueba, respetando las [reglas de consumo](#reglas-de-consumo-obligatorias) de esta página.
+
+    - REST: `https://api.demo.matrizoms.com.ar`
+    - WebSocket: `wss://api.demo.matrizoms.com.ar/`
+
+    Para arrancar, seguí la [Guía rápida](/quickstart) y revisá los [ambientes](/environments).
+  </Step>
+
+  <Step title="Revisión de logs y sesión de homologación técnica con Primary" icon="magnifying-glass">
+    Cuando termines tus pruebas en Demo, avisás a Soporte. El equipo revisa los registros de los servidores para verificar que **no haya reintentos en bucle ni llamadas excesivas a los endpoints REST**, y se realiza la sesión de homologación técnica con vos.
+  </Step>
+
+  <Step title="OK técnico y credenciales productivas" icon="circle-check">
+    Si el patrón de consumo respeta las reglas, se emite el **OK técnico** y tu **ALyC o la Mesa de Operaciones** gestiona tus credenciales definitivas de producción.
+  </Step>
+</Steps>
+
+<Note>
+  La habilitación productiva **no es inmediata**: requiere completar los tres pasos. Planificá tus fechas considerando el tiempo de pruebas en Demo y la revisión.
+</Note>
+
+## Reglas de consumo obligatorias
+
+Son tres reglas que **no se negocian**. Las revisamos en los logs de Demo antes de dar el OK técnico.
+
+<CardGroup cols={3}>
+  <Card title="Market Data por WebSocket" icon="bolt">
+    El seguimiento continuo de precios y del libro se hace solo por WebSocket.
+  </Card>
+
+  <Card title="Reintentos con backoff" icon="rotate">
+    Nunca reintentes en bucle: esperá cada vez más entre intentos.
+  </Card>
+
+  <Card title="Reconexión ordenada" icon="plug">
+    Si el WebSocket se corta, reconectá sin saturar al servidor.
+  </Card>
+</CardGroup>
+
+### 1. Market Data: continuo solo por WebSocket
+
+- **REST** ([`marketdata/get`](/market-data/snapshot) y [`getTrades`](/market-data/historical-trades)) se usa **únicamente para consultas puntuales o para un snapshot inicial al arrancar la aplicación**.
+- **Todo consumo continuo** de precios y del libro de órdenes en tiempo real se hace **exclusivamente por WebSocket** ([suscripción `smd`](/websockets/market-data/subscribe)).
+- **Está prohibido el polling continuo por REST**: consultar `marketdata/get` en bucle activa la limitación de peticiones del servidor y puede derivar en el bloqueo de tu usuario o IP.
+
+### 2. Reintentos: backoff exponencial, nunca en bucle
+
+Ante un error o un rechazo (una respuesta con `"status": "ERROR"`, un rechazo de riesgo o un límite de consumo), **tu programa no puede reintentar la misma petición en un bucle de milisegundos**. Tiene que esperar cada vez más entre intentos (por ejemplo, 1 s, 2 s, 5 s…) y rendirse tras un número acotado de intentos.
+
+<Warning>
+  Un rechazo de riesgo o de validación no se resuelve reintentando: revisá el motivo (`description` o `text`) antes de volver a enviar. Y **no reenvíes órdenes automáticamente** ante un corte o un timeout: primero verificá el estado de la orden original. Ver [Ciclo de vida de una orden](/guides/order-lifecycle).
+</Warning>
+
+<CodeGroup>
+  ```python Python
+  import time
+
+  import requests
+
+
+  def consultar_con_backoff(url, headers, params=None, esperas=(1, 2, 5, 10, 30)):
+      """Reintenta con espera creciente y corta al agotar los intentos (nunca en bucle)."""
+      error = None
+      for espera in esperas:
+          try:
+              respuesta = requests.get(url, headers=headers, params=params, timeout=10)
+              datos = respuesta.json()
+              if respuesta.ok and datos.get("status") != "ERROR":
+                  return datos
+              error = datos.get("description") or datos.get("message") or f"HTTP {respuesta.status_code}"
+          except (requests.RequestException, ValueError) as exc:
+              error = str(exc)
+          print(f"Error: {error}. Reintentando en {espera} s…")
+          time.sleep(espera)
+      raise RuntimeError(f"Se agotaron los reintentos: {error}")
+  ```
+
+  ```javascript Node.js
+  const espera = (ms) => new Promise((resolver) => setTimeout(resolver, ms));
+
+  // Reintenta con espera creciente y corta al agotar los intentos (nunca en bucle).
+  async function consultarConBackoff(url, headers, esperasSegundos = [1, 2, 5, 10, 30]) {
+    let error;
+    for (const segundos of esperasSegundos) {
+      try {
+        const respuesta = await fetch(url, { headers });
+        const datos = await respuesta.json();
+        if (respuesta.ok && datos.status !== "ERROR") return datos;
+        error = datos.description ?? datos.message ?? `HTTP ${respuesta.status}`;
+      } catch (excepcion) {
+        error = excepcion.message;
+      }
+      console.log(`Error: ${error}. Reintentando en ${segundos} s…`);
+      await espera(segundos * 1000);
+    }
+    throw new Error(`Se agotaron los reintentos: ${error}`);
+  }
+  ```
+</CodeGroup>
+
+### 3. Reconexión del WebSocket
+
+Programá en tu código la **reconexión automática** (un nuevo handshake) cuando el WebSocket se interrumpa. Usá espera creciente entre intentos y **no envíes miles de pedidos de reconexión por segundo**. Al reconectar, renová el token si está por vencer, volvé a enviar todas tus suscripciones y reconciliá el estado de tus órdenes. Ver [Reconexión](/websockets/overview) y el ejemplo con espera exponencial.
+
+## Otras buenas prácticas obligatorias
+
+<AccordionGroup>
+  <Accordion title="Identificador de orden (clOrdID): hasta 32 caracteres alfanuméricos" icon="fingerprint" defaultOpen>
+    El identificador propio que generás para tus órdenes (`wsClOrdId` en WebSocket) debe tener **como máximo 32 caracteres** y ser **solo alfanumérico**: sin guiones ni caracteres especiales.
+
+    | Formato | Ejemplo | ¿Válido? |
+    | --- | --- | --- |
+    | Alfanumérico, hasta 32 caracteres | `ALYC30202611170001` | Sí |
+    | Con guiones | `ALYC30-20261117-0001` | No |
+    | Con caracteres especiales | `orden#1_2026/11` | No |
+
+    Ver [Reglas de wsClOrdId](/websockets/orders/new-order).
+  </Accordion>
+
+  <Accordion title="Execution Reports y rechazos" icon="inbox">
+    Suscribite a los [Execution Reports](/websockets/orders/subscribe-execution-reports) de tu cuenta **antes** de enviar órdenes y procesá **todos** los estados, en especial `REJECTED`, cuyo motivo viene en `text`. Para monitorear la ejecución **no consultes el historial de órdenes por REST de forma repetitiva ni masiva**. Ver [Estados de una orden](/reference/order-statuses).
+  </Accordion>
+
+  <Accordion title="Cancelación por API" icon="ban">
+    Tu sistema tiene que poder **cancelar sus órdenes por API**: con [`cancelById`](/order-routing/cancel-order) por REST o con el [mensaje `co`](/websockets/orders/cancel-order) por WebSocket.
+  </Accordion>
+
+  <Accordion title="Kill switch" icon="power-off">
+    Tené un **mecanismo propio de corte** (kill switch o botón de pánico): ante un comportamiento anómalo, tu sistema debe poder dejar de enviar órdenes y cancelar las que estén activas. Para encontrarlas, consultá las [órdenes activas de la cuenta](/order-routing/status/actives-by-account) y cancelalas una por una.
+  </Accordion>
+</AccordionGroup>
+
+### Resumen
+
+| Si necesitás… | Hacelo así | Evitá |
+| --- | --- | --- |
+| Precios y libro en tiempo real | WebSocket (`smd`) | Consultar `marketdata/get` en bucle |
+| Un snapshot al arrancar | REST, una sola vez | Repetirlo de forma continua |
+| Seguir tus órdenes | WebSocket (`os`) | Releer el historial por REST una y otra vez |
+| Reaccionar a un error o rechazo | Backoff exponencial | Reintentar en bucle |
+| Recuperar un WebSocket caído | Reconexión automática con espera creciente | Reconectar miles de veces por segundo |
+| Identificar tus órdenes | `clOrdID` de hasta 32 caracteres alfanuméricos | Guiones o caracteres especiales |
+
+{/* [PENDIENTE] Valores concretos de los límites de consumo (cantidad de peticiones por unidad de tiempo, umbrales de limitación y de bloqueo de usuario o IP). Ninguna fuente los define: por eso esta página describe las reglas sin números. También falta confirmar el código HTTP y el cuerpo con los que el servidor informa un límite de consumo (el material interno menciona 400, 429 y 500, pero el portal documenta los errores con "status": "ERROR" en el cuerpo). */}
+
+## Qué esperar el día de la homologación
+
+La sesión de homologación técnica se coordina cuando tu desarrollo está listo y terminaste tus pruebas en Demo.
+
+- El equipo de Soporte de Primary revisa los **registros de tus pruebas en Demo** contra las reglas de esta página y contra lo que declaraste en el relevamiento previo.
+- Se verifica que el patrón de tráfico **no genere sobrecarga**: sin reintentos en bucle, sin polling por REST y con la reconexión del WebSocket bien resuelta.
+- Si todo cumple, se emite el **OK técnico**. Si algo no cumple las reglas, tenés que ajustarlo y volver a probar en Demo antes de recibirlo.
+
+<Tip>
+  Para aprovechar la sesión, tené cerca a quien conozca el código de la integración y llegá con tus pruebas en Demo terminadas.
+</Tip>
+
+{/* [PENDIENTE] Detalle de la sesión de homologación: duración, agenda, entregables del informe y forma de pedir una nueva revisión si no se aprueba. El material recibido no lo define. */}
+
+## Qué pasa después de enviar el relevamiento
+
+1. Vas a ver un **código de referencia** y recibir una copia del relevamiento por correo.
+2. Soporte revisa tus respuestas y te envía por mail las **credenciales del entorno Demo** y las herramientas para el desarrollo.
+3. Desarrollás y probás en Demo. Cuando termines, avisás a Soporte para coordinar la sesión de homologación técnica.
+
+{/* [PENDIENTE] Tiempo de respuesta de Soporte al recibir el relevamiento y canal por el que se avisa que las pruebas en Demo están terminadas (hoy se asume el portal de soporte). */}
+
+## Herramientas para desarrollar
+
+<CardGroup cols={2}>
+  <Card title="Guía rápida" icon="rocket" href="/quickstart">
+    Token, segmentos, una orden y la verificación de su estado.
+  </Card>
+
+  <Card title="Autenticación" icon="key" href="/authentication">
+    Cómo obtener y renovar el token de acceso.
+  </Card>
+
+  <Card title="API WebSocket" icon="bolt" href="/websockets/overview">
+    Conexión, suscripciones y reconexión.
+  </Card>
+
+  <Card title="Herramientas del ecosistema" icon="toolbox" href="/resources/ecosystem">
+    Postman, repositorios, guías de implementación y webinars.
+  </Card>
+</CardGroup>
+
+¿Tenés dudas sobre el proceso? Escribinos desde [Soporte](/support).

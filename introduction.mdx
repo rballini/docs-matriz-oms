@@ -498,7 +498,7 @@ Ambas interfaces conviven y se complementan:
 | **Market Data** | Último dato disponible al momento del request e historia de operaciones | Suscripción en tiempo real |
 
 <Info>
-  Las **cotizaciones en tiempo real requieren consumo vía WebSocket**. La API REST devuelve el último dato disponible al momento del request.
+  Las **cotizaciones en tiempo real requieren consumo vía WebSocket**. La API REST devuelve el último dato disponible al momento del request y se usa solo para consultas puntuales o un snapshot inicial: el polling continuo por REST está prohibido.
 </Info>
 
 La operatoria está organizada en **segmentos**: los distintos ambientes o ruedas de negociación de **A3 Mercados** y **BYMA**, como `DDF`, `DDA`, `DUAL` y `MERV`, entre otros. Los **instrumentos** se agrupan por tipo, identificado con el estándar **CFI Code**, y cada uno tiene características propias (tick size, tamaño mínimo y máximo, vencimiento) que podés consultar en su [descripción detallada](/reference-data/instruments/detail).
@@ -517,6 +517,9 @@ La operatoria está organizada en **segmentos**: los distintos ambientes o rueda
   </Step>
   <Step title="Pasá a tiempo real" icon="bolt">
     Conectate por [WebSocket](/websockets/overview) para recibir Market Data y Execution Reports sin polling.
+  </Step>
+  <Step title="Homologá y pasá a producción" icon="clipboard-check">
+    Completá el [relevamiento previo](/homologacion/solicitud) y seguí el [camino de homologación](/homologacion/proceso): pruebas en Demo, revisión de logs y OK técnico antes de recibir tus credenciales de producción.
   </Step>
 </Steps>
 

@@ -14,6 +14,10 @@ Este método permite consultar las **operaciones (trades)** realizadas sobre un 
 GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/data/getTrades
 ```
 
+<Warning>
+  Este método es para **consultas puntuales** de la historia de operaciones. No lo uses para seguimiento continuo: el consumo continuo de Market Data se hace **exclusivamente por WebSocket** y el polling continuo por REST está prohibido. Ver las [reglas de consumo](/homologacion/proceso).
+</Warning>
+
 ## Parámetros
 
 <AuthHeader />

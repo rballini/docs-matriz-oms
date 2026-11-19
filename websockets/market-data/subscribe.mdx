@@ -10,6 +10,10 @@ Con el mensaje **`smd`** (subscribe market data) te suscribís para recibir **Ma
 
 El servidor envía un mensaje [`Md`](/websockets/market-data/market-data-message) **por cada instrumento suscripto, cada vez que cambia** su Market Data, e incluye solo los datos pedidos en `entries`.
 
+<Tip>
+  Este es el canal para el **seguimiento continuo** de Market Data. La API REST ([`marketdata/get`](/market-data/snapshot)) se reserva para consultas puntuales o para el snapshot inicial al arrancar la aplicación: el polling continuo por REST está prohibido. Ver las [reglas de consumo](/homologacion/proceso).
+</Tip>
+
 ## Campos del mensaje
 
 <ParamField body="type" type="string" required>

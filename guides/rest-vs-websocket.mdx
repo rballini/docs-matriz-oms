@@ -52,7 +52,7 @@ Matriz OMS API ofrece dos interfaces que **conviven y se complementan**: la **AP
 </CardGroup>
 
 <Info>
-  Las **cotizaciones en tiempo real requieren WebSocket**. Consultar Market Data por REST en forma repetida no reemplaza a una suscripción.
+  Las **cotizaciones en tiempo real requieren WebSocket**. REST se usa solo para consultas puntuales o para un snapshot inicial al arrancar la aplicación: el polling continuo por REST está prohibido. Ver las [reglas de consumo](/homologacion/proceso).
 </Info>
 
 ## Arquitectura híbrida recomendada

@@ -66,7 +66,7 @@ Con el mensaje **`no`** (new order) se envía una orden al mercado a través de 
 </ParamField>
 
 <ParamField body="wsClOrdId" type="string">
-  Opcional. Identificador propio que le asignás a la orden para reconocerla en el primer Execution Report. Ver [Reglas de wsClOrdId](#reglas-de-wsclordid).
+  Opcional. Identificador propio que le asignás a la orden para reconocerla en el primer Execution Report. Máximo 32 caracteres, solo alfanuméricos (sin guiones ni caracteres especiales). Ver [Reglas de wsClOrdId](#reglas-de-wsclordid).
 </ParamField>
 
 {/* [PENDIENTE] Confirmar: (1) cómo se envía una orden MARKET por WebSocket (ningún ejemplo incluye ordType; los Execution Reports de ejemplo muestran LIMIT); (2) si timeInForce tiene valor por defecto DAY también en WebSocket; (3) qué recibe el cliente si el mensaje está mal formado. */}
@@ -94,7 +94,7 @@ Como el mensaje `no` no tiene respuesta directa, el campo opcional **`wsClOrdId`
 
 <Steps>
   <Step title="Asigná un identificador propio">
-    Enviá la orden con un `wsClOrdId` que tu sistema pueda reconocer. **La API no valida que sea único**: asegurate de generarlo de forma que identifique la orden sin ambigüedad (por ejemplo, combinando cuenta, fecha y un secuencial).
+    Enviá la orden con un `wsClOrdId` que tu sistema pueda reconocer. **La API no valida que sea único**: asegurate de generarlo de forma que identifique la orden sin ambigüedad (por ejemplo, combinando cuenta, fecha y un secuencial). **Formato obligatorio:** máximo **32 caracteres**, **solo alfanuméricos**, sin guiones ni caracteres especiales (válido: `ALYC30202611170001`).
   </Step>
   <Step title="Buscalo en el primer Execution Report">
     El `wsClOrdId` llega **solamente en el primer Execution Report** de la orden, con estado `PENDING_NEW` o `REJECTED`.
@@ -140,7 +140,7 @@ Como el mensaje `no` no tiene respuesta directa, el campo opcional **`wsClOrdId`
       "side": "BUY",
       "account": "30",
       "iceberg": false,
-      "wsClOrdId": "alyc30-20261117-0001"
+      "wsClOrdId": "ALYC30202611170001"
     }
     ```
   </Tab>
@@ -225,7 +225,7 @@ TOKEN = os.environ["MATRIZ_TOKEN"]  # obtenido con POST /auth/getToken
 async def main() -> None:
     async with websockets.connect(WS_URL, additional_headers={"X-Auth-Token": TOKEN}) as ws:
         await ws.send(json.dumps({"type": "os", "account": {"id": "30"}}))
-        await ws.send(json.dumps({"type": "no", "product": {"marketId": "ROFX", "symbol": "DLR/DIC26"}, "price": 1596.0, "quantity": 10, "side": "BUY", "account": "30", "iceberg": False, "wsClOrdId": "alyc30-20261117-0001"}))
+        await ws.send(json.dumps({"type": "no", "product": {"marketId": "ROFX", "symbol": "DLR/DIC26"}, "price": 1596.0, "quantity": 10, "side": "BUY", "account": "30", "iceberg": False, "wsClOrdId": "ALYC30202611170001"}))
 
         async for crudo in ws:
             mensaje = json.loads(crudo)
@@ -233,7 +233,7 @@ async def main() -> None:
                 continue
             reporte = mensaje["orderReport"]
             # El wsClOrdId solo llega en el primer Execution Report: ahí se asocia con el clOrdId
-            if reporte.get("wsClOrdId") == "alyc30-20261117-0001":
+            if reporte.get("wsClOrdId") == "ALYC30202611170001":
                 mi_cl_ord_id = reporte["clOrdId"]
                 print("Orden identificada. clOrdId:", mi_cl_ord_id)
             print(reporte["clOrdId"], reporte["status"], reporte.get("text"))
@@ -253,7 +253,7 @@ const ws = new WebSocket(WS_URL, {
 
 ws.on("open", () => {
   ws.send(JSON.stringify({"type": "os", "account": {"id": "30"}}));
-  ws.send(JSON.stringify({"type": "no", "product": {"marketId": "ROFX", "symbol": "DLR/DIC26"}, "price": 1596.0, "quantity": 10, "side": "BUY", "account": "30", "iceberg": false, "wsClOrdId": "alyc30-20261117-0001"}));
+  ws.send(JSON.stringify({"type": "no", "product": {"marketId": "ROFX", "symbol": "DLR/DIC26"}, "price": 1596.0, "quantity": 10, "side": "BUY", "account": "30", "iceberg": false, "wsClOrdId": "ALYC30202611170001"}));
 });
 
 ws.on("message", (datos) => {
@@ -261,7 +261,7 @@ ws.on("message", (datos) => {
   if (mensaje.type !== "or") return;
   const reporte = mensaje.orderReport;
   // El wsClOrdId solo llega en el primer Execution Report: ahí se asocia con el clOrdId
-  if (reporte.wsClOrdId === "alyc30-20261117-0001") {
+  if (reporte.wsClOrdId === "ALYC30202611170001") {
     console.log("Orden identificada. clOrdId:", reporte.clOrdId);
   }
   console.log(reporte.clOrdId, reporte.status, reporte.text);
@@ -299,7 +299,7 @@ El resultado llega como mensaje [`or`](/websockets/orders/execution-report-messa
     "transactTime": "20261117-14:23:35",
     "status": "PENDING_NEW",
     "text": "Enviada",
-    "wsClOrdId": "alyc30-20261117-0001"
+    "wsClOrdId": "ALYC30202611170001"
   }
 }
 ```

@@ -10,9 +10,9 @@ import RevisarVigencia from '/snippets/revisar-vigencia.mdx';
 
 Este método devuelve la Market Data del instrumento indicado, con el **último dato disponible al momento del request**.
 
-<Info>
-  Las **cotizaciones en tiempo real requieren consumo vía WebSocket**. Si necesitás recibir cada cambio del book o cada operación a medida que ocurren, usá [Suscripción a Market Data](/websockets/market-data/subscribe) en lugar de consultar este método en forma repetida.
-</Info>
+<Warning>
+  **Uso permitido de este método:** consultas puntuales o un **snapshot inicial al arrancar la aplicación**. **Está prohibido el polling continuo por REST.** Todo consumo continuo de precios y del libro de órdenes en tiempo real se hace **exclusivamente por WebSocket**: usá la [Suscripción a Market Data](/websockets/market-data/subscribe). Ver las [reglas de consumo](/homologacion/proceso).
+</Warning>
 
 ```http
 GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/marketdata/get
@@ -34,7 +34,7 @@ GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/marketdata/get
   Lista de entries de Market Data solicitados, **separados por coma**. Valores posibles: `BI`, `OF`, `LA`, `OP`, `CL`, `SE`, `OI`, `ACP`. Ej.: `BI,OF,LA`.
 </ParamField>
 
-<ParamField query="depth" type="integer" default="1">
+<ParamField query="depth" default="1" type="integer">
   Opcional. Profundidad del book solicitada, de `1` a `5`. Aplica a las puntas (`BI` y `OF`). Por defecto: `1`.
 </ParamField>
 
@@ -58,6 +58,7 @@ GET https://api.{urlbase}.(matrizoms|xoms).com.ar/rest/marketdata/get
 Puntas con profundidad 2, último precio, apertura, cierre, ajuste e interés abierto de `DLR/DIC26`:
 
 <CodeGroup>
+
 ```bash cURL
 # BASE_URL=https://api.{urlbase}.matrizoms.com.ar  (o .xoms.com.ar según tu ambiente)
 curl --get "$BASE_URL/rest/marketdata/get" \
@@ -114,6 +115,7 @@ const { marketData: md } = await respuesta.json();
 console.log("Compra:", md.BI?.[0], "| Venta:", md.OF?.[0]);
 console.log("Último:", md.LA?.price);
 ```
+
 </CodeGroup>
 
 <Note>
@@ -131,48 +133,61 @@ console.log("Último:", md.LA?.price);
 </ResponseField>
 
 {/* [REVISAR_VIGENCIA] origen: PDF v1.21, pp. 38-39. El manual vigente define los parámetros y los entries, pero no la estructura de la respuesta. */}
+
 <RevisarVigencia dato="La estructura de la respuesta (objeto marketData y campos depth y aggregated)" />
 
 <ResponseField name="marketData" type="object">
   Objeto con una clave por cada entry solicitado. Si un entry no tiene dato disponible, puede no venir en la respuesta o venir en `null`: validá su presencia antes de usarlo.
+
   <Expandable title="propiedades">
     <ResponseField name="BI" type="object[]">
       Puntas compradoras, ordenadas de la mejor a la peor. La cantidad de niveles depende de `depth`.
+
       <Expandable title="propiedades de cada nivel">
         <ResponseField name="price" type="number">
           Precio del nivel.
         </ResponseField>
+
         <ResponseField name="size" type="number">
           Cantidad en ese nivel.
         </ResponseField>
       </Expandable>
     </ResponseField>
+
     <ResponseField name="OF" type="object[]">
       Puntas vendedoras, ordenadas de la mejor a la peor. Misma estructura que `BI`.
     </ResponseField>
+
     <ResponseField name="LA" type="object">
       Último precio operado.
+
       <Expandable title="propiedades">
         <ResponseField name="price" type="number">
           Precio.
         </ResponseField>
+
         <ResponseField name="size" type="number | null">
           Cantidad operada.
         </ResponseField>
+
         <ResponseField name="date" type="integer">
           Fecha y hora del dato, en milisegundos desde epoch (Unix).
         </ResponseField>
       </Expandable>
     </ResponseField>
+
     <ResponseField name="OP" type="number">
       Precio de apertura. En el ejemplo llega como número, no como objeto.
     </ResponseField>
+
     <ResponseField name="CL" type="object">
       Precio de cierre de la rueda anterior. Misma estructura que `LA` (`price`, `size`, `date`).
     </ResponseField>
+
     <ResponseField name="SE" type="object">
       Precio de ajuste (solo futuros). Misma estructura que `LA` (`price`, `size`, `date`).
     </ResponseField>
+
     <ResponseField name="OI" type="object">
       Interés abierto (solo futuros). El valor viene en `size`; `price` llega en `null`. Incluye `date`.
     </ResponseField>
@@ -190,6 +205,7 @@ console.log("Último:", md.LA?.price);
 {/* [PENDIENTE] Ninguna fuente define el significado de "aggregated" ni la estructura de ACP en la respuesta REST. Confirmar con el equipo técnico. */}
 
 <ResponseExample>
+
 ```json Respuesta exitosa
 {
   "status": "OK",
@@ -219,4 +235,5 @@ console.log("Último:", md.LA?.price);
   "description": "Product DLR/DIC99:ROFX doesn't exist"
 }
 ```
+
 </ResponseExample>

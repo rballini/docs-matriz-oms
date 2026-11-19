@@ -1,0 +1,245 @@
+---
+title: "Relevamiento previo de homologación"
+sidebarTitle: "Formulario de relevamiento"
+description: "Completá el relevamiento previo para iniciar la homologación de tu integración con Matriz OMS API, sin necesidad de una reunión inicial."
+icon: "clipboard-list"
+---
+
+Este formulario **reemplaza la reunión inicial**. Contanos qué querés hacer y cómo te vas a conectar: el equipo de Soporte de Primary lo recibe por correo, lo revisa y te envía las credenciales del entorno Demo y las herramientas para empezar. Después, la única reunión es la **sesión de homologación técnica**, cuando tu desarrollo esté listo. Ver el [proceso completo](/homologacion/proceso).
+
+<Info>
+  **Si sos una ALyC**, compartí el link de esta página con las cuentas que quieran homologar. Lo completa quien va a hacer la integración.
+</Info>
+
+<Warning>
+  **No incluyas contraseñas ni tokens** en ningún campo. Alcanza con el nombre de usuario.
+</Warning>
+
+## Qué tené a mano
+
+- Los datos de contacto del responsable técnico y de una persona de escalación.
+- La ALyC por la que vas a operar y la **IP pública** desde la que te vas a conectar.
+- El lenguaje o stack de la integración y si es un desarrollo propio o de un tercero.
+- Qué Market Data necesitás y por qué canal la vas a consumir.
+- Si vas a enviar órdenes: instrumentos, tipos de orden, vigencias, volumen estimado y cómo generás el identificador de orden (`clOrdID`).
+- Los controles de riesgo pre-trade que tiene tu sistema y cómo manejás los rechazos, los reintentos y la reconexión.
+
+<Accordion title="Ver todas las secciones del formulario" icon="list">
+  1. **Contacto y escalación:** responsable técnico, empresa, ALyC y su autorización.
+  2. **Ambiente y conexión:** usuario Demo, IP pública, rango horario, stack, desarrollo propio o de un tercero y fecha estimada.
+  3. **Proyecto:** objetivo del desarrollo e interfaces de la API que vas a usar.
+  4. **Market Data:** activos y profundidad, canal de consumo o fuente alternativa.
+  5. **Órdenes:** instrumentos, tipos de orden, vigencias, operaciones, cuentas, volumen e identificador de orden.
+  6. **Estado de órdenes:** cómo monitoreás la ejecución.
+  7. **Controles de riesgo pre-trade:** controles implementados en tu sistema.
+  8. **Rechazos, reintentos y reconexión:** backoff exponencial y reconexión del WebSocket.
+  9. **Pruebas en Demo:** estado de tus pruebas.
+  10. **Privacidad:** consentimiento para el uso de tus datos.
+</Accordion>
+
+<SolicitudForm />
+
+Si el formulario no te funciona, usá **Copiar resumen para Jira** y cargá el resumen como ticket en el [portal de soporte](/support).
+
+## Qué pasa después de enviarlo
+
+Vas a ver un **código de referencia** y recibir una copia por correo. Soporte revisa tus respuestas y te envía por mail las credenciales del entorno Demo junto con la documentación y las herramientas. Cuando tu desarrollo esté listo y hayas terminado tus pruebas en Demo, se coordina la sesión de homologación técnica. Ver [Proceso y reglas de consumo](/homologacion/proceso).
+
+## Privacidad
+
+Los datos que completes, incluidos los del contacto técnico, se usan únicamente para gestionar la homologación de tu integración. Se envían por correo al equipo de Soporte APIs y se registran para el seguimiento de la solicitud. Vos recibís una copia en tu correo.
+
+{/* [PENDIENTE] Revisar con el área legal el texto de privacidad (finalidad, plazo de conservación y política de datos personales vigente) antes de dejarlo como definitivo. */}
+
+{/* [PENDIENTE] Para habilitar el envío: desplegar el Google Apps Script (apps-script/Codigo.gs) como aplicación web y pegar su URL (termina en /exec) en la constante APPS_SCRIPT_URL de SolicitudForm, al final de esta página. Mientras esté vacía, el formulario avisa que el envío no está habilitado y ofrece copiar el resumen para Jira. */}
+
+export const SolicitudForm = () => {
+  const APPS_SCRIPT_URL = "";
+  const SI = "Sí";
+  const NO = "No";
+  const usaMd = (a) => a.usaMd === SI;
+  const sinMd = (a) => a.usaMd === NO;
+  const usaOrd = (a) => a.usaOrdenes === SI;
+  const vendor = (a) => a.origen === "Solución de un tercero (vendor)";
+  const SECCIONES = [
+    { titulo: "1. Contacto y escalación", campos: [
+      { k: "nombre", l: "Nombre y apellido del responsable técnico", tipo: "text", req: true },
+      { k: "email", l: "Email del responsable técnico", tipo: "email", req: true },
+      { k: "telefono", l: "Teléfono de contacto", tipo: "tel", req: true },
+      { k: "escalacion", l: "Contacto de escalación (nombre y email o teléfono)", tipo: "text", req: true },
+      { k: "empresa", l: "Empresa o proyecto que va a integrar la API", tipo: "text", req: true },
+      { k: "alyc", l: "ALyC por la que vas a operar", tipo: "text", req: true },
+      { k: "instancia", l: "Instancia o identificador de la ALyC", tipo: "text", ayuda: "Si lo conocés." },
+      { k: "autorizaAlyc", l: "Confirmo que la ALyC está al tanto de esta solicitud y la autoriza", tipo: "check", req: true },
+    ] },
+    { titulo: "2. Ambiente y conexión", campos: [
+      { k: "usuarioDemo", l: "Usuario Demo asignado", tipo: "text", ayuda: "Solo el nombre de usuario, si ya tenés uno. Nunca incluyas contraseñas ni tokens." },
+      { k: "ip", l: "IP pública de origen", tipo: "text", req: true, ayuda: "La IP fija desde la que te vas a conectar. Si tenés más de una, separalas con coma. Si no es fija, escribí “dinámica”." },
+      { k: "horario", l: "Rango horario de conexión previsto", tipo: "text", ayuda: "Por ejemplo, de 09:30 a 17:30." },
+      { k: "stack", l: "Lenguaje o stack tecnológico de la integración", tipo: "text", req: true },
+      { k: "origen", l: "Tipo de desarrollo", tipo: "select", req: true, op: ["Desarrollo propio (in-house)", "Solución de un tercero (vendor)"] },
+      { k: "vendor", l: "Nombre del proveedor o de la solución", tipo: "text", req: true, si: vendor },
+      { k: "fechaListo", l: "Fecha estimada en la que tu desarrollo va a estar listo para homologar", tipo: "date" },
+    ] },
+    { titulo: "3. Proyecto", campos: [
+      { k: "objetivo", l: "Objetivo principal del desarrollo", tipo: "select", req: true, op: ["Bot de trading o arbitraje", "Conector con ERP o Back Office", "Pantalla propia de cotizaciones", "Otro"] },
+      { k: "detalle", l: "Describí brevemente qué hace tu desarrollo", tipo: "textarea", req: true },
+      { k: "interfaces", l: "Interfaces de la API que vas a usar", tipo: "multi", req: true, op: ["API REST de Trading", "API WebSocket"] },
+    ] },
+    { titulo: "4. Market Data", campos: [
+      { k: "usaMd", l: "¿Vas a consumir Market Data por la API?", tipo: "radio", req: true, op: [SI, NO] },
+      { k: "mdActivos", l: "Activos, instrumentos y profundidad del libro (puntas) que necesitás", tipo: "textarea", req: true, si: usaMd },
+      { k: "mdCanal", l: "Canal por el que vas a consumirla", tipo: "multi", req: true, si: usaMd, op: ["WebSocket (seguimiento continuo de precios y libro)", "REST (consulta puntual o snapshot inicial al arrancar)"] },
+      { k: "mdPolling", l: "Confirmo que no voy a hacer polling continuo por REST: el seguimiento continuo de precios y del libro de órdenes lo hago por WebSocket", tipo: "check", req: true, si: usaMd },
+      { k: "mdFuente", l: "¿De qué fuente obtenés los precios?", tipo: "text", req: true, si: sinMd, ayuda: "Fuente alternativa de Market Data." },
+    ] },
+    { titulo: "5. Órdenes", campos: [
+      { k: "usaOrdenes", l: "¿Vas a enviar órdenes por la API?", tipo: "radio", req: true, op: [SI, NO] },
+      { k: "instrumentos", l: "Tipos de instrumentos", tipo: "multi", req: true, si: usaOrd, op: ["Futuros", "Opciones", "Pases", "Futuros AoN o mayorista", "Títulos Valores", "Otros"] },
+      { k: "tiposOrden", l: "Tipos de orden", tipo: "multi", req: true, si: usaOrd, op: ["LIMIT", "MARKET", "STOP", "STOP LIMIT"] },
+      { k: "vigencias", l: "Vigencias (time in force)", tipo: "multi", req: true, si: usaOrd, op: ["DAY", "IOC", "FOK", "GTD"] },
+      { k: "operaciones", l: "Operaciones y atributos que vas a usar", tipo: "multi", req: true, si: usaOrd, op: ["Ingresar órdenes", "Reemplazar órdenes", "Cancelar órdenes", "Órdenes iceberg", "Cancelar órdenes previas al ingresar (cancelPrevious)"] },
+      { k: "cuentas", l: "Cuentas con las que vas a operar", tipo: "multi", req: true, si: usaOrd, op: ["Cuentas propias", "Cuentas de terceros"] },
+      { k: "volumen", l: "Volumen estimado de órdenes por segundo y por minuto", tipo: "text", req: true, si: usaOrd },
+      { k: "algoritmoId", l: "Algoritmo o formato con el que generás el identificador de orden (clOrdID)", tipo: "text", req: true, si: usaOrd, ayuda: "Por ejemplo: ALYC30202611170001 (alfanumérico, hasta 32 caracteres)." },
+      { k: "idOk", l: "Confirmo que el identificador tiene como máximo 32 caracteres y es solo alfanumérico, sin guiones ni caracteres especiales", tipo: "check", req: true, si: usaOrd },
+    ] },
+    { titulo: "6. Estado de órdenes", campos: [
+      { k: "monitoreo", l: "¿Cómo vas a monitorear la ejecución de tus órdenes?", tipo: "select", req: true, si: usaOrd, op: ["WebSocket: Execution Reports en tiempo real", "REST: consultas puntuales", "Ambos"] },
+      { k: "histOk", l: "Confirmo que no voy a consultar el historial de órdenes por REST de forma repetitiva ni masiva", tipo: "check", req: true, si: usaOrd },
+    ] },
+    { titulo: "7. Controles de riesgo pre-trade", campos: [
+      { k: "controles", l: "Controles implementados en tu sistema", tipo: "multi", si: usaOrd, op: ["Control de saldo", "Botón de pánico (kill switch): detiene el envío y cancela las órdenes activas", "Límite de nominales y volumen por orden individual", "Límite de nominales y volumen total de la estrategia", "Configuración de las puntas a las que opera el algoritmo", "No rutea órdenes si no hay Market Data de la parte opuesta"] },
+      { k: "controlesOtros", l: "Otros controles o mecanismos de protección", tipo: "textarea", si: usaOrd },
+    ] },
+    { titulo: "8. Rechazos, reintentos y reconexión", campos: [
+      { k: "backoff", l: "¿Tu código espera cada vez más tiempo entre reintentos (backoff exponencial) ante errores y rechazos?", tipo: "radio", req: true, op: [SI, "Parcialmente", NO] },
+      { k: "reintentos", l: "Describí cómo manejás los rechazos y los reintentos", tipo: "textarea", req: true },
+      { k: "reconexion", l: "¿Tu código reconecta automáticamente el WebSocket sin saturar al servidor?", tipo: "radio", req: true, op: [SI, NO, "No uso WebSocket"] },
+    ] },
+    { titulo: "9. Pruebas en Demo", campos: [
+      { k: "pruebasDemo", l: "Estado de tus pruebas en Demo", tipo: "select", req: true, op: ["Completé las pruebas", "Estoy probando", "Todavía no empecé"] },
+      { k: "comentarios", l: "Comentarios adicionales", tipo: "textarea" },
+    ] },
+    { titulo: "10. Privacidad", campos: [
+      { k: "privacidad", l: "Acepto que se usen estos datos únicamente para gestionar la homologación y que se me envíe una copia por correo", tipo: "check", req: true },
+    ] },
+  ];
+  const nuevaRef = () => { const d = new Date(); const p = (n) => String(n).padStart(2, "0"); return "HOM-" + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + "-" + Math.random().toString(36).slice(2, 6).toUpperCase().padEnd(4, "X"); };
+  const [a, setA] = useState({});
+  const [err, setErr] = useState({});
+  const [estado, setEstado] = useState("inicio");
+  const [copiado, setCopiado] = useState("");
+  const [ref, setRef] = useState(nuevaRef);
+  const postRef = useRef(null);
+  const copiaRef = useRef(null);
+  const visible = (f) => !f.si || f.si(a);
+  const set = (k, v) => { setA((p) => ({ ...p, [k]: v })); setErr((p) => { const n = { ...p }; delete n[k]; return n; }); };
+  const alterna = (k, o) => { const v = a[k] || []; set(k, v.includes(o) ? v.filter((x) => x !== o) : [...v, o]); };
+  const texto = (f) => { const v = a[f.k]; if (f.tipo === "multi") return v && v.length ? v.join(", ") : "—"; if (f.tipo === "check") return v ? SI : NO; return v && String(v).trim() ? String(v).trim() : "—"; };
+  const secciones = SECCIONES.map((s) => ({ ...s, campos: s.campos.filter(visible) })).filter((s) => s.campos.length);
+  const payload = JSON.stringify({ v: 1, ref, secciones: secciones.map((s) => ({ titulo: s.titulo, items: s.campos.map((f) => ({ k: f.k, l: f.l, v: texto(f) })) })) });
+  const resumen = () => ["## Relevamiento previo de homologación: " + (a.empresa || "sin empresa"), "Referencia: " + ref, ""].concat(...secciones.map((s) => ["### " + s.titulo].concat(s.campos.map((f) => "- **" + f.l + ":** " + texto(f)), [""]))).join("\n");
+  const validar = () => {
+    const e = {};
+    SECCIONES.forEach((s) => s.campos.forEach((f) => {
+      if (!visible(f)) return;
+      const v = a[f.k];
+      const vacio = f.tipo === "multi" ? !(v && v.length) : f.tipo === "check" ? !v : !String(v || "").trim();
+      if (f.req && vacio) e[f.k] = f.tipo === "check" ? "Necesitamos tu confirmación para continuar." : "Completá este campo.";
+      else if (f.tipo === "email" && v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) e[f.k] = "Ingresá un email válido.";
+    }));
+    return e;
+  };
+  useEffect(() => { if (estado !== "enviando") return undefined; const t = setTimeout(() => setEstado("error"), 25000); return () => clearTimeout(t); }, [estado]);
+  const enviar = (ev) => {
+    ev.preventDefault();
+    const errores = validar();
+    setErr(errores);
+    if (Object.keys(errores).length) { setEstado("invalido"); return; }
+    if (!APPS_SCRIPT_URL) { setEstado("sinConfig"); return; }
+    setEstado("enviando");
+    postRef.current.submit();
+  };
+  const cargado = () => { if (estado === "enviando") setEstado("enviado"); };
+  const copiar = () => {
+    const t = resumen();
+    const ok = () => { setCopiado("ok"); setTimeout(() => setCopiado(""), 2500); };
+    const fallo = () => { const el = copiaRef.current; if (!el) return; el.value = t; el.select(); let hecho = false; try { hecho = document.execCommand("copy"); } catch (x) { hecho = false; } if (hecho) ok(); else setCopiado("fallo"); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, fallo); else fallo();
+  };
+  const reiniciar = () => { setA({}); setErr({}); setEstado("inicio"); setRef(nuevaRef()); };
+  const campo = (f) => {
+    const id = "hf-" + f.k;
+    const e = err[f.k];
+    const v = a[f.k];
+    const cambia = (x) => set(f.k, x.target.value);
+    const grupo = f.tipo === "radio" || f.tipo === "multi";
+    let ctl;
+    if (f.tipo === "textarea") ctl = <textarea id={id} className="hf-in" rows={3} value={v || ""} onChange={cambia} aria-invalid={!!e} />;
+    else if (f.tipo === "select") ctl = <select id={id} className="hf-in hf-sel" value={v || ""} onChange={cambia} aria-invalid={!!e}><option value="">Elegí una opción</option>{f.op.map((o) => <option key={o} value={o}>{o}</option>)}</select>;
+    else if (grupo) ctl = <div className="hf-opts" role="group" aria-labelledby={id + "-l"}>{f.op.map((o) => <label key={o} className="hf-opt"><input type={f.tipo === "radio" ? "radio" : "checkbox"} checked={f.tipo === "radio" ? v === o : (v || []).includes(o)} onChange={() => (f.tipo === "radio" ? set(f.k, o) : alterna(f.k, o))} /><span>{o}</span></label>)}</div>;
+    else if (f.tipo === "check") ctl = <label className="hf-opt"><input type="checkbox" checked={!!v} onChange={(x) => set(f.k, x.target.checked)} aria-invalid={!!e} /><span>{f.l}{f.req ? " *" : ""}</span></label>;
+    else ctl = <input id={id} className="hf-in" type={f.tipo} value={v || ""} onChange={cambia} aria-invalid={!!e} />;
+    const rotulo = f.tipo === "check" ? null : grupo ? <div id={id + "-l"} className="hf-lbl">{f.l}{f.req ? " *" : ""}</div> : <label htmlFor={id} className="hf-lbl">{f.l}{f.req ? " *" : ""}</label>;
+    return <div key={f.k} className={"hf-field" + (f.tipo === "text" || f.tipo === "email" || f.tipo === "tel" || f.tipo === "date" || f.tipo === "select" ? "" : " hf-full")}>{rotulo}{ctl}{f.ayuda ? <div className="hf-help">{f.ayuda}</div> : null}{e ? <div className="hf-err" role="alert">{e}</div> : null}</div>;
+  };
+  const msg = { invalido: "Revisá los campos marcados: faltan datos obligatorios.", sinConfig: "El envío automático todavía no está habilitado. Usá Copiar resumen para Jira y cargalo en el portal de soporte.", error: "No pudimos confirmar el envío. Probá de nuevo o usá Copiar resumen para Jira y cargalo en el portal de soporte." }[estado];
+  const botonCopiar = <button type="button" className="hf-btn hf-sec" onClick={copiar}>{copiado === "ok" ? "Resumen copiado ✓" : copiado === "fallo" ? "No se pudo copiar" : "Copiar resumen para Jira"}</button>;
+  return (
+    <div className="not-prose hf-root">
+      <style>{`
+        .hf-root{display:grid;gap:18px;margin:20px 0;font-size:15px;line-height:1.5}
+        .hf-set{border:1px solid rgba(127,127,127,.28);border-radius:14px;padding:16px 18px;margin:0;min-width:0;background:rgba(127,127,127,.05)}
+        .hf-set legend{padding:0 8px;font-weight:700;font-size:16px;color:#2FA67C}
+        .hf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px 18px}
+        .hf-field{display:grid;gap:6px;align-content:start;min-width:0}
+        .hf-full{grid-column:1/-1}
+        .hf-lbl{font-weight:600}
+        .hf-in{width:100%;box-sizing:border-box;padding:9px 11px;border-radius:9px;border:1px solid rgba(127,127,127,.45);background:rgba(127,127,127,.08);color:inherit;font:inherit}
+        .hf-in:focus{outline:2px solid #3BB58C;outline-offset:1px}
+        .hf-in[aria-invalid="true"]{border-color:#E5484D}
+        .hf-sel option{background:#fff;color:#111}
+        .dark .hf-sel option{background:#15104A;color:#fff}
+        .hf-opts{display:grid;gap:6px}
+        .hf-opt{display:flex;gap:9px;align-items:flex-start;cursor:pointer}
+        .hf-opt input{margin-top:4px;accent-color:#3BB58C;flex:none}
+        .hf-help{font-size:13px;opacity:.7}
+        .hf-err{font-size:13px;color:#E5484D;font-weight:600}
+        .hf-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+        .hf-btn{padding:11px 22px;border-radius:999px;border:1px solid transparent;font:inherit;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s}
+        .hf-btn:hover{transform:translateY(-2px)}
+        .hf-btn:disabled{opacity:.6;cursor:wait;transform:none}
+        .hf-pri{background:linear-gradient(120deg,#3BB58C,#5AD1A8);color:#0E0A38;box-shadow:0 10px 24px -12px rgba(59,181,140,.9)}
+        .hf-sec{background:transparent;color:inherit;border-color:rgba(127,127,127,.5)}
+        .hf-msg{font-weight:600}
+        .hf-ok{border:1px solid rgba(59,181,140,.55);background:rgba(59,181,140,.1);border-radius:14px;padding:18px 20px;display:grid;gap:10px}
+        .hf-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;color:#2FA67C}
+        .hf-trap{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+      `}</style>
+      <iframe name="hf-destino" title="Destino del envío" onLoad={cargado} style={{ display: "none" }} />
+      <form ref={postRef} action={APPS_SCRIPT_URL || "about:blank"} method="POST" target="hf-destino" style={{ display: "none" }}>
+        <input type="hidden" name="payload" value={payload} />
+        <input type="hidden" name="website" value={a.website || ""} />
+      </form>
+      <textarea ref={copiaRef} aria-hidden="true" tabIndex={-1} readOnly className="hf-trap" />
+      {estado === "enviado" ? (
+        <div className="hf-ok" role="status">
+          <strong>¡Listo! Enviamos tu relevamiento.</strong>
+          <div>Código de referencia: <span className="hf-code">{ref}</span></div>
+          <div>Vas a recibir una copia en <strong>{a.email}</strong>. Si no te llega en unos minutos, revisá la carpeta de spam o escribinos desde Soporte citando el código.</div>
+          <div className="hf-bar">{botonCopiar}<button type="button" className="hf-btn hf-sec" onClick={reiniciar}>Completar otro relevamiento</button></div>
+        </div>
+      ) : (
+        <form onSubmit={enviar} noValidate>
+          <div className="hf-root">
+            {secciones.map((s) => <fieldset key={s.titulo} className="hf-set"><legend>{s.titulo}</legend><div className="hf-grid">{s.campos.map(campo)}</div></fieldset>)}
+            <div className="hf-trap" aria-hidden="true"><label>No completar este campo<input tabIndex={-1} autoComplete="off" value={a.website || ""} onChange={(x) => set("website", x.target.value)} /></label></div>
+            {msg ? <div className="hf-msg" role="alert" style={{ color: estado === "invalido" || estado === "error" ? "#E5484D" : "inherit" }}>{msg}</div> : null}
+            <div className="hf-bar"><button type="submit" className="hf-btn hf-pri" disabled={estado === "enviando"}>{estado === "enviando" ? "Enviando…" : "Enviar relevamiento"}</button>{botonCopiar}</div>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+};

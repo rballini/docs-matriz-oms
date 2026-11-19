@@ -41,7 +41,7 @@ Cada cliente de Matriz OMS API opera sobre uno o más **ambientes propios**. No 
 </CardGroup>
 
 <Warning>
-  Las órdenes que envíes en producción son **reales**. Hacé tus primeras pruebas en el demo general.
+  Las órdenes que envíes en producción son **reales**. Hacé tus primeras pruebas en el demo general. El acceso a producción se habilita una vez aprobada la [homologación](/homologacion/proceso).
 </Warning>
 
 <Note>
@@ -104,32 +104,29 @@ La URL base se compone del esquema, el servicio, tu identificador (`{urlbase}`) 
 
 ## Del demo a producción
 
+La homologación es el paso previo al acceso productivo y **aplica a todos los integradores**. El detalle completo está en [Homologación de APIs](/homologacion/proceso).
+
 <Steps>
-  <Step title="Integrá y probá en el demo general" icon="flask-vial">
-    Conectate al demo general y recorré el flujo completo de la [Guía rápida](/quickstart): token, segmentos, una orden y la verificación de su estado.
+  <Step title="Desarrollo y pruebas en Demo" icon="flask-vial">
+    Antes de empezar, completá el [relevamiento previo](/homologacion/solicitud): Soporte te envía por mail las credenciales del entorno Demo y las herramientas. Desarrollá y probá con la [Guía rápida](/quickstart), respetando las [reglas de consumo](/homologacion/proceso).
   </Step>
-  <Step title="Validá el ciclo completo de una orden" icon="arrows-spin">
-    Verificá siempre el estado real de cada orden y reconciliá el estado después de una desconexión. Ver [Ciclo de vida de una orden](/guides/order-lifecycle).
+  <Step title="Revisión de logs y sesión de homologación técnica" icon="magnifying-glass">
+    Cuando termines tus pruebas en Demo, avisá a Soporte. Primary revisa los logs (reintentos en bucle y llamadas excesivas a REST) y hace la sesión de homologación técnica con vos.
   </Step>
-  <Step title="Resolvé errores y reconexión" icon="triangle-exclamation">
-    Manejá los errores de la API y prepará la reconexión del WebSocket. Ver [Errores](/reference/errors) y [API WebSocket](/websockets/overview).
-  </Step>
-  <Step title="Pedí tu instancia y tus credenciales" icon="ticket">
-    Si no conocés tu `{urlbase}` o el dominio que te corresponde, solicitalo mediante un ticket en JIRA. Ver [Soporte](/support).
-  </Step>
-  <Step title="Cambiá la configuración, no el código" icon="sliders">
-    Apuntá la aplicación a tu instancia de producción modificando las variables de entorno (`MATRIZ_URLBASE`, `MATRIZ_DOMINIO` y las credenciales). Mantené separadas las credenciales de pruebas y de producción.
-  </Step>
-  <Step title="Empezá con cuidado" icon="circle-check">
-    Las órdenes en producción son reales: enviá primero una orden de cantidad mínima y verificá su estado antes de escalar el volumen.
+  <Step title="OK técnico y credenciales productivas" icon="circle-check">
+    Con el OK técnico, tu ALyC o la Mesa de Operaciones gestiona tus credenciales definitivas de producción.
   </Step>
 </Steps>
 
-<Info>
-  Esta lista resume las buenas prácticas de esta documentación. Para el proceso formal de homologación y habilitación productiva, consultá la Guía de homologación y buenas prácticas en [Herramientas del ecosistema](/resources/ecosystem) o escribile a [Soporte](/support).
-</Info>
+<CardGroup cols={2}>
+  <Card title="Proceso y reglas de consumo" icon="list-check" href="/homologacion/proceso">
+    El camino a producción en 3 pasos y las reglas que revisamos en los logs.
+  </Card>
 
-{/* [PENDIENTE] Documentar los requisitos oficiales de homologación y de habilitación productiva. Ninguna de las fuentes los define: la lista de pasos de arriba es una guía práctica armada con las buenas prácticas ya documentadas, no un proceso oficial. Confirmar también si el demo general es el ambiente de homologación. */}
+  <Card title="Relevamiento previo" icon="clipboard-list" href="/homologacion/solicitud">
+    Completá el formulario para iniciar la homologación sin reunión inicial.
+  </Card>
+</CardGroup>
 
 ## Reglas al trabajar con ambientes
 

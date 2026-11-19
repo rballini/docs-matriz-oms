@@ -258,6 +258,20 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "Homologación de APIs",
+        "icon": "clipboard-check",
+        "groups": [
+          {
+            "group": "Homologación",
+            "icon": "clipboard-check",
+            "pages": [
+              "homologacion/proceso",
+              "homologacion/solicitud"
+            ]
+          }
+        ]
       }
     ]
   },
