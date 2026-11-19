@@ -51,10 +51,8 @@ Los datos que completes, incluidos los del contacto técnico, se usan únicament
 
 {/* [PENDIENTE] Revisar con el área legal el texto de privacidad (finalidad, plazo de conservación y política de datos personales vigente) antes de dejarlo como definitivo. */}
 
-{/* [PENDIENTE] Para habilitar el envío: desplegar el Google Apps Script (apps-script/Codigo.gs) como aplicación web y pegar su URL (termina en /exec) en la constante APPS_SCRIPT_URL de SolicitudForm, al final de esta página. Mientras esté vacía, el formulario avisa que el envío no está habilitado y ofrece copiar el resumen para Jira. */}
-
 export const SolicitudForm = () => {
-  const APPS_SCRIPT_URL = "";
+  const APPS_SCRIPT_URL = "https://script.google.com/a/macros/primary.com.ar/s/AKfycbwmr3wwi4ylRxVLzcWGhCYnnxek4Ueb-wtYGCrFbfX4hJXRaVL11ij-5eKDKQIRFlCd/exec";
   const SI = "Sí";
   const NO = "No";
   const usaMd = (a) => a.usaMd === SI;
