@@ -13,6 +13,7 @@
  *   5. Demos en video (.demo-video-frame) con cambio automático claro/oscuro
  *   6. Accesibilidad: movimiento reducido
  *   6b. Splash de bienvenida de la home (marcado y lógica en /splash.js)
+ *   6c. Modo claro: capas reforzadas (barra superior, superficies sólidas, menú índigo)
  *   7. Footer: logo de Primary como columna derecha (no modificar)
  *
  * Hooks usados (documentados por Mintlify): .card, .callout, .steps, .step,
@@ -51,7 +52,7 @@
   --mx-surface-alt: #F8FAFC;
   --mx-surface-border: #CBD5E1;
   --mx-divider: #E2E8F0; /* líneas internas (filas de tabla) */
-  --mx-surface-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 6px 18px -8px rgba(15, 23, 42, 0.14);
+  --mx-surface-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
   --mx-surface-shadow-hover: 0 2px 4px rgba(15, 23, 42, 0.08), 0 14px 30px -12px rgba(15, 23, 42, 0.24);
 }
 
@@ -1261,6 +1262,65 @@ html.mx-splash-open {
   .mx-splash__arrow {
     animation: none !important;
   }
+}
+
+/* ---------------------------------------------------------------------------
+ * 6c. Modo claro: capas reforzadas
+ * Todas las reglas usan html:not(.dark): el modo oscuro no se modifica.
+ *  1. Barra superior en blanco sólido, separada del fondo gris.
+ *  2. Hero, tarjetas, tablas, bloques de código y paneles del formulario en
+ *     blanco sólido, con borde #CBD5E1 y sombra suave.
+ *  3. Identidad Primary (índigo suave) en los encabezados de grupo del menú.
+ * ------------------------------------------------------------------------- */
+
+/* 1. Barra superior (#navbar es el hook documentado por Mintlify) */
+html:not(.dark) #navbar,
+html:not(.dark) #navbar > div {
+  background-color: #FFFFFF !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html:not(.dark) #navbar {
+  border-bottom: 1px solid #CBD5E1 !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* 2. Superficies: fondo sólido, sin transparencias que dejen pasar el gris.
+ * Los bordes y la sombra de tarjetas, tablas y callouts salen de las variables
+ * --mx-surface-border (#CBD5E1) y --mx-surface-shadow, y conservan su hover. */
+html:not(.dark) .mx-hero,
+html:not(.dark) .card,
+html:not(.dark) .code-block,
+html:not(.dark) .code-group,
+html:not(.dark) #content table,
+html:not(.dark) .hf-set {
+  background-color: #FFFFFF !important;
+}
+html:not(.dark) .mx-hero,
+html:not(.dark) .hf-set {
+  border-color: #CBD5E1;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
+}
+html:not(.dark) .code-block:not(:hover),
+html:not(.dark) .code-group:not(:hover) {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+html:not(.dark) .code-group .code-block {
+  box-shadow: none;
+}
+
+/* 3. Encabezados de grupo del menú lateral */
+html:not(.dark) .sidebar-group-header {
+  color: #1D1464;
+  background: #EEF0FF;
+  border-color: #C7D2FE;
+  border-left-color: var(--mx-emerald);
+}
+html:not(.dark) .sidebar-group-header:hover {
+  background: #E4E8FF;
+  border-color: #A5B4FC;
+  border-left-color: var(--mx-emerald);
+  box-shadow: 0 6px 16px -10px rgba(29, 20, 100, 0.35);
 }
 
 /* ---------------------------------------------------------------------------
