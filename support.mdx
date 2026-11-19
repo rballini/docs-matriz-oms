@@ -6,13 +6,11 @@ icon: "life-ring"
 
 Las consultas y los incidentes de Matriz OMS API se gestionan mediante un **ticket en JIRA**, cargado **a través del cliente que lo solicita**.
 
-<Card title="Portal de soporte (JIRA)" icon="ticket">
+<Card title="Portal de soporte (JIRA)" icon="ticket" href="https://pmy.atlassian.net/servicedesk/customer/portal/3">
   Cargá tu consulta o incidente como ticket en JIRA.
 
-  Acceso: a confirmar.
+  Disponible para todos los clientes dados de alta.
 </Card>
-
-{/* [PENDIENTE] Completar: (1) URL del portal de JIRA (agregar href="https://…" a la Card y quitar "Acceso: a confirmar"); (2) quién puede cargar tickets (¿solo usuarios designados por cada ALyC?); (3) horarios de atención; (4) niveles de severidad y tiempos de respuesta (SLA); (5) canal de urgencias en horario de rueda, si existe. */}
 
 ## Antes de abrir un ticket
 
@@ -103,6 +101,7 @@ Copiá esta plantilla y completala:
 ## Cómo ocultar el token en tus logs
 
 <CodeGroup>
+
 ```python Python
 def redactar_headers(headers: dict) -> dict:
     """Devuelve una copia de los headers sin credenciales, apta para compartir."""
@@ -132,6 +131,7 @@ function redactarHeaders(headers) {
 console.log(redactarHeaders({ "X-Auth-Token": "abc123", "Content-Type": "application/json" }));
 // { 'X-Auth-Token': '[REDACTADO]', 'Content-Type': 'application/json' }
 ```
+
 </CodeGroup>
 
 <Note>
