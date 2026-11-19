@@ -96,7 +96,7 @@
     '  <span class="k">"quantity"</span><span class="p">:</span> <span class="n">10</span><span class="p">,</span>\n' +
     '  <span class="k">"side"</span><span class="p">:</span> <span class="s">"BUY"</span><span class="p">,</span>\n' +
     '  <span class="k">"account"</span><span class="p">:</span> <span class="s">"30"</span><span class="p">,</span>\n' +
-    '  <span class="k">"wsClOrdId"</span><span class="p">:</span> <span class="s">"alyc30-20261117-0001"</span>\n' +
+    '  <span class="k">"wsClOrdId"</span><span class="p">:</span> <span class="s">"ALYC30202611170001"</span>\n' +
     '<span class="p">}</span></code></pre>' +
     '        <div class="mx-splash__card-foot">' +
     '          <span class="mx-splash__card-arrow">←</span>' +

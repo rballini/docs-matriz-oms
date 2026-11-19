@@ -10,7 +10,7 @@ Generado a partir de los comentarios `{/* [PENDIENTE] ... */}` y de las marcas `
 2. **Revisar vigencia (sección B):** datos que provienen **solo** de la documentación anterior (Primary API v1.21 o su transcripción JSON) y se muestran al público con un aviso. Al validarlos, borrar el componente `<RevisarVigencia />` y el comentario `[REVISAR_VIGENCIA]` asociado (o corregir el dato).
 3. **Antes de publicar (sección C):** tareas de configuración y contenido que no son preguntas técnicas.
 
-## A. Pendientes de definición técnica (49 ítems)
+## A. Pendientes de definición técnica (54 ítems)
 
 ### Guías y páginas generales
 
@@ -100,6 +100,16 @@ Generado a partir de los comentarios `{/* [PENDIENTE] ... */}` y de las marcas `
 | --- | --- | --- | --- | --- |
 | A48 | `snippets/instrument-detail-fields.mdx` | El diccionario anterior nombra "timeInForces", pero la respuesta de ejemplo usa "timesInForce". Confirmar el nombre real del campo contra un ambiente vigente. | | ☐ |
 | A49 | `snippets/order-fields.mdx` | Confirmar el formato y la zona horaria de transactTime (en los ejemplos: AAAAMMDD-HH:mm:ss). | | ☐ |
+
+### Homologación de APIs
+
+| # | Archivo | Pendiente | Responsable | Estado |
+| --- | --- | --- | --- | --- |
+| A50 | `homologacion/proceso.mdx` | Valores concretos de los límites de consumo (cantidad de peticiones por unidad de tiempo, umbrales de limitación y de bloqueo de usuario o IP) y el código HTTP y el cuerpo con los que el servidor informa un límite de consumo. El material interno menciona 400, 429 y 500, pero el portal documenta los errores con "status": "ERROR" en el cuerpo. La página describe las reglas sin números. | | ☐ |
+| A51 | `homologacion/proceso.mdx` | Detalle de la sesión de homologación técnica: duración, agenda, entregables del informe y forma de pedir una nueva revisión si no se aprueba. | | ☐ |
+| A52 | `homologacion/proceso.mdx` | Tiempo de respuesta de Soporte al recibir el relevamiento y canal por el que se avisa que las pruebas en Demo están terminadas (hoy la página lo deja en el portal de soporte). | | ☐ |
+| A53 | `homologacion/proceso.mdx`, `homologacion/solicitud.mdx` | Confirmar que, al recibir el relevamiento, Soporte envía por mail las credenciales del entorno Demo y las herramientas, y quién lo hace. Se tomó del protocolo post-reunión del material interno. | | ☐ |
+| A54 | `homologacion/solicitud.mdx` | Revisión legal del texto de privacidad (finalidad, plazo de conservación y política de datos personales vigente). | | ☐ |
 
 ## B. Datos a validar contra la versión vigente — `[REVISAR_VIGENCIA]` (39 avisos visibles + 2 snippets)
 
@@ -213,13 +223,15 @@ Cada fila es un aviso `<RevisarVigencia />` visible en el portal. La columna **O
 - [ ] C15. **Logo de Primary en el footer (`styles.css`).** Se agregó con CSS porque `docs.json` no tiene una propiedad nativa para un segundo logo en el footer. Verificar en vivo en modo claro, modo oscuro y mobile que quede bien ubicado junto al de matriz OMS y ajustar el selector `#footer::after` si hace falta. Las rutas `/logo/primary-*.svg` del CSS asumen que el portal se publica en la raíz de su dominio (no en un subpath). Igual que C1: `logo/primary-light.svg` y `logo/primary-dark.svg` están vectorizados desde un PNG; reemplazarlos por los vectoriales originales cuando estén disponibles.
 - [ ] C16. **Videos del front DMA** (`introduction.mdx` y `websockets/overview.mdx`): verificar en vivo que existan en `/plataforma/` con estos nombres exactos (las rutas distinguen mayúsculas): `FavsLight.mp4`, `FrontMDdark.mp4`, `WidgetsLight.mp4` y `WidgetsDark.mp4`. Cada demo carga las dos versiones (clara y oscura) y el CSS muestra solo la que corresponde al modo: conviene que cada MP4 pese pocos MB (H.264, sin audio, 720p o 1080p) para no penalizar la carga de la portada.
 - [ ] C17. **Tarjeta “Risk API” en la portada pública** (`introduction.mdx`): cuando se restaure la restricción por grupos (C3 y C13), los usuarios que no sean administradores de ALyC van a llegar a un 404 desde esa tarjeta. Decidir si se mantiene (con su etiqueta “Exclusivo administradores de ALyC”) o se quita de la portada.
-- [ ] C18. **Homologación y habilitación productiva** (`environments.mdx`, sección “Del demo a producción”): ninguna fuente define los requisitos oficiales. Los 6 pasos publicados son una guía práctica armada con buenas prácticas ya documentadas, y un aviso remite a la Guía de homologación de las herramientas del ecosistema. Reemplazar por el proceso oficial y confirmar si el **demo general es el ambiente de homologación** (hoy la tarjeta se llama “Testing · Demo general”). Relacionado con A3 (código HTTP y cuerpo de la respuesta ante credenciales inválidas o token vencido): `authentication.mdx` describe causas y soluciones sin afirmar un código, por ejemplo `401 Unauthorized`.
+- [x] C18. **Homologación y habilitación productiva** (`environments.mdx`): resuelto el 19/11/2026. El proceso oficial de 3 pasos (Demo, revisión de logs y sesión técnica, OK técnico y credenciales vía ALyC o Mesa de Operaciones) quedó documentado en `homologacion/proceso.mdx` y `environments.mdx` lo resume. El demo general es el ambiente de pruebas de la homologación. Lo que sigue abierto está en A50 a A54. Relacionado con A3 y A42 (código HTTP y cuerpo de la respuesta ante credenciales inválidas o token vencido): `authentication.mdx` describe causas y soluciones sin afirmar un código.
+- [ ] C19. **Habilitar el envío del formulario de homologación** (`homologacion/solicitud.mdx`): desplegar `apps-script/Codigo.gs` en el Google Workspace como aplicación web (ejecutar como “Yo”, acceso “Cualquier persona”), completar `SOPORTE_EMAIL` en su `CONFIG`, pegar la URL `/exec` en la constante `APPS_SCRIPT_URL` del componente `SolicitudForm` (al final de la página) y probar un envío real. Hasta entonces el formulario avisa que el envío no está habilitado y ofrece copiar el resumen para Jira. No subir `Codigo.gs` con el correo real al repositorio, que es público.
+- [ ] C20. **Archivos de más en el repositorio:** `overview.mdx` en la raíz (copia de `websockets/overview.mdx`) y las carpetas `docs-json-e-introduction/` y `docs-matriz-oms-navegacion-profundidad/` (esta última con un `styles.css` viejo que Mintlify aplica de forma duplicada). Borrarlos desde GitHub.
 
 ## Resumen
 
 | Tipo | Cantidad |
 | --- | --- |
-| A. Pendientes de definición técnica | 49 |
+| A. Pendientes de definición técnica | 54 |
 | B. Avisos `[REVISAR_VIGENCIA]` visibles en páginas | 39 |
 | B. Marcas `[REVISAR_VIGENCIA]` en snippets (sin aviso propio) | 2 |
-| C. Tareas antes de publicar | 18 |
+| C. Tareas antes de publicar | 20 |
