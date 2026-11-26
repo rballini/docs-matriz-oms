@@ -40,16 +40,6 @@
   "seo": {
     "indexing": "navigable"
   },
-  "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "cursor",
-      "vscode"
-    ]
-  },
   "metadata": {
     "timestamp": false
   },
