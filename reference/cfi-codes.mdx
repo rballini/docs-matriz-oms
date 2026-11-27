@@ -1,41 +1,118 @@
 ---
 title: "Códigos CFI"
-description: "Códigos CFI que identifican el tipo de cada instrumento en Matriz OMS API."
+description: "Referencia de los códigos CFI (ISO 10962) que devuelve Matriz OMS API, con su tipo de instrumento, para clasificar las especies sin consultar a Soporte."
 icon: "tags"
 ---
 
-Cada instrumento tiene un **código CFI** (Classification of Financial Instruments, estándar ISO 10962) que identifica su tipo. Lo vas a encontrar en el campo `cficode` de los instrumentos y lo podés usar para filtrar con [Lista de instrumentos por código CFI](/reference-data/instruments/by-cfi-code).
+Cada instrumento tiene un **código CFI** (Classification of Financial Instruments, estándar ISO 10962) que identifica su tipo. Lo vas a encontrar en el campo `cficode` de [`instruments/details`](/reference-data/instruments/list-detailed) y del resto de los métodos de instrumentos. Podés usarlo para clasificar las especies o para filtrarlas con [Lista de instrumentos por código CFI](/reference-data/instruments/by-cfi-code).
 
-## Códigos disponibles
+<Info>
+  Matriz OMS **retransmite** el `cficode` (tag 461 de FIX) tal como lo informa el **maestro de especies de cada mercado** (A3 Mercados y BYMA). Por eso esta página tiene dos grupos: los códigos que Matriz OMS mapea a un tipo propio y otros códigos ISO 10962 frecuentes que el mercado también informa.
+</Info>
 
-| Código | Tipo de instrumento | Categoría |
+## Primera letra: referencia rápida
+
+| Primera letra | Categoría | Códigos de ejemplo |
 | --- | --- | --- |
-| `ESXXXX` | Acción | Renta variable |
-| `EMXXXX` | CEDEAR | Renta variable |
-| `DBXXXX` | Bono | Renta fija |
-| `DBXXFR` | Obligación negociable | Renta fija |
-| `FXXXSX` | Futuro | Derivados |
-| `OCAFXS` | Opción call sobre futuro | Derivados |
-| `OPAFXS` | Opción put sobre futuro | Derivados |
-| `OCASPS` | Opción call sobre acción | Derivados |
-| `OPASPS` | Opción put sobre acción | Derivados |
+| `E` | Renta variable | `ESXXXX`, `EMXXXX` |
+| `D` | Renta fija | `DBXXXX`, `DBXXFR`, `DYXTXR` |
+| `C` | Fondos comunes y fondos de inversión (FCI) | `CIOXXX`, `CICXXX` |
+| `F` | Futuros | `FXXXSX`, `FXXXXX`, `FFCXXX` |
+| `O` | Opciones | `OCASPS`, `OPAFXS`, `OMAOCS` |
+| `R` | Cauciones y pases | `RPXXXX` |
+| `M` | Otros: índices y especies sin definir | `MRIXXX`, `MXXXXX` |
+| `X` | Swaps | `XXWXXX` |
+
+<Note>
+  En ISO 10962 la letra `R` identifica derechos (_entitlements_). Matriz OMS usa `RPXXXX` para identificar cauciones y pases, según su diccionario interno.
+</Note>
+
+## Códigos mapeados en Matriz OMS
+
+Son los códigos que Matriz OMS reconoce y asocia a un **tipo interno** de instrumento.
+
+| Código | Instrumento | Tipo interno | Categoría |
+| --- | --- | --- | --- |
+| `ESXXXX` | Acciones | `STOCK` | Renta variable |
+| `EMXXXX` | CEDEARs | `CEDEAR` | Renta variable |
+| `DBXXXX` | Bonos y títulos públicos | `BOND` | Renta fija |
+| `DBXXFR` | Obligaciones negociables | `NEGOTIABLE_OBLIGATION` | Renta fija |
+| `DYXTXR` | Letras del Tesoro | `LETTER_NOTE` | Renta fija |
+| `RPXXXX` | Cauciones y pases | `REPURCHASE` | Cauciones |
+| `CIOXXX` | Fondos comunes de inversión | `MUTUAL_FUNDS` | Fondos |
+| `CICXXX` | Fondos de inversión | `INVESTMENT_FUNDS` | Fondos |
+| `FXXXSX` | Futuros | `FUTURE` | Derivados |
+| `FXXXXX` | Spreads de futuros | `FUTURES_SPREAD` | Derivados |
+| `OCASPS` | Opciones call sobre acciones | `STOCK_OPTION_CALL` | Derivados |
+| `OPASPS` | Opciones put sobre acciones | `STOCK_OPTION_PUT` | Derivados |
+| `OCAFXS` | Opciones call sobre futuros | `FUTURE_OPTION_CALL` | Derivados |
+| `OPAFXS` | Opciones put sobre futuros | `FUTURE_OPTION_PUT` | Derivados |
+| `OCEFXS` | Opciones call europeas sobre futuros | `FUTURE_OPTION_CALL_EUROPEAN` | Derivados |
+| `OPEFXS` | Opciones put europeas sobre futuros | `FUTURE_OPTION_PUT_EUROPEAN` | Derivados |
+| `OMAOCS` | Spreads de opciones | `OPTION_SPREAD` | Derivados |
+| `XXWXXX` | Swaps | `SWAP` | Derivados |
+| `MRIXXX` | Índices | `INDEX` | Otros |
+| `MXXXXX` | Sin definir y otros | `UNDEFINED` | Otros |
+
+<Tip>
+  `FXXXSX` (futuros) y `FXXXXX` (spreads de futuros) se distinguen solo por la quinta letra. Para filtrar o clasificar, usá siempre el código **completo** de 6 letras.
+</Tip>
+
+## Otros códigos ISO 10962 frecuentes
+
+El mercado (A3 Mercados y BYMA) informa además estos códigos. Matriz OMS los retransmite tal cual, sin asociarlos a un tipo interno. La columna describe lo que indica cada carácter según ISO 10962.
+
+| Código | Qué indica |
+| --- | --- |
+| `FCAXXX` | Futuro de commodities (`FC`) sobre productos agropecuarios (`A`). Entrega y estandarización sin especificar. |
+| `FCAXSX` | Igual que `FCAXXX`, **estandarizado** (`S`). |
+| `FFCXXX` | Futuro financiero (`FF`) sobre monedas o divisas (`C`). Entrega y estandarización sin especificar. |
+| `FFCXSX` | Igual que `FFCXXX`, **estandarizado** (`S`). |
+| `FCXXNN` | Futuro de commodities (`FC`) con subyacente y entrega sin especificar, **no estandarizado** (`N`). |
+| `OXEFXN` | Opción cuyo tipo (call o put) no está especificado (`X`), de estilo **europeo** (`E`), sobre **futuros** (`F`), con entrega sin especificar y **no estandarizada** (`N`). |
+
+<Note>
+  En ISO 10962, la quinta letra de un futuro indica si el contrato es **estandarizado** (`S`) o no estandarizado (`N`): no indica la forma de liquidación. La forma de liquidación está en la cuarta letra, cuando viene informada: `P` entrega física y `C` liquidación en efectivo.
+</Note>
 
 ## Cómo leer un código CFI
 
-El código tiene **6 letras**. La primera indica la categoría del instrumento según la norma ISO 10962, y las siguientes agregan atributos; la letra `X` indica un atributo no especificado.
+El código tiene **6 letras**. La primera indica la categoría, la segunda el grupo dentro de la categoría y de la tercera a la sexta son atributos que dependen del grupo. La letra `X` indica un atributo no especificado.
 
-| Primera letra | Categoría | Ejemplos |
-| --- | --- | --- |
-| `E` | Equity: acciones y certificados | `ESXXXX`, `EMXXXX` |
-| `D` | Debt: instrumentos de deuda | `DBXXXX`, `DBXXFR` |
-| `F` | Futures: futuros | `FXXXSX` |
-| `O` | Options: opciones (`C` = call, `P` = put en la segunda letra) | `OCAFXS`, `OPAFXS`, `OCASPS`, `OPASPS` |
+<Tabs>
+  <Tab title="Futuros (F)" icon="chart-line">
+    | Posición | Qué indica | Valores |
+    | --- | --- | --- |
+    | 2.ª | Grupo | `F` financieros · `C` commodities |
+    | 3.ª | Subyacente | `A` agropecuario · `S` acciones (financieros) o servicios (commodities) · `C` monedas · `I` índices (financieros) o productos industriales (commodities) · `D` tasas o deuda · `F` futuros · `O` opciones · `W` swaps · `M` otros |
+    | 4.ª | Entrega | `P` física · `C` en efectivo · `N` no entregable |
+    | 5.ª | Estandarización | `S` estandarizado · `N` no estandarizado |
+    | 6.ª | Sin uso definido | `X` |
 
-<Tip>
-  Para filtrar instrumentos, usá siempre el código **completo** de 6 letras, tal como figura en la tabla de códigos disponibles.
-</Tip>
+    Ejemplo: `FFCXSX` es un futuro financiero (`FF`) sobre monedas (`C`), estandarizado (`S`).
+  </Tab>
+  <Tab title="Opciones (O)" icon="arrows-up-down">
+    | Posición | Qué indica | Valores |
+    | --- | --- | --- |
+    | 2.ª | Tipo | `C` call · `P` put |
+    | 3.ª | Estilo de ejercicio | `A` americano · `E` europeo |
+    | 4.ª | Subyacente | `S` acciones · `F` futuros · `C` monedas · `I` índices · `D` tasas o deuda · `O` opciones · `W` swaps · `M` otros |
+    | 5.ª | Entrega | `P` física · `C` en efectivo · `N` no entregable |
+    | 6.ª | Estandarización | `S` estandarizada · `N` no estandarizada |
 
-{/* [PENDIENTE] Confirmar que el parámetro CFICode no admite prefijos ni comodines, y si existen otros códigos CFI vigentes (por ejemplo, para índices o cauciones). */}
+    Ejemplo: `OCASPS` es una opción call (`C`) americana (`A`) sobre acciones (`S`), con entrega física (`P`), estandarizada (`S`).
+  </Tab>
+</Tabs>
+
+<Note>
+  Los códigos de spreads (`FXXXXX`, `OMAOCS`) y los que el mercado informe con otro criterio se retransmiten tal cual. Cuando un código no figura en estas tablas, usá la primera letra para ubicar la categoría y consultá a Soporte si necesitás su significado exacto.
+</Note>
+
+{/* [PENDIENTE] Confirmar que el parámetro CFICode no admite prefijos ni comodines, y si `byCFICode` acepta todos los códigos de estas tablas (el manual solo lista los 9 originales). */}
+
+{/* [PENDIENTE] Confirmar con ingeniería si el campo `securityType` de `instruments/details` devuelve el "Tipo interno" de la tabla (en los ejemplos del manual viene en `null`) y si estas tablas cubren todos los códigos que se informan en Producción. */}
+
+{/* [PENDIENTE] Validar las decodificaciones de "Otros códigos ISO 10962 frecuentes" contra el maestro de especies de A3 Mercados y BYMA. Se redactaron según la estructura del estándar ISO 10962. */}
 
 ## Ejemplo
 
@@ -47,3 +124,54 @@ Instrumento `DLR/DIC26` con su código CFI, tal como lo devuelve [Lista de instr
   "cficode": "FXXXSX"
 }
 ```
+
+## Ver los códigos que devuelve tu ambiente
+
+Para saber qué códigos CFI hay en tu ambiente y cuántas especies tiene cada uno, consultá [`instruments/details`](/reference-data/instruments/list-detailed) **una sola vez** (por ejemplo, al arrancar tu aplicación) y contá los valores de `cficode`.
+
+<CodeGroup>
+
+```python Python
+import os
+from collections import Counter
+
+import requests
+
+URLBASE = os.environ["MATRIZ_URLBASE"]
+DOMINIO = os.environ.get("MATRIZ_DOMINIO", "matrizoms")
+BASE_URL = f"https://api.{URLBASE}.{DOMINIO}.com.ar"
+
+respuesta = requests.get(
+    f"{BASE_URL}/rest/instruments/details",
+    headers={"X-Auth-Token": os.environ["MATRIZ_TOKEN"]},
+    timeout=60,
+)
+respuesta.raise_for_status()
+
+codigos = Counter(instrumento.get("cficode") for instrumento in respuesta.json()["instruments"])
+for codigo, cantidad in sorted(codigos.items(), key=lambda par: str(par[0])):
+    print(codigo, cantidad)
+```
+
+```javascript Node.js
+// Node.js 18 o superior (fetch nativo, ES modules)
+const URLBASE = process.env.MATRIZ_URLBASE;
+const DOMINIO = process.env.MATRIZ_DOMINIO ?? "matrizoms";
+const BASE_URL = `https://api.${URLBASE}.${DOMINIO}.com.ar`;
+
+const respuesta = await fetch(`${BASE_URL}/rest/instruments/details`, {
+  headers: { "X-Auth-Token": process.env.MATRIZ_TOKEN },
+});
+if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
+
+const { instruments } = await respuesta.json();
+const codigos = new Map();
+for (const { cficode } of instruments) {
+  codigos.set(cficode, (codigos.get(cficode) ?? 0) + 1);
+}
+for (const [codigo, cantidad] of [...codigos].sort()) {
+  console.log(codigo, cantidad);
+}
+```
+
+</CodeGroup>
